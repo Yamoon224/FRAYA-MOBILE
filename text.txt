@@ -1,0 +1,70 @@
+Rapport Backend Manquant — Fraya Mobile
+========================================
+
+Observations générales
+- Standardiser les codes d'erreur HTTP (le mobile ne doit pas faire de pattern-matching sur des strings).
+- Documenter les réponses réelles des endpoints mobiles dans le Swagger.
+- Fournir les URLs WebSocket/SSE dès disponibilité.
+
+
+PARTIE 1 — CONTRATS API (correctifs par endpoint)
+--------------------------------------------------
+
+| Endpoint                            | Problème                                                                 | Action requise                                                                                          |
+|-------------------------------------|--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| POST /auth/login                    | OK globalement.                                                          | Garantir `data.access_token` + `data.user` en réponse.                                                 |
+| POST /auth/register/step1           | Swagger exige `recaptchaToken`, mobile envoie seulement `phoneNumber`.   | Rendre `recaptchaToken` optionnel pour le mobile.                                                       |
+| POST /auth/register/step2           | OK globalement.                                                          | Confirmer que `phoneNumber` + `verificationCode` suffisent.                                             |
+| POST /auth/register/step3           | OK globalement.                                                          | Garantir le même retour token + user que le login.                                                      |
+| GET /sid-users/profile              | Réponse potentiellement pauvre, sert à plusieurs écrans.                 | Retourner : `id`, `firstNames`, `lastName`, `phoneNumber`, `email`, `createdAt`, `rating`, `coursesCount`. |
+| PUT /sid-users/update-info/{id}     | Documenté multipart/form-data, mobile envoie du JSON.                   | Accepter `application/json`.                                                                            |
+| GET /pricing/configs/range-pricing  | Format de réponse doit rester stable.                                    | Retourner `{ success: true, data: [...] }` avec `range` dans chaque item.                              |
+| POST /rides/maps/calculate          | Décalage entre réponse Swagger et ce que lit le mobile.                  | Retourner `data.price.totalPrice`, tolérer les champs extra (`destinationLat`, `destinationLng`).      |
+| POST /rides/maps/request            | Payload mobile plus large que le DTO Swagger.                            | Accepter `arrivalPlaceId`, `amountReceived`, `finalPrice`, `durationInTraffic`, `trafficPercentage`, `amountCommission`. Retourner `data.id`. |
+| GET /rides/maps/user/{userId}       | Sert à la fois pour l'historique et la course active.                    | Maintenir un payload riche et stable.                                                                   |
+| POST /rides/maps/{id}/cancel        | OK presque.                                                              | Accepter `by` et `reason`. L'id path prime sur le body.                                                |
+| GET /rides/maps/user/{userId}/active| URL non confirmée dans le Swagger.                                       | Confirmer/normaliser l'URL et la documenter.                                                            |
+| GET /rides/{id}                     | Absent.                                                                  | Ajouter : chauffeur, véhicule, paiement, prix, distance, durée, statuts.                               |
+| POST /rides/{id}/rate               | Absent. UI de notation livrée mais le bouton "Envoyer" ne fait aucun appel API. | Ajouter avec `rating` (1–5) et `comment` (optionnel).                                           |
+
+
+PARTIE 2 — FONCTIONNALITÉS MANQUANTES
+--------------------------------------
+
+1. Temps Réel & Tracking GPS (Critique 🔴)
+   - WebSocket/SSE pour pousser les changements de statut de course (passager) et les nouvelles courses (chauffeur), sans polling.
+   - POST /drivers/location — le chauffeur envoie { lat, lng, heading } toutes les 3–5s pendant une course.
+   - GET /drivers/nearby?lat=X&lng=Y&radius=500 — les chauffeurs affichés sur la carte passager sont actuellement simulés par un Random() côté mobile (aucun appel API réel).
+
+2. Statut Chauffeur (Critique 🔴)
+   - POST /drivers/status { "status": "ONLINE" | "OFFLINE" } — aucun moyen de basculer la disponibilité depuis l'app.
+
+3. Notation de Course (Critique 🔴)
+   - POST /rides/{rideId}/rate { rating, comment } — l'écran de notation est complet côté mobile mais ne persiste rien faute d'endpoint.
+
+4. Authentification (Important 🟡)
+   - POST /auth/refresh { refreshToken } — sans refresh token, les utilisateurs sont déconnectés à expiration du JWT sans avertissement.
+
+5. Historique (Important 🟡)
+   - GET /rides/{rideId} avec infos chauffeur + véhicule + paiement (voir Partie 1).
+   - GET /rides/maps/user/{userId} devrait embarquer les infos chauffeur/véhicule pour éviter un appel par course.
+
+6. Lieux Favoris (Important 🟡)
+   - Les favoris sont en local uniquement (perte au changement de téléphone).
+   - GET /users/favorites, POST /users/favorites, DELETE /users/favorites/{id}.
+
+7. Notifications Push (Important 🟡)
+   - POST /users/device-token { token, platform } — aucun enregistrement FCM/APNs actuellement.
+
+8. Paiement Mobile (À définir 🟡)
+   - Le `paymentMethod` est envoyé dans la requête de course mais aucun flow d'initiation/callback n'est prévu. Définir et documenter le flow complet si un opérateur mobile est intégré.
+
+9. Courses — Compléments (Important 🟡)
+   - Autoriser l'annulation passager même après acceptation par le chauffeur (avec logique de pénalité éventuelle).
+   - Inclure infos chauffeur + véhicule dans la réponse de course active (nom, photo, plaque, modèle).
+
+
+RÉSUMÉ PRIORITÉS
+-----------------
+Critique 🔴  WebSocket/SSE · GET /drivers/nearby · POST /drivers/location · POST /drivers/status · POST /rides/{id}/rate
+Important 🟡  Refresh token · recaptchaToken optionnel · GET /rides/{id} · POST /users/device-token · Favoris backend · Flow paiement mobile · JSON sur update-info

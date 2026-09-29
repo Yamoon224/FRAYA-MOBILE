@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <!-- Shadow -->
+  <ellipse cx="48" cy="91" rx="25" ry="4" fill="#000000" fill-opacity="0.18"/>
+
+  <!-- Wheel arches (rendered behind body; edges visible at the 4 corners) -->
+  <rect x="11" y="12" width="18" height="22" rx="5" fill="#1A1A1A"/>
+  <rect x="67" y="12" width="18" height="22" rx="5" fill="#1A1A1A"/>
+  <rect x="11" y="61" width="18" height="22" rx="5" fill="#1A1A1A"/>
+  <rect x="67" y="61" width="18" height="22" rx="5" fill="#1A1A1A"/>
+
+  <!-- Main car body — fill="currentColor" is the only dynamic color -->
+  <rect x="22" y="6" width="52" height="82" rx="14" fill="currentColor"/>
+
+  <!-- Front windshield -->
+  <rect x="27" y="14" width="42" height="24" rx="6" fill="#3C4A56"/>
+
+  <!-- Rear window -->
+  <rect x="27" y="58" width="42" height="22" rx="6" fill="#3C4A56"/>
+
+  <!-- Left side window (x 22→30, fits flush against taxi sign) -->
+  <rect x="22" y="42" width="8" height="13" rx="3" fill="#3C4A56"/>
+
+  <!-- Right side window (x 66→74, fits flush against taxi sign) -->
+  <rect x="66" y="42" width="8" height="13" rx="3" fill="#3C4A56"/>
+
+  <!-- Taxi sign (x 30→66, between the two side windows) -->
+  <rect x="30" y="42" width="36" height="13" rx="3" fill="#F5C518"/>
+
+  <!-- Headlights (front, amber-white) -->
+  <rect x="28" y="7"  width="13" height="5" rx="2" fill="#FFF5D6"/>
+  <rect x="55" y="7"  width="13" height="5" rx="2" fill="#FFF5D6"/>
+
+  <!-- Taillights (rear, red) -->
+  <rect x="28" y="82" width="13" height="5" rx="2" fill="#F44336"/>
+  <rect x="55" y="82" width="13" height="5" rx="2" fill="#F44336"/>
+
+  <!-- Body highlight — subtle white reflection to give a 3D rounded feel -->
+  <ellipse cx="36" cy="23" rx="6" ry="4" fill="#FFFFFF" fill-opacity="0.18" transform="rotate(-15 36 23)"/>
+
+  <!-- Body outline — thin semi-transparent border for polish -->
+  <rect x="22" y="6" width="52" height="82" rx="14" fill="none" stroke="#00000020" stroke-width="1.5"/>
+</svg>

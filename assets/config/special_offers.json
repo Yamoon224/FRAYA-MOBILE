@@ -1,0 +1,9 @@
+[
+  {
+    "id": "fraya-referral-june",
+    "title": "Invitez vos proches sur Fraya",
+    "description": "Partagez Fraya avec votre entourage et faites decouvrir une course simple, rapide et confortable dans Abidjan.",
+    "isActive": true,
+    "audiences": ["passenger", "driver"]
+  }
+]
