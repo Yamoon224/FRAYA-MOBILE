@@ -1,0 +1,55 @@
+workflows:
+  ios-release:
+    name: iOS Release (IPA)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    environment:
+      flutter: stable
+      vars:
+        FLUTTER_PROJECT_PATH: mobile
+      groups:
+        - fraya_env        # groupe contenant toutes les variables .env
+        - ios_signing      # groupe contenant les certs/provisioning
+
+    scripts:
+      - name: Créer le fichier .env
+        script: |
+          cat > "$CM_BUILD_DIR/mobile/.env" << EOF
+          GOOGLE_MAPS_API_KEY_ANDROID=$GOOGLE_MAPS_API_KEY_ANDROID
+          GOOGLE_MAPS_API_KEY_IOS=$GOOGLE_MAPS_API_KEY_IOS
+          GOOGLE_PLACES_API_KEY=$GOOGLE_PLACES_API_KEY
+          SERVER_URL=$SERVER_URL
+          ONESIGNAL_APP_ID_PASSENGER=$ONESIGNAL_APP_ID_PASSENGER
+          ONESIGNAL_APP_ID_DRIVER=$ONESIGNAL_APP_ID_DRIVER
+          WHATSAPP_SUPPORT_NUMBER=$WHATSAPP_SUPPORT_NUMBER
+          EOF
+          echo "✅ .env créé"
+          ls -la "$CM_BUILD_DIR/mobile/.env"
+
+      - name: Flutter pub get
+        script: |
+          cd "$CM_BUILD_DIR/mobile"
+          flutter pub get
+
+      - name: Pod install
+        script: |
+          cd "$CM_BUILD_DIR/mobile/ios"
+          pod install
+
+      - name: Build IPA
+        script: |
+          cd "$CM_BUILD_DIR/mobile"
+          flutter build ipa \
+            --release \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - mobile/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
