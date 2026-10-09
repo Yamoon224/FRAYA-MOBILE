@@ -8,7 +8,6 @@ workflows:
       flutter: stable
       groups:
         - fraya_env
-        - ios_signing
 
     scripts:
       - name: Créer le fichier .env
