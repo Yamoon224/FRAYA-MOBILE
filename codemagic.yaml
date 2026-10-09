@@ -30,12 +30,12 @@ workflows:
 
       - name: Pod install
         script: |
-          cd ios
-          pod install
+          cd ios && pod install
 
       - name: Build IPA
         script: |
-          flutter build ipa --release
+          cd "$CM_BUILD_DIR"
+          flutter build ipa --release --target lib/main_passenger.dart
 
     artifacts:
       - build/ios/ipa/*.ipa
