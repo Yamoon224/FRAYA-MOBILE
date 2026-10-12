@@ -7,6 +7,11 @@ abstract final class AppConstants {
   static const Duration receiveTimeout = Duration(seconds: 30);
   static const Duration sendTimeout = Duration(seconds: 30);
 
+  // Uploads multipart (plusieurs photos/documents dans une même requête) :
+  // le réseau mobile peut être lent en envoi, on laisse plus de marge.
+  static const Duration uploadSendTimeout = Duration(seconds: 120);
+  static const Duration uploadReceiveTimeout = Duration(seconds: 60);
+
   // ── Storage Keys ──
   static const String accessTokenKey = 'access_token';
   static const String authUserDataKey = 'auth_user_data';

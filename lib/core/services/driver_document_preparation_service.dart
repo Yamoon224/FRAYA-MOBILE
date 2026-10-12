@@ -9,7 +9,10 @@ import '../error/exceptions.dart';
 import 'driver_document_image_compressor.dart';
 import 'driver_document_pdf_compressor.dart';
 
-const int driverImageMaxBytes = 2 * 1024 * 1024;
+// Abaissé de 2 Mo à 1 Mo : les soumissions véhicule/KYC envoient plusieurs
+// photos dans une seule requête multipart, et le poids cumulé peut dépasser
+// le timeout réseau sur une connexion mobile lente.
+const int driverImageMaxBytes = 1 * 1024 * 1024;
 const int driverPdfMaxBytes = 5 * 1024 * 1024;
 
 class DriverDocumentPreparationService {
@@ -176,6 +179,8 @@ const _attempts = <_CompressionAttempt>[
   _CompressionAttempt(75, 2048),
   _CompressionAttempt(65, 1800),
   _CompressionAttempt(60, 1600),
+  _CompressionAttempt(50, 1280),
+  _CompressionAttempt(40, 1024),
 ];
 
 class _PdfCompressionAttempt {

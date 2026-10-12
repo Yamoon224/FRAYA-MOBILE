@@ -210,7 +210,7 @@ void main() {
   test('rejects an image when every attempt remains too large', () async {
     final source = await _largeImage(directory, 'large.png');
     final compressor = _SizedImageCompressor(
-      List.filled(4, driverImageMaxBytes + 1),
+      List.filled(6, driverImageMaxBytes + 1),
     );
     final service = _service(directory, compressor);
 
@@ -218,7 +218,7 @@ void main() {
       service.prepare(_document(source, 'large.png')),
       throwsA(isA<DocumentPreparationException>()),
     );
-    expect(compressor.calls, 4);
+    expect(compressor.calls, 6);
     _expectNoTemporaryFiles(directory);
   });
 

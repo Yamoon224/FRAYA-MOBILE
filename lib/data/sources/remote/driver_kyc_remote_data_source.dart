@@ -3,10 +3,17 @@ library;
 import 'package:dio/dio.dart';
 
 import '../../../core/error/exceptions.dart';
+import '../../../core/utils/constants.dart';
 import '../../../domain/models/driver_kyc_document_file.dart';
 import '../../../domain/models/driver_kyc_document_type.dart';
 import '../../sources/api_client.dart';
 import '../../../domain/models/driver_kyc_submission.dart';
+
+Options _uploadOptions() => Options(
+  contentType: 'multipart/form-data',
+  sendTimeout: AppConstants.uploadSendTimeout,
+  receiveTimeout: AppConstants.uploadReceiveTimeout,
+);
 
 class DriverKycRemoteDataSource {
   DriverKycRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance.dio;
@@ -23,7 +30,7 @@ class DriverKycRemoteDataSource {
       final response = await _dio.post(
         '/kycs/create/$userId',
         data: FormData.fromMap(payload),
-        options: Options(contentType: 'multipart/form-data'),
+        options: _uploadOptions(),
       );
 
       return _parseResponse(response, 'soumission KYC');
@@ -47,7 +54,7 @@ class DriverKycRemoteDataSource {
       final response = await _dio.post(
         '/kycs/update/$kycId',
         data: FormData.fromMap(payload),
-        options: Options(contentType: 'multipart/form-data'),
+        options: _uploadOptions(),
       );
 
       return _parseResponse(response, 'mise à jour KYC');
