@@ -46,3 +46,9 @@ app.*.map.json
 
 
 .env
+
+# Signing keys — jamais versionnées, générées une fois et conservées hors dépôt
+*.jks
+*.keystore
+android/key.properties
+keystores/
