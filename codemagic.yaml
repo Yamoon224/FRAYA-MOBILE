@@ -8,6 +8,9 @@ workflows:
       flutter: stable
       groups:
         - fraya_env
+      ios_signing:
+        distribution_type: app_store  # ou ad_hoc pour les tests
+        bundle_identifier: com.carrementweb.frayaMobile
 
     scripts:
       - name: Créer le fichier .env
