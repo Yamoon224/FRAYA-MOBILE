@@ -38,13 +38,19 @@ class ForgotPasswordRepository {
   Future<void> resetPassword(
     String verificationCode,
     String newPassword,
+    String identifier,
   ) async {
+    final trimmedIdentifier = identifier.trim();
     try {
       final response = await _dio.post(
         '/auth/reset-mobile-password',
         data: {
           'verificationCode': verificationCode,
           'newPassword': newPassword,
+          if (trimmedIdentifier.isValidEmail)
+            'email': trimmedIdentifier
+          else
+            'phoneNumber': trimmedIdentifier,
         },
       );
       ensureAuthStepSucceeded(

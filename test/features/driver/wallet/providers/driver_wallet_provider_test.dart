@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fraya_mobile/core/error/exceptions.dart';
 import 'package:fraya_mobile/domain/models/driver_wallet_overview.dart';
 import 'package:fraya_mobile/domain/models/driver_wallet_package.dart';
 import 'package:fraya_mobile/domain/models/driver_wallet_package_subscription_result.dart';
 import 'package:fraya_mobile/domain/models/driver_wallet_reload_result.dart';
 import 'package:fraya_mobile/domain/models/driver_wallet_transaction.dart';
+import 'package:fraya_mobile/domain/models/orange_money_payment.dart';
 import 'package:fraya_mobile/domain/repositories/driver_wallet_repository.dart';
 import 'package:fraya_mobile/features/driver/auth/providers/driver_auth_provider.dart';
 import 'package:fraya_mobile/features/driver/wallet/providers/driver_wallet_dependencies.dart';
@@ -124,6 +126,36 @@ class FakeDriverWalletRepository implements DriverWalletRepository {
     withdrawCalls++;
     lastAmount = amount;
     lastWalletId = walletId;
+  }
+
+  OrangeMoneyPayment orangeMoneyPayment = const OrangeMoneyPayment(
+    paymentUrl: 'https://webpayment.orange.test/pay/abc',
+    reference: 'FRAYA_OM_1_ABCD',
+  );
+  Object? orangeMoneyInitError;
+  OrangeMoneyPaymentStatus orangeMoneyStatus = OrangeMoneyPaymentStatus.pending;
+  Object? orangeMoneyVerifyError;
+  int orangeMoneyInitCalls = 0;
+  int orangeMoneyVerifyCalls = 0;
+  double? lastOrangeMoneyAmount;
+
+  @override
+  Future<OrangeMoneyPayment> initializeOrangeMoneyReload({
+    required double amount,
+  }) async {
+    orangeMoneyInitCalls++;
+    lastOrangeMoneyAmount = amount;
+    if (orangeMoneyInitError != null) throw orangeMoneyInitError!;
+    return orangeMoneyPayment;
+  }
+
+  @override
+  Future<OrangeMoneyPaymentStatus> verifyOrangeMoneyReload(
+    String reference,
+  ) async {
+    orangeMoneyVerifyCalls++;
+    if (orangeMoneyVerifyError != null) throw orangeMoneyVerifyError!;
+    return orangeMoneyStatus;
   }
 }
 
@@ -322,6 +354,168 @@ void main() {
       expect(cleared.isLoading, isFalse);
     },
   );
+
+  group('Orange Money reload', () {
+    Future<(ProviderContainer, FakeDriverWalletRepository)> setUp() async {
+      final walletRepo = FakeDriverWalletRepository();
+      final container = ProviderContainer(
+        overrides: [
+          driverAuthProvider.overrideWith((ref) => _fakeAuthNotifier()),
+          driverWalletRepositoryProvider.overrideWithValue(walletRepo),
+          driverWalletCompletedRidesProvider.overrideWithValue(const []),
+        ],
+      );
+      addTearDown(container.dispose);
+      await _waitUntilLoaded(container);
+      return (container, walletRepo);
+    }
+
+    test(
+      'start returns the payment to open and does not touch the legacy reload',
+      () async {
+        final (container, repo) = await setUp();
+
+        final result = await container
+            .read(driverWalletProvider.notifier)
+            .startOrangeMoneyReload(amount: 2500);
+
+        expect(result.isSuccess, isTrue);
+        expect(result.payload, isA<OrangeMoneyPayment>());
+        expect(
+          (result.payload as OrangeMoneyPayment).reference,
+          'FRAYA_OM_1_ABCD',
+        );
+        expect(repo.lastOrangeMoneyAmount, 2500);
+        expect(repo.reloadCalls, 0, reason: 'plus de faux succès de recharge');
+        expect(container.read(driverWalletProvider).isSubmitting, isFalse);
+      },
+    );
+
+    test(
+      'start rejects a non-positive amount without calling the server',
+      () async {
+        final (container, repo) = await setUp();
+
+        final result = await container
+            .read(driverWalletProvider.notifier)
+            .startOrangeMoneyReload(amount: 0);
+
+        expect(result.isSuccess, isFalse);
+        expect(repo.orangeMoneyInitCalls, 0);
+      },
+    );
+
+    test(
+      'start surfaces the server error and releases the submit lock',
+      () async {
+        final (container, repo) = await setUp();
+        repo.orangeMoneyInitError = const ServerException(
+          message: 'Les clés Orange Money ne sont pas configurées',
+        );
+
+        final result = await container
+            .read(driverWalletProvider.notifier)
+            .startOrangeMoneyReload(amount: 1000);
+
+        expect(result.isSuccess, isFalse);
+        expect(result.message, contains('clés Orange Money'));
+        expect(container.read(driverWalletProvider).isSubmitting, isFalse);
+      },
+    );
+
+    test(
+      'check treats a network error as still pending, never as success',
+      () async {
+        final (container, repo) = await setUp();
+        repo.orangeMoneyVerifyError = const NetworkException();
+
+        final status = await container
+            .read(driverWalletProvider.notifier)
+            .checkOrangeMoneyReload('FRAYA_OM_1_ABCD');
+
+        expect(status, OrangeMoneyPaymentStatus.pending);
+      },
+    );
+
+    test(
+      'finish after a confirmed payment reloads the balance and reports success',
+      () async {
+        final (container, repo) = await setUp();
+        final notifier = container.read(driverWalletProvider.notifier);
+        final fetchesBefore = repo.fetchCalls;
+        repo.overview = const DriverWalletOverview(
+          balance: 14500,
+          walletId: 'Fra-I4JUY',
+          transactions: [],
+        );
+
+        final result = await notifier.finishOrangeMoneyReload(
+          payment: repo.orangeMoneyPayment,
+          outcome: OrangeMoneyPaymentStatus.success,
+        );
+
+        expect(result.isSuccess, isTrue);
+        expect(result.message, contains('Orange Money'));
+        expect(repo.fetchCalls, greaterThan(fetchesBefore));
+        expect(container.read(driverWalletProvider).balance, 14500);
+        expect(repo.orangeMoneyVerifyCalls, 0, reason: 'issue déjà connue');
+      },
+    );
+
+    test(
+      'finish after a refused payment reports a failure without crediting',
+      () async {
+        final (container, repo) = await setUp();
+
+        final result = await container
+            .read(driverWalletProvider.notifier)
+            .finishOrangeMoneyReload(
+              payment: repo.orangeMoneyPayment,
+              outcome: OrangeMoneyPaymentStatus.failed,
+            );
+
+        expect(result.isSuccess, isFalse);
+        expect(result.message, contains('échoué'));
+        expect(container.read(driverWalletProvider).balance, 12000);
+      },
+    );
+
+    test(
+      'closing the window triggers one last server check (paid just before closing)',
+      () async {
+        final (container, repo) = await setUp();
+        repo.orangeMoneyStatus = OrangeMoneyPaymentStatus.success;
+
+        final result = await container
+            .read(driverWalletProvider.notifier)
+            .finishOrangeMoneyReload(
+              payment: repo.orangeMoneyPayment,
+              outcome: null,
+            );
+
+        expect(repo.orangeMoneyVerifyCalls, 1);
+        expect(result.isSuccess, isTrue);
+      },
+    );
+
+    test(
+      'closing the window with the payment unconfirmed explains it is pending',
+      () async {
+        final (container, repo) = await setUp();
+        repo.orangeMoneyStatus = OrangeMoneyPaymentStatus.pending;
+
+        final result = await container
+            .read(driverWalletProvider.notifier)
+            .finishOrangeMoneyReload(
+              payment: repo.orangeMoneyPayment,
+              outcome: null,
+            );
+
+        expect(result.isSuccess, isFalse);
+        expect(result.message, contains('en attente'));
+      },
+    );
+  });
 }
 
 Future<void> _waitUntilLoaded(ProviderContainer container) async {

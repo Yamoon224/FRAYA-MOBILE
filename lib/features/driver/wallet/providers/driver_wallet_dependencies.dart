@@ -8,6 +8,7 @@ import '../../../../../domain/models/driver_ride.dart';
 import '../../../../../domain/repositories/driver_wallet_repository.dart';
 import '../../../../../domain/usecases/driver/wallet/get_driver_wallet_packages_usecase.dart';
 import '../../../../../domain/usecases/driver/wallet/get_driver_wallet_overview_usecase.dart';
+import '../../../../../domain/usecases/driver/wallet/orange_money_reload_usecases.dart';
 import '../../../../../domain/usecases/driver/wallet/reload_driver_wallet_usecase.dart';
 import '../../../../../domain/usecases/driver/wallet/subscribe_driver_wallet_package_usecase.dart';
 import '../../../../../domain/usecases/driver/wallet/withdraw_driver_wallet_usecase.dart';
@@ -72,4 +73,16 @@ final withdrawDriverWalletUseCaseProvider =
     Provider<WithdrawDriverWalletUseCase>((ref) {
       final repository = ref.watch(driverWalletRepositoryProvider);
       return WithdrawDriverWalletUseCase(repository);
+    });
+
+final initializeOrangeMoneyReloadUseCaseProvider =
+    Provider<InitializeOrangeMoneyReloadUseCase>((ref) {
+      final repository = ref.watch(driverWalletRepositoryProvider);
+      return InitializeOrangeMoneyReloadUseCase(repository);
+    });
+
+final verifyOrangeMoneyReloadUseCaseProvider =
+    Provider<VerifyOrangeMoneyReloadUseCase>((ref) {
+      final repository = ref.watch(driverWalletRepositoryProvider);
+      return VerifyOrangeMoneyReloadUseCase(repository);
     });

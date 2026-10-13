@@ -77,7 +77,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     if (!_formKey.currentState!.validate()) return;
     ref
         .read(forgotPasswordProvider.notifier)
-        .resetPassword(_verificationCode!, _newPasswordController.text);
+        .resetPassword(
+          _verificationCode!,
+          _newPasswordController.text,
+          _identifierController.text.trim(),
+        );
   }
 
   Future<void> _showOtpDialog() async {

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fraya_mobile/domain/models/orange_money_payment.dart';
 import 'package:fraya_mobile/core/error/exceptions.dart';
 import 'package:fraya_mobile/core/utils/constants.dart';
 import 'package:fraya_mobile/data/sources/local_storage.dart';
@@ -115,6 +116,30 @@ class ScreenFakeWalletRepository implements DriverWalletRepository {
     required double amount,
     String? walletId,
   }) async {}
+
+  int orangeMoneyInitCalls = 0;
+  Completer<void>? orangeMoneyInitCompleter;
+  Object? orangeMoneyInitError;
+
+  @override
+  Future<OrangeMoneyPayment> initializeOrangeMoneyReload({
+    required double amount,
+  }) async {
+    orangeMoneyInitCalls++;
+    if (orangeMoneyInitCompleter != null) {
+      await orangeMoneyInitCompleter!.future;
+    }
+    if (orangeMoneyInitError != null) throw orangeMoneyInitError!;
+    return const OrangeMoneyPayment(
+      paymentUrl: 'https://webpayment.orange.test/pay/abc',
+      reference: 'FRAYA_OM_1_ABCD',
+    );
+  }
+
+  @override
+  Future<OrangeMoneyPaymentStatus> verifyOrangeMoneyReload(
+    String reference,
+  ) async => throw UnimplementedError();
 }
 
 void main() {
@@ -153,13 +178,13 @@ void main() {
     expect(repository.fetchPackagesCalls, 1);
   });
 
-  testWidgets('shows reload progress then exact API success message', (
+  testWidgets('shows progress while the Orange Money payment is created', (
     tester,
   ) async {
     final repository = ScreenFakeWalletRepository()
-      ..reloadCompleter = Completer<void>()
-      ..reloadResult = const DriverWalletReloadResult(
-        message: 'Recharge acceptée par l’API.',
+      ..orangeMoneyInitCompleter = Completer<void>()
+      ..orangeMoneyInitError = ServerException(
+        message: 'Les clés Orange Money ne sont pas configurées',
       );
 
     await _pumpWalletScreen(tester, repository);
@@ -172,18 +197,42 @@ void main() {
     await tester.pump();
 
     expect(find.text('Traitement en cours'), findsOneWidget);
+    expect(repository.orangeMoneyInitCalls, 1);
 
-    repository.reloadCompleter!.complete();
+    repository.orangeMoneyInitCompleter!.complete();
     await tester.pumpAndSettle();
 
-    expect(find.text('Recharge acceptée par l’API.'), findsOneWidget);
+    expect(
+      find.text('Les clés Orange Money ne sont pas configurées'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('never calls the legacy instant reload for Orange Money', (
+    tester,
+  ) async {
+    final repository = ScreenFakeWalletRepository()
+      ..orangeMoneyInitError = ServerException(message: 'Échec Orange.');
+
+    await _pumpWalletScreen(tester, repository);
+
+    await tester.tap(find.text('Recharger'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '200');
+    await tester.ensureVisible(find.text('Confirmer le paiement'));
+    await tester.tap(find.text('Confirmer le paiement'));
+    await tester.pumpAndSettle();
+
+    expect(repository.reloadCalls, 0);
   });
 
   testWidgets('shows reload failure with retry and edit actions', (
     tester,
   ) async {
     final repository = ScreenFakeWalletRepository()
-      ..reloadError = ServerException(message: 'Échec renvoyé par l’API.');
+      ..orangeMoneyInitError = ServerException(
+        message: 'Échec renvoyé par l’API.',
+      );
 
     await _pumpWalletScreen(tester, repository);
 

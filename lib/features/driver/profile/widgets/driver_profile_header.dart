@@ -1,5 +1,6 @@
 library;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/config/app_config.dart';
@@ -139,10 +140,10 @@ class _DriverAvatar extends StatelessWidget {
           child: ClipOval(
             child: resolvedUrl == null
                 ? Icon(Icons.person_outline_rounded, size: size * 0.44)
-                : Image.network(
-                    resolvedUrl,
+                : CachedNetworkImage(
+                    imageUrl: resolvedUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) =>
+                    errorWidget: (_, _, _) =>
                         Icon(Icons.person_outline_rounded, size: size * 0.44),
                   ),
           ),

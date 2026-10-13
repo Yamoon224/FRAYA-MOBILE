@@ -62,11 +62,9 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="fraya_alerts_v2" />
-        
-        <!-- ANCIEN CODE: android:value="TODO_ADD_MAPS_API_KEY_HERE" -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBEuEixYFqNQO7fslROgNQB6FvFWoHcxKw"/>
+            android:value="${mapsApiKey}"/>
 
     </application>
     <!-- Required to query activities that can process text, see:

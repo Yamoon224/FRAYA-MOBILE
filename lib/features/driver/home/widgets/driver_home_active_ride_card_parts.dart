@@ -1,5 +1,6 @@
 library;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -118,10 +119,10 @@ class _PassengerAvatar extends StatelessWidget {
       ),
       child: resolvedUrl == null
           ? Icon(Icons.person_outline_rounded, size: iconSize)
-          : Image.network(
-              resolvedUrl,
+          : CachedNetworkImage(
+              imageUrl: resolvedUrl,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) =>
+              errorWidget: (_, _, _) =>
                   Icon(Icons.person_outline_rounded, size: iconSize),
             ),
     );

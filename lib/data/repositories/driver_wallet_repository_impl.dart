@@ -1,9 +1,11 @@
 library;
 
+import '../../core/error/exceptions.dart';
 import '../../domain/models/driver_wallet_overview.dart';
 import '../../domain/models/driver_wallet_package.dart';
 import '../../domain/models/driver_wallet_package_subscription_result.dart';
 import '../../domain/models/driver_wallet_reload_result.dart';
+import '../../domain/models/orange_money_payment.dart';
 import '../../domain/repositories/driver_wallet_repository.dart';
 import '../sources/remote/driver_wallet_remote_data_source.dart';
 import 'driver_wallet_transaction_parser.dart';
@@ -94,6 +96,33 @@ class DriverWalletRepositoryImpl implements DriverWalletRepository {
         ? Map<String, dynamic>.from(payload)
         : <String, dynamic>{};
     return DriverWalletReloadResult.fromMap(map);
+  }
+
+  @override
+  Future<OrangeMoneyPayment> initializeOrangeMoneyReload({
+    required double amount,
+  }) async {
+    final payload = await _remoteDataSource.initializeOrangeMoneyReload(
+      amount: amount,
+    );
+    final map = payload is Map
+        ? Map<String, dynamic>.from(payload)
+        : <String, dynamic>{};
+    final payment = OrangeMoneyPayment.fromMap(map);
+    if (!payment.isValid) {
+      throw ServerException(
+        message: "Orange Money n'a pas renvoyé de lien de paiement.",
+      );
+    }
+    return payment;
+  }
+
+  @override
+  Future<OrangeMoneyPaymentStatus> verifyOrangeMoneyReload(
+    String reference,
+  ) async {
+    final payload = await _remoteDataSource.verifyOrangeMoneyReload(reference);
+    return parseOrangeMoneyPaymentStatus(payload);
   }
 
   @override

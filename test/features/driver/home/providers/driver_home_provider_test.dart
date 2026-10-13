@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fraya_mobile/domain/models/orange_money_payment.dart';
 import 'package:fraya_mobile/data/sources/local_storage.dart';
 import 'package:fraya_mobile/core/realtime/realtime_events.dart';
 import 'package:fraya_mobile/domain/models/driver_ride.dart';
@@ -232,6 +233,16 @@ class RecordingDriverWalletRepository implements DriverWalletRepository {
     required double amount,
     String? walletId,
   }) async {}
+
+  @override
+  Future<OrangeMoneyPayment> initializeOrangeMoneyReload({
+    required double amount,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<OrangeMoneyPaymentStatus> verifyOrangeMoneyReload(
+    String reference,
+  ) async => throw UnimplementedError();
 }
 
 void main() {

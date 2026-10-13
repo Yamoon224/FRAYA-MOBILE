@@ -79,6 +79,50 @@ class DriverWalletRemoteDataSource {
     );
   }
 
+  /// Crée le paiement Orange Money côté serveur et renvoie l'URL de règlement.
+  Future<dynamic> initializeOrangeMoneyReload({required double amount}) async {
+    try {
+      final response = await _dio.post(
+        '/orange-money/initialize',
+        data: <String, dynamic>{'amount': amount.round()},
+      );
+      final data = response.data;
+      if (data is Map && data['success'] == false) {
+        throw ServerException(
+          message:
+              data['message']?.toString() ??
+              "Impossible d'initialiser le paiement Orange Money.",
+          statusCode: response.statusCode,
+        );
+      }
+      return data;
+    } on DioException catch (error) {
+      ApiClient.handleDioError(error);
+    } catch (error) {
+      if (error is ServerException) {
+        rethrow;
+      }
+      throw ServerException(
+        message: "Impossible d'initialiser le paiement Orange Money : $error",
+      );
+    }
+  }
+
+  Future<dynamic> verifyOrangeMoneyReload(String reference) async {
+    try {
+      final response = await _dio.get(
+        '/orange-money/verify/${Uri.encodeComponent(reference)}',
+      );
+      return response.data;
+    } on DioException catch (error) {
+      ApiClient.handleDioError(error);
+    } catch (error) {
+      throw ServerException(
+        message: 'Impossible de vérifier le paiement Orange Money : $error',
+      );
+    }
+  }
+
   Future<void> withdrawWallet({
     required double amount,
     String? walletId,

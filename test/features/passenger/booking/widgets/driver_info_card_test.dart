@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,17 +28,11 @@ void main() {
       ),
     );
 
-    final image = tester.widget<Image>(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is Image &&
-            widget.image is NetworkImage &&
-            (widget.image as NetworkImage).url ==
-                'http://83.228.247.227/profiles/awa.jpg',
-      ),
+    final image = tester.widget<CachedNetworkImage>(
+      find.byType(CachedNetworkImage),
     );
 
-    expect(image.image, isA<NetworkImage>());
+    expect(image.imageUrl, 'http://83.228.247.227/profiles/awa.jpg');
   });
 
   testWidgets('uses driver placeholder when photo is missing', (tester) async {
