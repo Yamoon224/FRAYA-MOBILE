@@ -21,7 +21,7 @@ Set<Polyline> buildTrafficPolylines({
       Polyline(
         polylineId: PolylineId('traffic_${routeIndex}_$i'),
         points: points.sublist(start, end),
-        width: 6,
+        width: 8,
         zIndex: 2,
         color: trafficColor(segment.level),
       ),

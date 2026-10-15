@@ -193,8 +193,8 @@ class _DriverHomeMapStageState extends ConsumerState<DriverHomeMapStage>
         Polyline(
           polylineId: const PolylineId('driver_active_ride_polyline'),
           points: routePoints,
-          color: const Color(0xFF16A34A),
-          width: 6,
+          color: const Color(0xFF0B57D0),
+          width: 8,
           geodesic: true,
           zIndex: 1,
         ),

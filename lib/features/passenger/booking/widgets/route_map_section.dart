@@ -232,8 +232,8 @@ class _RouteMapSectionState extends ConsumerState<RouteMapSection>
           Polyline(
             polylineId: const PolylineId('active_ride_route'),
             points: routePoints,
-            color: const Color(0xFF4285F4),
-            width: 6,
+            color: const Color(0xFF0B57D0),
+            width: 8,
             zIndex: 1,
           ),
       };

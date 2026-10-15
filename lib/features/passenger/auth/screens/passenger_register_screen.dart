@@ -171,6 +171,7 @@ class _PassengerRegisterScreenState
       isLoading: authState.status == AuthStatus.loading,
       isResendingOtp: flowState.isResendingOtp,
       otpResendSecondsRemaining: flowState.otpResendSecondsRemaining,
+      otpResendLimitReached: flowState.otpResendLimitReached,
     );
   }
 }

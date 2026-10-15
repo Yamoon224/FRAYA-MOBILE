@@ -172,6 +172,7 @@ class _DriverRegisterScreenState extends ConsumerState<DriverRegisterScreen> {
       isLoading: authState.status == AuthStatus.loading,
       isResendingOtp: flowState.isResendingOtp,
       otpResendSecondsRemaining: flowState.otpResendSecondsRemaining,
+      otpResendLimitReached: flowState.otpResendLimitReached,
       dateOfBirthController: _dateOfBirthController,
     );
   }

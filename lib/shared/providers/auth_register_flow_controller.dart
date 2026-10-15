@@ -22,6 +22,7 @@ class AuthRegisterFlowState {
     this.dateOfBirth,
     this.otpResendSecondsRemaining = 0,
     this.isResendingOtp = false,
+    this.otpResendCount = 0,
     this.isRestoringDraft = false,
   });
 
@@ -34,7 +35,11 @@ class AuthRegisterFlowState {
   final String? dateOfBirth;
   final int otpResendSecondsRemaining;
   final bool isResendingOtp;
+  final int otpResendCount;
   final bool isRestoringDraft;
+
+  bool get otpResendLimitReached =>
+      otpResendCount >= AuthRegisterFlowController.maxOtpResends;
 
   AuthRegisterFlowState copyWith({
     AuthRegisterFlowStep? currentStep,
@@ -46,6 +51,7 @@ class AuthRegisterFlowState {
     Object? dateOfBirth = _sentinel,
     int? otpResendSecondsRemaining,
     bool? isResendingOtp,
+    int? otpResendCount,
     bool? isRestoringDraft,
   }) {
     return AuthRegisterFlowState(
@@ -67,12 +73,15 @@ class AuthRegisterFlowState {
       otpResendSecondsRemaining:
           otpResendSecondsRemaining ?? this.otpResendSecondsRemaining,
       isResendingOtp: isResendingOtp ?? this.isResendingOtp,
+      otpResendCount: otpResendCount ?? this.otpResendCount,
       isRestoringDraft: isRestoringDraft ?? this.isRestoringDraft,
     );
   }
 }
 
 class AuthRegisterFlowController extends StateNotifier<AuthRegisterFlowState> {
+  static const int maxOtpResends = 3;
+
   AuthRegisterFlowController({
     required AuthRegisterRole role,
     required String userRegistrationType,
@@ -147,16 +156,24 @@ class AuthRegisterFlowController extends StateNotifier<AuthRegisterFlowState> {
     } catch (_) {
       return;
     }
-    state = state.copyWith(currentStep: AuthRegisterFlowStep.otp);
+    state = state.copyWith(
+      currentStep: AuthRegisterFlowStep.otp,
+      otpResendCount: 0,
+    );
     _startOtpCooldown();
     await _saveDraft(step: AuthRegisterFlowStep.otp);
   }
 
   Future<void> resendOtp() async {
-    if (state.otpResendSecondsRemaining > 0 || state.isResendingOtp) return;
+    if (state.otpResendSecondsRemaining > 0 ||
+        state.isResendingOtp ||
+        state.otpResendLimitReached) {
+      return;
+    }
     state = state.copyWith(isResendingOtp: true);
     try {
       await _sendOtpAction(_phoneNumber, email: state.email);
+      state = state.copyWith(otpResendCount: state.otpResendCount + 1);
       _startOtpCooldown();
       await _saveDraft(step: AuthRegisterFlowStep.otp);
     } catch (_) {

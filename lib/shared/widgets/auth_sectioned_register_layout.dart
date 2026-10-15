@@ -31,6 +31,7 @@ class AuthSectionedRegisterLayout extends StatelessWidget {
     required this.isLoading,
     required this.isResendingOtp,
     required this.otpResendSecondsRemaining,
+    this.otpResendLimitReached = false,
     this.dateOfBirthController,
   });
 
@@ -54,6 +55,7 @@ class AuthSectionedRegisterLayout extends StatelessWidget {
   final bool isLoading;
   final bool isResendingOtp;
   final int otpResendSecondsRemaining;
+  final bool otpResendLimitReached;
   final TextEditingController? dateOfBirthController;
 
   @override
@@ -110,6 +112,7 @@ class AuthSectionedRegisterLayout extends StatelessWidget {
         isLoading: isLoading,
         isResendingOtp: isResendingOtp,
         otpResendSecondsRemaining: otpResendSecondsRemaining,
+        otpResendLimitReached: otpResendLimitReached,
         onVerify: onVerifyOtp,
         onResend: onResendOtp,
         onBack: onBack,
