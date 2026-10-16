@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/route_names.dart';
 import '../../../../shared/models/auth_state.dart';
 import '../../../../shared/providers/auth_register_flow_controller.dart';
+import '../../../../shared/widgets/account_already_used_dialog.dart';
 import '../../../../shared/widgets/app_snack_bar.dart';
 import '../../../../shared/widgets/auth_sectioned_register_layout.dart';
 import '../providers/driver_auth_provider.dart';
@@ -132,7 +133,13 @@ class _DriverRegisterScreenState extends ConsumerState<DriverRegisterScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen<AuthState>(driverAuthProvider, (previous, next) {
-      if (next.status == AuthStatus.error) {
+      if (next.status == AuthStatus.error &&
+          isAccountAlreadyUsedMessage(next.errorMessage)) {
+        showAccountAlreadyUsedDialog(
+          context,
+          onLogin: () => context.goNamed(RouteNames.login),
+        );
+      } else if (next.status == AuthStatus.error) {
         AppSnackBar.showError(
           context,
           next.errorMessage ?? "Erreur lors de l'inscription",
