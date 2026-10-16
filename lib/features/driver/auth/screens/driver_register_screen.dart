@@ -134,6 +134,15 @@ class _DriverRegisterScreenState extends ConsumerState<DriverRegisterScreen> {
   Widget build(BuildContext context) {
     ref.listen<AuthState>(driverAuthProvider, (previous, next) {
       if (next.status == AuthStatus.error &&
+          isDriverRegistrationIncompleteMessage(next.errorMessage)) {
+        showDriverRegistrationIncompleteDialog(
+          context,
+          onFinalize: () => context.goNamed(
+            RouteNames.login,
+            queryParameters: {'phone': _phoneController.text.trim()},
+          ),
+        );
+      } else if (next.status == AuthStatus.error &&
           isAccountAlreadyUsedMessage(next.errorMessage)) {
         showAccountAlreadyUsedDialog(
           context,

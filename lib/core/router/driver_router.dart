@@ -58,7 +58,8 @@ GoRouter createDriverRouter(Ref ref) {
       GoRoute(
         path: RoutePaths.login,
         name: RouteNames.login,
-        builder: (context, state) => const DriverLoginScreen(),
+        builder: (context, state) =>
+            DriverLoginScreen(initialPhone: state.uri.queryParameters['phone']),
       ),
       GoRoute(
         path: RoutePaths.register,
