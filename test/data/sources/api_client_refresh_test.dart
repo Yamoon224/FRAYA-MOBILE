@@ -18,9 +18,13 @@ class _FakeBackend implements HttpClientAdapter {
   _FakeBackend({
     this.refreshHandler,
     this.alwaysUnauthorized = false,
+    this.authorizedStatus = 200,
   });
 
   static const validAccessToken = 'access-new';
+
+  /// Statut renvoyé quand l'access token est valide (ex. 503 pour simuler une panne serveur).
+  final int authorizedStatus;
   final Future<ResponseBody> Function(RequestOptions options)? refreshHandler;
   final bool alwaysUnauthorized;
 
@@ -49,7 +53,7 @@ class _FakeBackend implements HttpClientAdapter {
     if (alwaysUnauthorized || auth != 'Bearer $validAccessToken') {
       return _json(401, {'message': 'Unauthorized'});
     }
-    return _json(200, {'ok': true, 'path': options.path});
+    return _json(authorizedStatus, {'ok': true, 'path': options.path});
   }
 
   @override
@@ -290,6 +294,50 @@ void main() {
     expect(
       await LocalStorage.instance.getSecure(AppConstants.refreshTokenKey),
       'refresh-old',
+    );
+  });
+
+  test('a server error during refresh keeps the session', () async {
+    await _seedTokens();
+    final backend = _FakeBackend(
+      refreshHandler: (_) async => _json(500, {'message': 'boom'}),
+    );
+    ApiClient.instance.dio.httpClientAdapter = backend;
+
+    await expectLater(
+      ApiClient.instance.dio.get('/rides/active'),
+      throwsA(isA<DioException>()),
+    );
+
+    await pumpEventQueue();
+    expect(expiredEvents, isEmpty);
+    expect(
+      await LocalStorage.instance.getSecure(AppConstants.refreshTokenKey),
+      'refresh-old',
+    );
+  });
+
+  test('a failing retry after a successful refresh keeps the session', () async {
+    await _seedTokens();
+    final backend = _FakeBackend(authorizedStatus: 503);
+    ApiClient.instance.dio.httpClientAdapter = backend;
+
+    await expectLater(
+      ApiClient.instance.dio.get('/rides/active'),
+      throwsA(
+        isA<DioException>().having(
+          (e) => e.response?.statusCode,
+          'status',
+          503,
+        ),
+      ),
+    );
+
+    await pumpEventQueue();
+    expect(expiredEvents, isEmpty);
+    expect(
+      await LocalStorage.instance.getSecure(AppConstants.refreshTokenKey),
+      'refresh-rotated',
     );
   });
 
