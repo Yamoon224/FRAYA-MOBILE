@@ -172,6 +172,10 @@ class _DriverVehicleScreenState extends ConsumerState<DriverVehicleScreen> {
                         colorController: _colorController,
                         licensePlateController: _licensePlateController,
                         selectedRange: formState.selectedRange,
+                        selectedSecondaryRange: formState.selectedSecondaryRange,
+                        onSecondaryRangeChanged: ref
+                            .read(driverVehicleFormProvider.notifier)
+                            .setSecondaryRange,
                         airConditioning: formState.airConditioning,
                         enabled:
                             viewData.isEditable &&

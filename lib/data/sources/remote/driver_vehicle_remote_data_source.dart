@@ -28,6 +28,8 @@ class DriverVehicleRemoteDataSource {
         'color': submission.color,
         'licensePlate': submission.licensePlate,
         'range': submission.range,
+        if (submission.secondaryRange != null && submission.secondaryRange!.isNotEmpty)
+          'secondaryRange': submission.secondaryRange,
         'sidUserId': submission.sidUserId.toString(),
         'vehicleStatus': 'PENDING_VALIDATION',
         'airConditioning': submission.airConditioning,
