@@ -39,7 +39,7 @@ class DriverVehicleFormState {
       color.trim().isNotEmpty &&
       licensePlate.trim().isNotEmpty &&
       selectedRange.trim().isNotEmpty &&
-      DriverVehicleDocumentType.values.every(documents.containsKey) &&
+      requiredVehicleDocuments.every(documents.containsKey) &&
       processingDocuments.isEmpty &&
       !isSubmitting;
 

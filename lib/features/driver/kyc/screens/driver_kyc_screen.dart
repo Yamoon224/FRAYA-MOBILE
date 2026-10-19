@@ -150,7 +150,7 @@ class _DriverKycScreenState extends ConsumerState<DriverKycScreen> {
                   DriverKycSectionCard(
                     title: 'Documents chauffeur',
                     subtitle:
-                        'Permis, selfie avec permis et casier judiciaire.',
+                        'Permis et casier judiciaire.',
                     children: _buildSectionTiles(
                       documents: driverKycDriverDocuments,
                       isSubmitting: formState.isSubmitting,

@@ -148,5 +148,4 @@ class DriverVehicleRemoteDataSource {
 const List<DriverKycDocumentType> _requiredKycDocuments = [
   DriverKycDocumentType.photoFrontPermis,
   DriverKycDocumentType.photoBackPermis,
-  DriverKycDocumentType.photoSelfPermis,
 ];

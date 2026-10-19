@@ -92,7 +92,6 @@ class InMemoryDriverOnboardingDraftRepository
 const List<DriverKycDocumentType> requiredKycTypes = [
   DriverKycDocumentType.photoFrontPermis,
   DriverKycDocumentType.photoBackPermis,
-  DriverKycDocumentType.photoSelfPermis,
 ];
 
 Future<void> fillCompleteVehicleForm(DriverVehicleNotifier notifier) async {

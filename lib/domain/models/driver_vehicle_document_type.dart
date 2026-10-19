@@ -11,6 +11,12 @@ enum DriverVehicleDocumentType {
   photoInteriorVehicle,
 }
 
+/// Documents véhicule obligatoires à l'inscription : l'assurance peut être ajoutée plus tard.
+final List<DriverVehicleDocumentType> requiredVehicleDocuments =
+    DriverVehicleDocumentType.values
+        .where((type) => type != DriverVehicleDocumentType.insuranceCertificate)
+        .toList(growable: false);
+
 extension DriverVehicleDocumentTypeX on DriverVehicleDocumentType {
   String get backendField => switch (this) {
     DriverVehicleDocumentType.insuranceCertificate => 'insuranceCertificate',
@@ -39,7 +45,7 @@ extension DriverVehicleDocumentTypeX on DriverVehicleDocumentType {
 
   String get helperText => switch (this) {
     DriverVehicleDocumentType.insuranceCertificate =>
-      'Ajoutez l\'attestation d\'assurance en image ou PDF.',
+      'Attestation d\'assurance en image ou PDF (facultatif pour l\'instant, à ajouter plus tard).',
     DriverVehicleDocumentType.technicalInspection =>
       'Ajoutez la visite technique en cours de validité.',
     DriverVehicleDocumentType.vehicleRegistration =>

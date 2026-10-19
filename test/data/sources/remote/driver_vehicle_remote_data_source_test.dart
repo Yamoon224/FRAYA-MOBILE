@@ -253,7 +253,6 @@ void main() {
 const List<DriverKycDocumentType> _requiredKycDocuments = [
   DriverKycDocumentType.photoFrontPermis,
   DriverKycDocumentType.photoBackPermis,
-  DriverKycDocumentType.photoSelfPermis,
 ];
 
 Future<DriverKycDocumentFile> _createDocument(

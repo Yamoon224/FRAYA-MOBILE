@@ -8,7 +8,6 @@ import 'driver_vehicle_form_state.dart';
 const List<DriverKycDocumentType> requiredVehicleKycDocuments = [
   DriverKycDocumentType.photoFrontPermis,
   DriverKycDocumentType.photoBackPermis,
-  DriverKycDocumentType.photoSelfPermis,
 ];
 
 DriverVehicleFormState restoreVehicleFormState(
