@@ -11,6 +11,23 @@ enum DriverVehicleDocumentType {
   photoInteriorVehicle,
 }
 
+/// Les cinq photos exigées pour demander une gamme supérieure à celle du véhicule.
+const List<DriverVehicleDocumentType> vehicleRangePhotoTypes = [
+  DriverVehicleDocumentType.photoFrontVehicle,
+  DriverVehicleDocumentType.photoRearVehicle,
+  DriverVehicleDocumentType.photoLeftVehicle,
+  DriverVehicleDocumentType.photoRightVehicle,
+  DriverVehicleDocumentType.photoInteriorVehicle,
+];
+
+/// Niveau d'une gamme (MAGIC < GLADIATEUR < ELITE) ; 0 si inconnue.
+int vehicleRangeLevel(String? range) => switch (range?.trim().toUpperCase()) {
+  'MAGIC' => 1,
+  'GLADIATEUR' => 2,
+  'ELITE' => 3,
+  _ => 0,
+};
+
 /// Documents véhicule obligatoires à l'inscription : l'assurance peut être ajoutée plus tard.
 final List<DriverVehicleDocumentType> requiredVehicleDocuments =
     DriverVehicleDocumentType.values

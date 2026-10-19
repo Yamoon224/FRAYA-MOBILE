@@ -89,6 +89,53 @@ class DriverVehicleRemoteDataSource {
     }
   }
 
+  /// Retire la seconde gamme ou la remplace par une gamme déjà couverte (libre-service).
+  Future<Map<String, dynamic>> updateSecondaryRange({
+    required int vehicleId,
+    required String? secondaryRange,
+  }) async {
+    try {
+      final response = await _dio.patch(
+        '/vehicles/$vehicleId/secondary-range',
+        data: {'secondaryRange': secondaryRange},
+      );
+      return _parseResponse(response, 'mise à jour de la seconde gamme');
+    } on DioException catch (error) {
+      ApiClient.handleDioError(error);
+    } catch (error) {
+      if (error is ServerException) rethrow;
+      throw ServerException(
+        message: 'Impossible de mettre à jour la seconde gamme : $error',
+      );
+    }
+  }
+
+  /// Demande une seconde gamme supérieure à la principale : les cinq photos sont jointes
+  /// et un administrateur examine la demande. Le véhicule reste en service pendant la revue.
+  Future<Map<String, dynamic>> requestSecondaryRange({
+    required int vehicleId,
+    required String secondaryRange,
+    required Map<DriverVehicleDocumentType, DriverKycDocumentFile> photos,
+  }) async {
+    try {
+      final response = await _postWithRetry(
+        '/vehicles/$vehicleId/change-requests',
+        fields: {'secondaryRange': secondaryRange},
+        documents: {
+          for (final entry in photos.entries) entry.key.backendField: entry.value,
+        },
+      );
+      return _parseResponse(response, 'demande de seconde gamme');
+    } on DioException catch (error) {
+      ApiClient.handleDioError(error);
+    } catch (error) {
+      if (error is ServerException) rethrow;
+      throw ServerException(
+        message: "Impossible d'envoyer la demande de seconde gamme : $error",
+      );
+    }
+  }
+
   /// Envoie la requête multipart ; si l'upload échoue par timeout réseau
   /// (fréquent avec plusieurs photos sur une connexion mobile lente), on
   /// reconstruit le FormData (les MultipartFile ne sont utilisables qu'une
