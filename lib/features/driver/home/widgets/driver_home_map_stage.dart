@@ -17,6 +17,9 @@ import '../../../../shared/providers/map_icons_provider.dart';
 import '../../../../shared/widgets/map/fraya_map.dart';
 import 'driver_home_map_backdrop.dart';
 import 'driver_home_map_route_policy.dart';
+import 'driver_route_polylines.dart';
+import 'driver_route_recenter_button.dart';
+import 'driver_route_summary_chip.dart';
 
 class DriverHomeMapStage extends ConsumerStatefulWidget {
   const DriverHomeMapStage({
@@ -188,17 +191,9 @@ class _DriverHomeMapStageState extends ConsumerState<DriverHomeMapStage>
     final route = routeAsync.asData?.value?.mainRoute;
     final routePoints = route?.getPolylinePoints() ?? const <LatLng>[];
 
-    final polylines = <Polyline>{
-      if (_shouldShowActiveRoute && routePoints.isNotEmpty)
-        Polyline(
-          polylineId: const PolylineId('driver_active_ride_polyline'),
-          points: routePoints,
-          color: const Color(0xFF0B57D0),
-          width: 8,
-          geodesic: true,
-          zIndex: 1,
-        ),
-    };
+    final polylines = _shouldShowActiveRoute
+        ? buildDriverRoutePolylines(routePoints)
+        : const <Polyline>{};
 
     if (_shouldShowActiveRoute && routePoints.isNotEmpty) {
       _scheduleFitRoute(routePoints, markers);
@@ -206,7 +201,7 @@ class _DriverHomeMapStageState extends ConsumerState<DriverHomeMapStage>
       _lastFittedRouteKey = null;
     }
 
-    return FrayaMap(
+    final map = FrayaMap(
       key: const Key('driver_home_live_map'),
       padding: EdgeInsets.only(bottom: widget.bottomPadding),
       markers: markers,
@@ -222,6 +217,33 @@ class _DriverHomeMapStageState extends ConsumerState<DriverHomeMapStage>
       },
       initialTarget: widget.driverMarkerPosition ?? _activeRouteDestination,
       autoCenterOnUser: !_shouldShowActiveRoute,
+    );
+
+    if (!_shouldShowActiveRoute || route == null || routePoints.isEmpty) {
+      return map;
+    }
+    return Stack(
+      children: [
+        Positioned.fill(child: map),
+        Positioned(
+          left: 12,
+          bottom: widget.bottomPadding + 12,
+          child: DriverRouteSummaryChip(
+            key: const Key('driver_route_summary'),
+            isHeadingToPickup: _isHeadingToPickup,
+            minutes: route.effectiveDurationMinutes,
+            kilometers: route.distanceKm,
+          ),
+        ),
+        Positioned(
+          right: 12,
+          bottom: widget.bottomPadding + 12,
+          child: DriverRouteRecenterButton(
+            key: const Key('driver_route_recenter'),
+            onPressed: () => _fitRouteOnMap(routePoints, markers),
+          ),
+        ),
+      ],
     );
   }
 
