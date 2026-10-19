@@ -31,6 +31,7 @@ import '../../../../shared/widgets/ride_cancelled_alert_dialog.dart';
 import '../../auth/providers/driver_admin_status_gate.dart';
 import '../../auth/providers/driver_auth_provider.dart';
 import '../../settings/providers/driver_settings_provider.dart';
+import '../widgets/battery_optimization_prompt.dart';
 import '../widgets/driver_home_incoming_request_bubble.dart';
 import '../widgets/driver_home_map_stage.dart';
 import '../providers/driver_navigation_launcher_provider.dart';
@@ -243,10 +244,15 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                             homeState.activeRide == null ||
                             effectiveIsRideMinimized,
                         isNavigationEnabled: canOpenNavigation,
-                        onToggleOnline: (value) {
-                          ref
+                        onToggleOnline: (value) async {
+                          await ref
                               .read(driverHomeProvider.notifier)
                               .setOnline(value);
+                          if (value &&
+                              context.mounted &&
+                              ref.read(driverHomeProvider).isOnline) {
+                            unawaited(maybeShowBatteryOptimizationPrompt(context));
+                          }
                         },
                         onMenuPressed: () {
                           _scaffoldKey.currentState?.openDrawer();
