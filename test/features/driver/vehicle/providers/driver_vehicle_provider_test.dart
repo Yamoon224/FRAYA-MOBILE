@@ -345,6 +345,45 @@ void main() {
       expect(repository.lastSubmission, isNull);
     });
 
+    test("envoie le dossier sans l'assurance, qui est facultative", () async {
+      draftRepository.draft = buildKycDraft();
+      draftRepository.existingPaths.addAll(
+        requiredKycTypes.map((type) => '/persisted/${type.name}.png'),
+      );
+      await fillCompleteVehicleForm(notifier);
+      await notifier.removeDocument(DriverVehicleDocumentType.insuranceCertificate);
+
+      await notifier.submit();
+
+      expect(notifier.state.errorMessage, isNull);
+      expect(repository.lastSubmission, isNotNull);
+      expect(
+        repository.lastSubmission?.documents.containsKey(
+          DriverVehicleDocumentType.insuranceCertificate,
+        ),
+        isFalse,
+      );
+      expect(
+        repository.lastSubmission?.documents.keys.toSet(),
+        requiredVehicleDocuments.toSet(),
+      );
+    });
+
+    test('un document obligatoire manquant bloque toujours, assurance ou non', () async {
+      draftRepository.draft = buildKycDraft();
+      draftRepository.existingPaths.addAll(
+        requiredKycTypes.map((type) => '/persisted/${type.name}.png'),
+      );
+      await fillCompleteVehicleForm(notifier);
+      await notifier.removeDocument(DriverVehicleDocumentType.insuranceCertificate);
+      draftRepository.existingPaths.remove('/persisted/vehicle_technicalInspection.pdf');
+
+      await notifier.submit();
+
+      expect(notifier.state.errorMessage, isNotNull);
+      expect(repository.lastSubmission, isNull);
+    });
+
     test('surfaces missing local vehicle file before API call', () async {
       draftRepository.draft = buildKycDraft();
       draftRepository.existingPaths.addAll(

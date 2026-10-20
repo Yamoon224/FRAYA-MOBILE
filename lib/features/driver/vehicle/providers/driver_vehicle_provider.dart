@@ -320,7 +320,9 @@ class DriverVehicleNotifier extends StateNotifier<DriverVehicleFormState> {
     for (final type in DriverVehicleDocumentType.values) {
       final document = documents[type];
       if (document == null) {
-        return type;
+        // Un document facultatif (assurance) peut être absent ; seuls les obligatoires bloquent.
+        if (requiredVehicleDocuments.contains(type)) return type;
+        continue;
       }
       final exists = await _draftRepository.documentExists(document.path);
       if (!exists) {
