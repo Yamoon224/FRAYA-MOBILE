@@ -45,6 +45,10 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- stopWithTask="true" volontaire : le service ne fait que garder le processus en vie, c'est le code
+             Dart (signal de présence, position) qui travaille. Si le chauffeur ferme l'app depuis les
+             applications récentes, ce code s'arrête : garder la notification « en ligne » afficherait un
+             chauffeur disponible alors qu'il ne l'est plus. Le serveur le passe hors ligne faute de signal. -->
         <service
             android:name=".DriverPresenceForegroundService"
             android:exported="false"

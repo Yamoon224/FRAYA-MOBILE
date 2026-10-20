@@ -31,7 +31,7 @@ import '../../../../shared/widgets/ride_cancelled_alert_dialog.dart';
 import '../../auth/providers/driver_admin_status_gate.dart';
 import '../../auth/providers/driver_auth_provider.dart';
 import '../../settings/providers/driver_settings_provider.dart';
-import '../widgets/battery_optimization_prompt.dart';
+import '../../../../shared/widgets/battery_optimization_prompt.dart';
 import '../widgets/driver_home_incoming_request_bubble.dart';
 import '../widgets/driver_home_map_stage.dart';
 import '../providers/driver_navigation_launcher_provider.dart';
