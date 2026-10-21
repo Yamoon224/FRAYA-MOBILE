@@ -1,6 +1,6 @@
 workflows:
-  ios-release:
-    name: iOS Release (IPA)
+  ios-passenger-release:
+    name: iOS Passager (IPA)
     max_build_duration: 60
     instance_type: mac_mini_m2
 
@@ -9,8 +9,8 @@ workflows:
       groups:
         - fraya_env
       ios_signing:
-        distribution_type: app_store  # ou ad_hoc pour les tests
-        bundle_identifier: com.carrementweb.frayaMobile
+        distribution_type: app_store
+        bundle_identifier: com.carrementweb.frayaMobile.passenger
 
     scripts:
       - name: Créer le fichier .env
@@ -35,10 +35,71 @@ workflows:
         script: |
           cd ios && pod install
 
-      - name: Build IPA
+      - name: Appliquer les profils de signature au projet Xcode
+        script: |
+          xcode-project use-profiles
+
+      - name: Build IPA passager
         script: |
           cd "$CM_BUILD_DIR"
-          flutter build ipa --release --target lib/main_passenger.dart
+          flutter build ipa --release \
+            --flavor passenger \
+            --target lib/main_passenger.dart \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+  ios-driver-release:
+    name: iOS Chauffeur (IPA)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    environment:
+      flutter: stable
+      groups:
+        - fraya_env
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.carrementweb.frayaMobile.driver
+
+    scripts:
+      - name: Créer le fichier .env
+        script: |
+          cat > "$CM_BUILD_DIR/.env" << EOF
+          GOOGLE_MAPS_API_KEY_ANDROID=$GOOGLE_MAPS_API_KEY_ANDROID
+          GOOGLE_MAPS_API_KEY_IOS=$GOOGLE_MAPS_API_KEY_IOS
+          GOOGLE_PLACES_API_KEY=$GOOGLE_PLACES_API_KEY
+          SERVER_URL=$SERVER_URL
+          ONESIGNAL_APP_ID_PASSENGER=$ONESIGNAL_APP_ID_PASSENGER
+          ONESIGNAL_APP_ID_DRIVER=$ONESIGNAL_APP_ID_DRIVER
+          WHATSAPP_SUPPORT_NUMBER=$WHATSAPP_SUPPORT_NUMBER
+          EOF
+          echo "✅ .env créé"
+          ls -la "$CM_BUILD_DIR/.env"
+
+      - name: Flutter pub get
+        script: |
+          flutter pub get
+
+      - name: Pod install
+        script: |
+          cd ios && pod install
+
+      - name: Appliquer les profils de signature au projet Xcode
+        script: |
+          xcode-project use-profiles
+
+      - name: Build IPA chauffeur
+        script: |
+          cd "$CM_BUILD_DIR"
+          flutter build ipa --release \
+            --flavor driver \
+            --target lib/main_driver.dart \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
