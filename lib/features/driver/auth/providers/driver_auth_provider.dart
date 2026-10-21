@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/services/auth_session_notifier.dart';
+import '../../../../core/services/pin_migration_service.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../data/sources/local_storage.dart';
 import 'package:fraya_mobile/shared/models/auth_state.dart';
@@ -91,6 +92,10 @@ class DriverAuthNotifier extends StateNotifier<AuthState> {
       (failure) async => _setError(failure),
       _persistAuthResponse,
     );
+    // Le mot de passe saisi dit si le compte est déjà à 4 chiffres (rien n'est conservé).
+    if (state.status == AuthStatus.authenticated) {
+      await PinMigrationService().recordLogin(password);
+    }
   }
 
   Future<void> register(Map<String, dynamic> data) async {
@@ -102,6 +107,10 @@ class DriverAuthNotifier extends StateNotifier<AuthState> {
       (failure) async => _setError(failure),
       _persistAuthResponse,
     );
+    // Un compte créé dans cette version a forcément un code à 4 chiffres.
+    if (state.status == AuthStatus.authenticated) {
+      await PinMigrationService().markDone();
+    }
   }
 
   Future<void> registerStep1(String phoneNumber, {String? email}) async {

@@ -18,6 +18,7 @@ import '../../../../shared/providers/places_provider.dart';
 import '../../../../shared/widgets/map/fraya_map.dart';
 import '../../../../core/router/route_names.dart';
 import '../../../../shared/widgets/battery_optimization_prompt.dart';
+import '../../../../shared/widgets/pin_migration_prompt.dart';
 import '../../../passenger/booking/providers/active_ride_provider.dart';
 import '../../../passenger/booking/providers/booking_flow_provider.dart';
 import '../../../passenger/map/providers/nearby_drivers_provider.dart';
@@ -28,6 +29,7 @@ import '../widgets/home_address_pill.dart';
 import '../widgets/home_menu_button.dart';
 import '../widgets/home_bottom_sheet.dart';
 import '../widgets/active_ride_banner.dart';
+import '../../settings/screens/passenger_security_screen.dart';
 
 class PassengerHomeScreen extends ConsumerStatefulWidget {
   const PassengerHomeScreen({super.key});
@@ -50,6 +52,7 @@ class _PassengerHomeScreenState extends ConsumerState<PassengerHomeScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _schedulePinMigrationPrompt();
     _navSub = HomeNavigationNotifier.instance.openSearchEvents.listen((_) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -105,6 +108,7 @@ class _PassengerHomeScreenState extends ConsumerState<PassengerHomeScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _pinPromptTimer?.cancel();
     _navSub?.cancel();
     _resetSearchSub?.cancel();
     _openVehicleSelectionSub?.cancel();
@@ -126,6 +130,23 @@ class _PassengerHomeScreenState extends ConsumerState<PassengerHomeScreen>
     setState(() => _loaderOpaque = false);
     Future.delayed(const Duration(milliseconds: 480), () {
       if (mounted) setState(() => _showLoader = false);
+    });
+  }
+
+  Timer? _pinPromptTimer;
+
+  /// Propose une fois le passage au mot de passe à 4 chiffres, sans gêner l'arrivée sur la carte.
+  void _schedulePinMigrationPrompt() {
+    _pinPromptTimer = Timer(const Duration(seconds: 4), () {
+      if (!mounted) return;
+      unawaited(
+        maybeShowPinMigrationPrompt(
+          context,
+          onAccept: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const PassengerSecurityScreen()),
+          ),
+        ),
+      );
     });
   }
 

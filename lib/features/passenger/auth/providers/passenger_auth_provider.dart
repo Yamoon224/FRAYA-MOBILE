@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'dart:convert';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../../shared/models/auth_state.dart';
 import '../../../../data/sources/local_storage.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/services/auth_session_notifier.dart';
+import '../../../../core/services/pin_migration_service.dart';
 import '../../../../core/services/recent_places_service.dart';
 import '../../../../core/error/failures.dart';
 import 'passenger_auth_user_id.dart';
@@ -73,10 +76,13 @@ class PassengerAuthNotifier extends StateNotifier<AuthState> {
       LoginPassengerParams(phoneNumber: phoneNumber, password: password),
     );
 
-    result.fold(
-      (failure) => _setError(failure),
-      (response) => _handleLoginResponse(response),
-    );
+    result.fold((failure) => _setError(failure), (response) {
+      _handleLoginResponse(response);
+      // Le mot de passe saisi dit si le compte est déjà à 4 chiffres (rien n'est conservé).
+      if (state.status != AuthStatus.error && state.status != AuthStatus.wrongRole) {
+        unawaited(PinMigrationService().recordLogin(password));
+      }
+    });
   }
 
   void _handleLoginResponse(Map<String, dynamic> response) {
@@ -204,6 +210,8 @@ class PassengerAuthNotifier extends StateNotifier<AuthState> {
       token: token,
       userData: data?['user'] ?? response['user'],
     );
+    // Un compte créé dans cette version a forcément un code à 4 chiffres.
+    unawaited(PinMigrationService().markDone());
   }
 
   Future<void> register(Map<String, dynamic> data) async {

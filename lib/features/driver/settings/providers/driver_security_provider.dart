@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../../core/error/exceptions.dart';
+import '../../../../core/services/pin_migration_service.dart';
 import 'driver_settings_provider.dart';
 
 class DriverSecurityState {
@@ -45,6 +46,7 @@ class DriverSecurityNotifier extends StateNotifier<DriverSecurityState> {
         newPassword: newPassword,
       );
       state = const DriverSecurityState(success: true);
+      await PinMigrationService().markDone();
     } on ServerException catch (error) {
       state = DriverSecurityState(errorMessage: error.message);
     } on NetworkException catch (error) {

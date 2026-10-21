@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../../core/error/exceptions.dart';
+import '../../../../core/services/pin_migration_service.dart';
 import 'passenger_settings_provider.dart';
 
 class PassengerSecurityState {
@@ -45,6 +46,7 @@ class PassengerSecurityNotifier extends StateNotifier<PassengerSecurityState> {
         newPassword: newPassword,
       );
       state = const PassengerSecurityState(success: true);
+      await PinMigrationService().markDone();
     } on ServerException catch (error) {
       state = PassengerSecurityState(errorMessage: error.message);
     } on NetworkException catch (error) {
