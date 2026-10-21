@@ -11,7 +11,6 @@ import '../../core/utils/responsive.dart';
 import '../providers/forgot_password_provider.dart';
 import '../widgets/app_snack_bar.dart';
 import '../widgets/auth_otp_dialog.dart';
-import '../widgets/auth_password_rules.dart';
 import '../widgets/fraya_button.dart';
 import '../widgets/fraya_text_field.dart';
 
@@ -594,7 +593,6 @@ class _Step2Content extends StatelessWidget {
                     return PasswordPolicy.validateNew(value);
                   },
                 ),
-                PasswordRules(password: newPassword),
                 const SizedBox(height: 14),
               ],
             ),

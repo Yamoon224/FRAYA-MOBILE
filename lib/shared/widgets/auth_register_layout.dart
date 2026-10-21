@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/theme/app_theme.dart';
-import 'auth_password_rules.dart';
 import 'fraya_button.dart';
 import 'fraya_text_field.dart';
 import 'legal_document_dialog.dart';
@@ -231,7 +230,6 @@ class _AuthRegisterLayoutState extends State<AuthRegisterLayout> {
                   obscureText: _isPasswordObscured,
                   validator: _validatePassword,
                 ),
-                PasswordRules(password: widget.passwordController.text),
                 const SizedBox(height: 16),
                 FrayaTextField(
                   controller: widget.confirmPasswordController,
