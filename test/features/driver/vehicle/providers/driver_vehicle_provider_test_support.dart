@@ -9,6 +9,11 @@ import 'package:fraya_mobile/domain/repositories/driver_vehicle_repository.dart'
 import 'package:fraya_mobile/features/driver/vehicle/providers/driver_vehicle_provider.dart';
 
 class RecordingDriverVehicleRepository implements DriverVehicleRepository {
+  // Les méthodes de gammes secondaires ne sont pas exercées par ces tests.
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError(invocation.memberName.toString());
+
   DriverVehicleSubmission? lastSubmission;
   DriverVehicleUpdate? lastUpdate;
   int? lastUpdateVehicleId;
@@ -92,7 +97,6 @@ class InMemoryDriverOnboardingDraftRepository
 const List<DriverKycDocumentType> requiredKycTypes = [
   DriverKycDocumentType.photoFrontPermis,
   DriverKycDocumentType.photoBackPermis,
-  DriverKycDocumentType.photoSelfPermis,
 ];
 
 Future<void> fillCompleteVehicleForm(DriverVehicleNotifier notifier) async {

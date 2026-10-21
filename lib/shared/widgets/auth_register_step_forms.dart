@@ -84,6 +84,7 @@ class AuthRegisterOtpStep extends StatefulWidget {
     required this.isLoading,
     required this.isResendingOtp,
     required this.otpResendSecondsRemaining,
+    this.otpResendLimitReached = false,
     required this.onVerify,
     required this.onResend,
     required this.onBack,
@@ -93,6 +94,7 @@ class AuthRegisterOtpStep extends StatefulWidget {
   final bool isLoading;
   final bool isResendingOtp;
   final int otpResendSecondsRemaining;
+  final bool otpResendLimitReached;
   final Future<void> Function() onVerify;
   final Future<void> Function() onResend;
   final VoidCallback onBack;
@@ -106,8 +108,9 @@ class _AuthRegisterOtpStepState extends State<AuthRegisterOtpStep> {
 
   @override
   Widget build(BuildContext context) {
-    final canResend =
-        widget.otpResendSecondsRemaining <= 0 && !widget.isResendingOtp;
+    final canResend = widget.otpResendSecondsRemaining <= 0 &&
+        !widget.isResendingOtp &&
+        !widget.otpResendLimitReached;
     return Form(
       key: _formKey,
       child: AuthRegisterSectionSurface(
@@ -137,7 +140,9 @@ class _AuthRegisterOtpStepState extends State<AuthRegisterOtpStep> {
           ),
           const SizedBox(height: 12),
           FrayaButton(
-            label: canResend
+            label: widget.otpResendLimitReached
+                ? 'Limite de renvois atteinte'
+                : canResend
                 ? 'Renvoyer le code'
                 : 'Renvoyer dans ${widget.otpResendSecondsRemaining}s',
             variant: FrayaButtonVariant.outline,

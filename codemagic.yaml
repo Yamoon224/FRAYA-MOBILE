@@ -1,3 +1,8 @@
+# Deux applications iOS construites depuis le même projet : un workflow par flavor.
+# Les identifiants de bundle viennent du projet Xcode (ios/Runner.xcodeproj) :
+#   passager  -> com.carrementweb.frayaMobile.passenger  (scheme Passenger)
+#   chauffeur -> com.carrementweb.frayaMobile.driver     (scheme Driver)
+# Chaque identifiant doit exister dans Apple Developer (App ID) et dans App Store Connect (application).
 workflows:
   ios-passenger-release:
     name: iOS Passager (IPA)
@@ -9,7 +14,7 @@ workflows:
       groups:
         - fraya_env
       ios_signing:
-        distribution_type: app_store
+        distribution_type: app_store  # ou ad_hoc pour les tests
         bundle_identifier: com.carrementweb.frayaMobile.passenger
 
     scripts:
@@ -42,6 +47,7 @@ workflows:
       - name: Build IPA passager
         script: |
           cd "$CM_BUILD_DIR"
+          # Le numéro de build doit augmenter à chaque envoi vers App Store Connect.
           flutter build ipa --release \
             --flavor passenger \
             --target lib/main_passenger.dart \
@@ -62,7 +68,7 @@ workflows:
       groups:
         - fraya_env
       ios_signing:
-        distribution_type: app_store
+        distribution_type: app_store  # ou ad_hoc pour les tests
         bundle_identifier: com.carrementweb.frayaMobile.driver
 
     scripts:
@@ -95,6 +101,7 @@ workflows:
       - name: Build IPA chauffeur
         script: |
           cd "$CM_BUILD_DIR"
+          # Le numéro de build doit augmenter à chaque envoi vers App Store Connect.
           flutter build ipa --release \
             --flavor driver \
             --target lib/main_driver.dart \

@@ -11,10 +11,12 @@ class ResetPasswordParams {
   const ResetPasswordParams({
     required this.verificationCode,
     required this.newPassword,
+    required this.identifier,
   });
 
   final String verificationCode;
   final String newPassword;
+  final String identifier;
 }
 
 class ResetPasswordUsecase extends UseCase<void, ResetPasswordParams> {
@@ -28,6 +30,7 @@ class ResetPasswordUsecase extends UseCase<void, ResetPasswordParams> {
       await _repository.resetPassword(
         params.verificationCode,
         params.newPassword,
+        params.identifier,
       );
       return right(null);
     } catch (error) {

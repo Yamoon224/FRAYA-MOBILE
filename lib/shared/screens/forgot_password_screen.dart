@@ -1,3 +1,4 @@
+import '../../core/utils/password_policy.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,7 +11,6 @@ import '../../core/utils/responsive.dart';
 import '../providers/forgot_password_provider.dart';
 import '../widgets/app_snack_bar.dart';
 import '../widgets/auth_otp_dialog.dart';
-import '../widgets/auth_password_rules.dart';
 import '../widgets/fraya_button.dart';
 import '../widgets/fraya_text_field.dart';
 
@@ -27,10 +27,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _identifierController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  static final _passwordRegex = RegExp(
-    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$',
-  );
-
   bool _isPasswordObscured = true;
   bool _isConfirmObscured = true;
   bool _isOtpDialogOpen = false;
@@ -40,7 +36,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   bool get _canSubmitReset =>
       _verificationCode != null &&
-      _passwordRegex.hasMatch(_newPasswordController.text) &&
+      PasswordPolicy.isValidNew(_newPasswordController.text) &&
       _confirmPasswordController.text == _newPasswordController.text;
 
   @override
@@ -77,7 +73,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     if (!_formKey.currentState!.validate()) return;
     ref
         .read(forgotPasswordProvider.notifier)
-        .resetPassword(_verificationCode!, _newPasswordController.text);
+        .resetPassword(
+          _verificationCode!,
+          _newPasswordController.text,
+          _identifierController.text.trim(),
+        );
   }
 
   Future<void> _showOtpDialog() async {
@@ -575,7 +575,9 @@ class _Step2Content extends StatelessWidget {
                 FrayaTextField(
                   controller: newPasswordController,
                   label: 'Nouveau mot de passe',
-                  hint: '••••••••',
+                  hint: PasswordPolicy.hint,
+                  keyboardType: PasswordPolicy.keyboardType,
+                  inputFormatters: PasswordPolicy.inputFormatters,
                   prefixIcon: Icons.lock_outline,
                   obscureText: isPasswordObscured,
                   suffixIcon: isPasswordObscured
@@ -588,15 +590,9 @@ class _Step2Content extends StatelessWidget {
                     if (value == null || value.isEmpty) {
                       return 'Veuillez entrer un mot de passe';
                     }
-                    if (!_ForgotPasswordScreenState._passwordRegex.hasMatch(
-                      value,
-                    )) {
-                      return 'Min. 8 caractères, une majuscule, une minuscule et un chiffre';
-                    }
-                    return null;
+                    return PasswordPolicy.validateNew(value);
                   },
                 ),
-                PasswordRules(password: newPassword),
                 const SizedBox(height: 14),
               ],
             ),
@@ -611,7 +607,9 @@ class _Step2Content extends StatelessWidget {
             child: FrayaTextField(
               controller: confirmPasswordController,
               label: 'Confirmer le mot de passe',
-              hint: '••••••••',
+              hint: PasswordPolicy.hint,
+              keyboardType: PasswordPolicy.keyboardType,
+              inputFormatters: PasswordPolicy.inputFormatters,
               prefixIcon: Icons.check_circle_outline_rounded,
               obscureText: isConfirmObscured,
               suffixIcon: isConfirmObscured

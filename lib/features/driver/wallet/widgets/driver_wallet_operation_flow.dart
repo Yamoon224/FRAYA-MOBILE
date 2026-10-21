@@ -9,8 +9,10 @@ import 'package:intl/intl.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/extensions.dart';
 import '../../../../../domain/models/driver_wallet_package.dart';
+import '../../../../../domain/models/orange_money_payment.dart';
 import '../models/driver_wallet_operation_result.dart';
 import '../providers/driver_wallet_provider.dart';
+import '../screens/driver_orange_money_payment_screen.dart';
 import 'driver_wallet_operation_progress_sheet.dart';
 import 'driver_wallet_operation_result_sheet.dart';
 import 'driver_wallet_package_sheet.dart';
@@ -26,16 +28,26 @@ class DriverWalletOperationFlow {
     DriverWalletReloadDraft? draft = await _showReloadForm(context);
     while (draft != null && context.mounted) {
       if (!context.mounted) return;
-      final result = await _runWithProgress(
-        context: context,
-        operationType: DriverWalletOperationType.reload,
-        action: () => ref
-            .read(driverWalletProvider.notifier)
-            .reloadWallet(
-              amount: draft!.amount,
-              walletId: ref.read(driverWalletProvider).walletId,
-            ),
-      );
+      final reloadDraft = draft;
+      final DriverWalletOperationResult result;
+      if (reloadDraft.paymentMethod == _orangeMoneyMethod) {
+        result = await _runOrangeMoneyReload(
+          context: context,
+          ref: ref,
+          amount: reloadDraft.amount,
+        );
+      } else {
+        result = await _runWithProgress(
+          context: context,
+          operationType: DriverWalletOperationType.reload,
+          action: () => ref
+              .read(driverWalletProvider.notifier)
+              .reloadWallet(
+                amount: reloadDraft.amount,
+                walletId: ref.read(driverWalletProvider).walletId,
+              ),
+        );
+      }
       if (!context.mounted || result.isIgnored) return;
       final action = await _showResult(context, result);
       if (result.isSuccess || action == DriverWalletResultAction.close) return;
@@ -43,6 +55,50 @@ class DriverWalletOperationFlow {
       if (!context.mounted) return;
       draft = await _showReloadForm(context, initialDraft: draft);
     }
+  }
+
+  static const String _orangeMoneyMethod = 'orange_money';
+
+  /// Orange Money : création du paiement, règlement dans la page Orange, puis vérification serveur.
+  static Future<DriverWalletOperationResult> _runOrangeMoneyReload({
+    required BuildContext context,
+    required WidgetRef ref,
+    required double amount,
+  }) async {
+    final notifier = ref.read(driverWalletProvider.notifier);
+    final started = await _runWithProgress(
+      context: context,
+      operationType: DriverWalletOperationType.reload,
+      action: () => notifier.startOrangeMoneyReload(amount: amount),
+    );
+    final payment = started.payload;
+    if (!started.isSuccess || payment is! OrangeMoneyPayment) return started;
+    if (!context.mounted) {
+      return DriverWalletOperationResult.ignored(
+        DriverWalletOperationType.reload,
+      );
+    }
+
+    final outcome = await Navigator.of(context).push<OrangeMoneyPaymentStatus>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => DriverOrangeMoneyPaymentScreen(
+          payment: payment,
+          check: () => notifier.checkOrangeMoneyReload(payment.reference),
+        ),
+      ),
+    );
+    if (!context.mounted) {
+      return DriverWalletOperationResult.ignored(
+        DriverWalletOperationType.reload,
+      );
+    }
+    return _runWithProgress(
+      context: context,
+      operationType: DriverWalletOperationType.reload,
+      action: () =>
+          notifier.finishOrangeMoneyReload(payment: payment, outcome: outcome),
+    );
   }
 
   static Future<void> showPackageFlow({

@@ -9,11 +9,27 @@ void main() {
   testWidgets('shows camera image and pdf options', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(body: DriverDocumentSourceSheet()),
+        home: Scaffold(
+          body: DriverDocumentSourceSheet(cameraAvailable: true),
+        ),
       ),
     );
 
     expect(find.text('Prendre une photo'), findsOneWidget);
+    expect(find.text('Choisir une image'), findsOneWidget);
+    expect(find.text('Choisir un PDF'), findsOneWidget);
+  });
+
+  testWidgets('hides camera option when camera is unavailable', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: DriverDocumentSourceSheet(cameraAvailable: false),
+        ),
+      ),
+    );
+
+    expect(find.text('Prendre une photo'), findsNothing);
     expect(find.text('Choisir une image'), findsOneWidget);
     expect(find.text('Choisir un PDF'), findsOneWidget);
   });

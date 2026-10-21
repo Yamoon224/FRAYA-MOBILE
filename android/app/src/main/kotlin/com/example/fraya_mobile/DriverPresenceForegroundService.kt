@@ -4,9 +4,12 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.Manifest
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -18,7 +21,18 @@ class DriverPresenceForegroundService : Service() {
         super.onCreate()
         createNotificationChannel()
         acquireWakeLock()
-        startForeground(NOTIFICATION_ID, buildNotification())
+        val notification = buildNotification()
+        // Type « location » : Android continue de livrer la position du chauffeur quand l'app est en
+        // arrière-plan (sans lui, les positions se figent et le chauffeur disparaît de la recherche).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(
+                NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
+            )
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
     }
 
     override fun onStartCommand(
@@ -96,13 +110,26 @@ class DriverPresenceForegroundService : Service() {
         private const val NOTIFICATION_ID = 4102
 
         fun start(context: Context) {
+            // Android 14+ refuse un service de premier plan « location » sans permission de position :
+            // on ne le démarre pas plutôt que de faire planter l'application.
+            if (!hasLocationPermission(context)) return
             val intent = Intent(context, DriverPresenceForegroundService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            } catch (error: RuntimeException) {
+                // Démarrage interdit par le système (ex. app non visible) : la présence réseau continue.
             }
         }
+
+        private fun hasLocationPermission(context: Context): Boolean =
+            context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED ||
+                context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED
 
         fun stop(context: Context) {
             context.stopService(

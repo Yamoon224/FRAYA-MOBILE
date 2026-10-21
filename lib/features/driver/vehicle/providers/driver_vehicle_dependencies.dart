@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/repositories/driver_vehicle_repository_impl.dart';
 import '../../../../data/sources/remote/driver_vehicle_remote_data_source.dart';
 import '../../../../domain/repositories/driver_vehicle_repository.dart';
+import '../../../../domain/usecases/driver/vehicle/request_driver_vehicle_secondary_range_usecase.dart';
 import '../../../../domain/usecases/driver/vehicle/submit_driver_vehicle_usecase.dart';
+import '../../../../domain/usecases/driver/vehicle/update_driver_vehicle_secondary_range_usecase.dart';
 import '../../../../domain/usecases/driver/vehicle/update_driver_vehicle_usecase.dart';
 import '../../kyc/providers/driver_kyc_dependencies.dart';
 
@@ -40,3 +42,17 @@ final updateDriverVehicleUseCaseProvider = Provider<UpdateDriverVehicleUseCase>(
     return UpdateDriverVehicleUseCase(repository);
   },
 );
+
+final updateDriverVehicleSecondaryRangeUseCaseProvider =
+    Provider<UpdateDriverVehicleSecondaryRangeUseCase>((ref) {
+      return UpdateDriverVehicleSecondaryRangeUseCase(
+        ref.watch(driverVehicleRepositoryProvider),
+      );
+    });
+
+final requestDriverVehicleSecondaryRangeUseCaseProvider =
+    Provider<RequestDriverVehicleSecondaryRangeUseCase>((ref) {
+      return RequestDriverVehicleSecondaryRangeUseCase(
+        ref.watch(driverVehicleRepositoryProvider),
+      );
+    });

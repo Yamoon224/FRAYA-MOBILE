@@ -70,7 +70,7 @@ void main() {
 
       expect(map.polylines, hasLength(1));
       expect(map.polylines.single.polylineId, const PolylineId('route_0'));
-      expect(map.polylines.single.width, 6);
+      expect(map.polylines.single.width, 8);
     },
   );
 

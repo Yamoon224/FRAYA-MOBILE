@@ -19,7 +19,7 @@ import '../../features/driver/profile/screens/driver_profile_screen.dart';
 import '../../features/driver/settings/screens/driver_settings_screen.dart';
 import '../../features/driver/status/screens/driver_ride_completion_screen.dart';
 import '../../features/driver/vehicle/screens/driver_vehicle_pending_screen.dart';
-import '../../features/driver/vehicle/screens/driver_vehicle_screen.dart';
+import '../../features/driver/vehicle/screens/driver_vehicle_entry_screen.dart';
 import '../../features/driver/wallet/screens/driver_wallet_screen.dart';
 import '../../features/driver/auth/screens/driver_wrong_account_screen.dart';
 import '../../domain/models/driver_ride.dart';
@@ -58,7 +58,8 @@ GoRouter createDriverRouter(Ref ref) {
       GoRoute(
         path: RoutePaths.login,
         name: RouteNames.login,
-        builder: (context, state) => const DriverLoginScreen(),
+        builder: (context, state) =>
+            DriverLoginScreen(initialPhone: state.uri.queryParameters['phone']),
       ),
       GoRoute(
         path: RoutePaths.register,
@@ -117,7 +118,7 @@ GoRouter createDriverRouter(Ref ref) {
       GoRoute(
         path: RoutePaths.driverVehicle,
         name: RouteNames.driverVehicle,
-        builder: (context, state) => const DriverVehicleScreen(),
+        builder: (context, state) => const DriverVehicleEntryScreen(),
       ),
       GoRoute(
         path: RoutePaths.driverVehiclePending,
@@ -180,8 +181,14 @@ String? resolveDriverRedirect({
 
   final gate = DriverAdminStatusGate.fromUserData(authState.userData);
   if (gate.needsKycSubmission) {
-    if (isGoingToKyc) return null;
-    return RoutePaths.driverKyc;
+    // Inscription initiale : une seule page (route véhicule). Après un refus du KYC, l'écran de
+    // correction d'avant reste utilisé.
+    if (gate.isKycRejected) {
+      if (isGoingToKyc) return null;
+      return RoutePaths.driverKyc;
+    }
+    if (isGoingToVehicle) return null;
+    return RoutePaths.driverVehicle;
   }
 
   // Désactivé temporairement (voir b70ad34) — réactiver si on dissocie docs véhicule KYC et formulaire véhicule
@@ -226,7 +233,7 @@ String? resolveDriverRedirect({
 
   if (isGoingToAuth) {
     if (gate.needsKycSubmission) {
-      return RoutePaths.driverKyc;
+      return gate.isKycRejected ? RoutePaths.driverKyc : RoutePaths.driverVehicle;
     }
     if (needsVehicleStep) {
       return RoutePaths.driverVehicle;

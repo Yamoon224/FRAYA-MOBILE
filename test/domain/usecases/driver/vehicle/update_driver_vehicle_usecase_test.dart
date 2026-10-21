@@ -7,6 +7,11 @@ import 'package:fraya_mobile/domain/repositories/driver_vehicle_repository.dart'
 import 'package:fraya_mobile/domain/usecases/driver/vehicle/update_driver_vehicle_usecase.dart';
 
 class RecordingDriverVehicleRepository implements DriverVehicleRepository {
+  // Les méthodes de gammes secondaires ne sont pas exercées par ces tests.
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError(invocation.memberName.toString());
+
   int? lastVehicleId;
   DriverVehicleUpdate? lastUpdate;
   Map<String, dynamic> response = const {'id': 7};

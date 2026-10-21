@@ -60,6 +60,11 @@ class DriverProfileViewDataResolver {
       userData['range'],
     ]);
 
+    final secondaryRange = _readText([
+      vehicle?['secondaryRange'],
+      userData['secondaryRange'],
+    ]);
+
     final hasAnyVehicleData = [
       brand,
       model,
@@ -78,6 +83,8 @@ class DriverProfileViewDataResolver {
       subtitle: subtitle.isEmpty ? 'Infos non renseignées' : subtitle,
       plate: licensePlate ?? 'Plaque non renseignée',
       rangeLabel: range == null ? 'Standard' : VehicleUiUtils.rangeLabel(range),
+      range: range,
+      secondaryRange: secondaryRange,
     );
   }
 

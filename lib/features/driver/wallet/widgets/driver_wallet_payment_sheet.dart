@@ -31,26 +31,13 @@ class DriverWalletPaymentSheet extends StatefulWidget {
 
 class _DriverWalletPaymentSheetState extends State<DriverWalletPaymentSheet> {
   late final TextEditingController _amountController;
+  // Wave, MTN MoMo et Moov Money sont masqués tant qu'ils ne sont pas intégrés : leur recharge
+  // affichait un succès sans rien créditer.
   static const List<_PaymentMethod> _methods = <_PaymentMethod>[
-    _PaymentMethod(
-      id: 'wave',
-      name: 'Wave',
-      assetPath: 'assets/images/wave.png',
-    ),
     _PaymentMethod(
       id: 'orange_money',
       name: 'Orange Money',
       assetPath: 'assets/images/orange-money.png',
-    ),
-    _PaymentMethod(
-      id: 'mtn_momo',
-      name: 'MTN MoMo',
-      assetPath: 'assets/images/mobile-money.png',
-    ),
-    _PaymentMethod(
-      id: 'moov_money',
-      name: 'Moov Money',
-      assetPath: 'assets/images/moov.jpg',
     ),
   ];
   late String _selectedMethod;

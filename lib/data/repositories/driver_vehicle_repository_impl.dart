@@ -52,6 +52,35 @@ class DriverVehicleRepositoryImpl implements DriverVehicleRepository {
     );
   }
 
+  @override
+  Future<Map<String, dynamic>> updateSecondaryRange({
+    required int vehicleId,
+    required String? secondaryRange,
+  }) {
+    return _remoteDataSource.updateSecondaryRange(
+      vehicleId: vehicleId,
+      secondaryRange: secondaryRange,
+    );
+  }
+
+  @override
+  Future<Map<String, dynamic>> requestSecondaryRange({
+    required int vehicleId,
+    required String secondaryRange,
+    required Map<DriverVehicleDocumentType, DriverKycDocumentFile> photos,
+  }) async {
+    final prepared = await _prepareDocuments(photos);
+    try {
+      return await _remoteDataSource.requestSecondaryRange(
+        vehicleId: vehicleId,
+        secondaryRange: secondaryRange,
+        photos: prepared,
+      );
+    } finally {
+      await _cleanupCreatedFiles(photos, prepared);
+    }
+  }
+
   DriverVehicleSubmission _copySubmission(
     DriverVehicleSubmission source,
     Map<DriverKycDocumentType, DriverKycDocumentFile> kycDocuments,
@@ -64,6 +93,7 @@ class DriverVehicleRepositoryImpl implements DriverVehicleRepository {
       color: source.color,
       licensePlate: source.licensePlate,
       range: source.range,
+      secondaryRange: source.secondaryRange,
       sidUserId: source.sidUserId,
       kycDocuments: kycDocuments,
       documents: vehicleDocuments,

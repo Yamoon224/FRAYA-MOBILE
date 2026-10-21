@@ -20,6 +20,8 @@ import '../providers/driver_profile_document_review_provider.dart';
 import '../providers/driver_profile_provider.dart';
 import '../providers/driver_profile_view_data_resolver.dart';
 import '../providers/driver_kyc_update_state.dart';
+import '../../vehicle/providers/driver_vehicle_ranges_provider.dart';
+import '../../vehicle/widgets/driver_vehicle_ranges_sheet.dart';
 import '../widgets/driver_document_photo_viewer.dart';
 import '../widgets/driver_kyc_update_sheet.dart';
 import '../widgets/driver_kyc_update_result_sheet.dart';
@@ -142,6 +144,15 @@ class DriverProfileScreen extends ConsumerWidget {
                     onEdit: vehicleId == null
                         ? null
                         : () => _showVehicleInfoUpdateSheet(context, vehicleId),
+                    onManageRanges:
+                        vehicleId == null || viewData.vehicle!.range == null
+                        ? null
+                        : () => _showVehicleRangesSheet(
+                            context,
+                            ref,
+                            vehicleId,
+                            viewData.vehicle!,
+                          ),
                   ),
                 ],
                 const SizedBox(height: 24),
@@ -284,6 +295,34 @@ class DriverProfileScreen extends ConsumerWidget {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => DriverKycUpdateResultSheet(completion: completion),
+    );
+  }
+
+  static Future<void> _showVehicleRangesSheet(
+    BuildContext context,
+    WidgetRef ref,
+    int vehicleId,
+    DriverProfileVehicleViewData vehicle,
+  ) async {
+    final outcome = await showModalBottomSheet<DriverVehicleRangesOutcome>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DriverVehicleRangesSheet(
+        vehicleId: vehicleId,
+        primaryRange: vehicle.range!,
+        secondaryRange: vehicle.secondaryRange,
+      ),
+    );
+    if (outcome == null) return;
+    // Recharge le profil pour afficher la seconde gamme à jour.
+    await ref.read(driverAuthProvider.notifier).refreshProfile();
+    if (!context.mounted) return;
+    AppSnackBar.showSuccess(
+      context,
+      outcome == DriverVehicleRangesOutcome.requested
+          ? "Demande envoyée. Un administrateur va l'examiner ; votre véhicule reste en service."
+          : 'Vos gammes ont été mises à jour.',
     );
   }
 

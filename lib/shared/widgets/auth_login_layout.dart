@@ -1,3 +1,4 @@
+import '../../core/utils/password_policy.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -185,7 +186,7 @@ class _AuthLoginLayoutState extends State<AuthLoginLayout> {
                           if (password.isEmpty) {
                             return 'Veuillez entrer votre mot de passe';
                           }
-                          if (password.length < 8) {
+                          if (password.length < PasswordPolicy.minLoginLength) {
                             return 'Mot de passe trop court';
                           }
                           return null;

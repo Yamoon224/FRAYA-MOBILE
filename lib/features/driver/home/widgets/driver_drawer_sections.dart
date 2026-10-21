@@ -1,5 +1,6 @@
 library;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/config/app_config.dart';
@@ -48,10 +49,10 @@ class DriverIdentityHeader extends StatelessWidget {
           child: ClipOval(
             child: resolvedUrl == null
                 ? Icon(Icons.person_outline_rounded, size: avatarSize * 0.48)
-                : Image.network(
-                    resolvedUrl,
+                : CachedNetworkImage(
+                    imageUrl: resolvedUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Icon(
+                    errorWidget: (_, _, _) => Icon(
                       Icons.person_outline_rounded,
                       size: avatarSize * 0.48,
                     ),

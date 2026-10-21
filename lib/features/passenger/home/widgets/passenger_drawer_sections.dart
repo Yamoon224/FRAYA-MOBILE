@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/config/app_config.dart';
@@ -112,10 +113,10 @@ class _PassengerAvatar extends StatelessWidget {
                   color: Colors.black87,
                 ),
               )
-            : Image.network(
-                resolvedUrl,
+            : CachedNetworkImage(
+                imageUrl: resolvedUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const Center(
+                errorWidget: (_, _, _) => const Center(
                   child: Icon(
                     Icons.person_outline,
                     size: 32,

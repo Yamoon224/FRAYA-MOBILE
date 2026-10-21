@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -21,12 +22,12 @@ class DriverInfoCard extends ConsumerWidget {
     const fallback = 'assets/images/driver_placeholder.png';
     final resolvedPhoto = _resolvePhotoUrl(photo);
     if (resolvedPhoto != null) {
-      return Image.network(
-        resolvedPhoto,
+      return CachedNetworkImage(
+        imageUrl: resolvedPhoto,
         width: 60,
         height: 60,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, _) => const _DriverPhotoPlaceholder(),
+        errorWidget: (_, _, _) => const _DriverPhotoPlaceholder(),
       );
     }
     if (photo.trim().isEmpty || photo == fallback) {

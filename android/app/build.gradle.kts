@@ -19,6 +19,15 @@ if (hasReleaseKeystore) {
     keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
 
+// La cle Google Maps Android n'est pas versionnee : elle vient de MAPS_API_KEY ou du .env de l'app
+// (genere en CI depuis le secret MOBILE_ENV_FILE), puis est injectee dans le manifeste.
+val dotEnv = Properties().apply {
+    val file = rootProject.file("../.env")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val mapsApiKey: String = System.getenv("MAPS_API_KEY")
+    ?: (dotEnv.getProperty("GOOGLE_MAPS_API_KEY_ANDROID") ?: "").trim().removeSurrounding("\"")
+
 // Minification desactivee par defaut : elle n'apporte que quelques Mo sur une app Flutter
 // (le code Dart est deja compile AOT et tree-shake) mais peut casser au runtime les plugins
 // natifs qui utilisent la reflexion. A activer avec -Pminify=true une fois le parcours
@@ -49,6 +58,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["mapsApiKey"] = mapsApiKey
     }
 
     flavorDimensions += "app"
@@ -94,6 +104,8 @@ android {
             // debug ne doit JAMAIS etre distribue.
             signingConfig = if (hasReleaseKeystore) {
                 signingConfigs.getByName("release")
+            } else if (System.getenv("CI") == "true") {
+                throw GradleException("android/key.properties absent en CI : un build release ne doit pas etre signe avec la cle de debug.")
             } else {
                 logger.warn("ATTENTION: android/key.properties introuvable -> APK release signe avec la cle de DEBUG. Ne pas distribuer.")
                 signingConfigs.getByName("debug")

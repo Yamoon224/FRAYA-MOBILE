@@ -46,7 +46,7 @@ void main() {
       expect(redirectAfterLogout, RoutePaths.login);
     });
 
-    test('redirects drivers without KYC submission to the KYC step', () {
+    test('redirects drivers without KYC submission to the single registration page', () {
       final redirect = resolveDriverRedirect(
         authState: AuthState(
           status: AuthStatus.authenticated,
@@ -55,7 +55,51 @@ void main() {
         currentPath: RoutePaths.driverHome,
       );
 
+      expect(redirect, RoutePaths.driverVehicle);
+    });
+
+    test('keeps drivers on the single registration page while KYC is not submitted', () {
+      final redirect = resolveDriverRedirect(
+        authState: AuthState(
+          status: AuthStatus.authenticated,
+          userData: const {'driverId': 14, 'kycStatus': 'NOT_SUBMITTED'},
+        ),
+        currentPath: RoutePaths.driverVehicle,
+      );
+
+      expect(redirect, isNull);
+    });
+
+    test('sends the old KYC route to the single registration page for new drivers', () {
+      final redirect = resolveDriverRedirect(
+        authState: AuthState(
+          status: AuthStatus.authenticated,
+          userData: const {'driverId': 14, 'kycStatus': 'NOT_SUBMITTED'},
+        ),
+        currentPath: RoutePaths.driverKyc,
+      );
+
+      expect(redirect, RoutePaths.driverVehicle);
+    });
+
+    test('keeps the existing correction screen after a KYC rejection', () {
+      final redirect = resolveDriverRedirect(
+        authState: AuthState(
+          status: AuthStatus.authenticated,
+          userData: const {'driverId': 14, 'kycStatus': 'REJECTED'},
+        ),
+        currentPath: RoutePaths.driverHome,
+      );
+      final onKyc = resolveDriverRedirect(
+        authState: AuthState(
+          status: AuthStatus.authenticated,
+          userData: const {'driverId': 14, 'kycStatus': 'REJECTED'},
+        ),
+        currentPath: RoutePaths.driverKyc,
+      );
+
       expect(redirect, RoutePaths.driverKyc);
+      expect(onKyc, isNull);
     });
 
     test('redirects KYC pending drivers without vehicle to vehicle form', () {

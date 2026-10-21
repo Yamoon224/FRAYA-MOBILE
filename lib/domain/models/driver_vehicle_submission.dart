@@ -16,6 +16,7 @@ class DriverVehicleSubmission {
     required this.kycDocuments,
     required this.documents,
     this.airConditioning = false,
+    this.secondaryRange,
   });
 
   final String brand;
@@ -28,4 +29,7 @@ class DriverVehicleSubmission {
   final Map<DriverKycDocumentType, DriverKycDocumentFile> kycDocuments;
   final Map<DriverVehicleDocumentType, DriverKycDocumentFile> documents;
   final bool airConditioning;
+
+  /// Seconde gamme facultative (différente de [range]).
+  final String? secondaryRange;
 }

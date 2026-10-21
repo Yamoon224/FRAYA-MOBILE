@@ -1,6 +1,29 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:geolocator/geolocator.dart';
 
+import '../config/app_config.dart';
+
 class LocationService {
+  /// Réglages du flux de position. Sur iPhone, seul le chauffeur doit continuer à recevoir sa position
+  /// quand l'app passe en arrière-plan (sinon il disparaît de la recherche) : le passager n'en a pas besoin.
+  /// Cela suppose le mode d'arrière-plan « location » dans l'Info.plist du flavor chauffeur.
+  static LocationSettings positionSettings({required bool isIOS, required bool isDriver}) {
+    const distanceFilter = 5; // Mise à jour tous les 5 mètres
+    if (isIOS && isDriver) {
+      return AppleSettings(
+        accuracy: LocationAccuracy.high,
+        activityType: ActivityType.automotiveNavigation,
+        distanceFilter: distanceFilter,
+        pauseLocationUpdatesAutomatically: false,
+        showBackgroundLocationIndicator: true,
+        allowBackgroundLocationUpdates: true,
+      );
+    }
+    return const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: distanceFilter);
+  }
+
   Future<bool> handlePermission() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -51,9 +74,9 @@ class LocationService {
 
   Stream<Position> getPositionStream() {
     return Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 5, // Mise à jour tous les 5 mètres
+      locationSettings: positionSettings(
+        isIOS: !kIsWeb && Platform.isIOS,
+        isDriver: AppConfig.instance.isDriver,
       ),
     );
   }

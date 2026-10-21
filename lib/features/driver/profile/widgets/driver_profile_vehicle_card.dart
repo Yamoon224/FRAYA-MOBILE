@@ -6,6 +6,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/extensions.dart';
+import '../../../../../core/utils/vehicle_ui_utils.dart';
 import '../models/driver_profile_view_data.dart';
 
 class DriverProfileVehicleCard extends StatelessWidget {
@@ -13,10 +14,14 @@ class DriverProfileVehicleCard extends StatelessWidget {
     super.key,
     required this.vehicle,
     this.onEdit,
+    this.onManageRanges,
   });
 
   final DriverProfileVehicleViewData vehicle;
   final VoidCallback? onEdit;
+
+  /// Ouvre « Gérer mes gammes » ; le bouton n'apparaît que si ce callback est fourni.
+  final VoidCallback? onManageRanges;
 
   @override
   Widget build(BuildContext context) {
@@ -88,8 +93,38 @@ class DriverProfileVehicleCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (vehicle.secondaryRange != null) ...[
+                const SizedBox(width: 6),
+                Container(
+                  key: const ValueKey('vehicle-secondary-range-chip'),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: borderColor),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '+ ${VehicleUiUtils.rangeLabel(vehicle.secondaryRange!)}',
+                    style: AppTextStyles.buttonSmall.copyWith(color: titleColor),
+                  ),
+                ),
+              ],
             ],
           ),
+          if (onManageRanges != null) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const ValueKey('vehicle-manage-ranges'),
+                onPressed: onManageRanges,
+                icon: const Icon(Icons.tune, size: 18),
+                label: const Text('Gérer mes gammes'),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           Container(
             width: double.infinity,

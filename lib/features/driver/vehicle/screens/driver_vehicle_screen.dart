@@ -172,6 +172,10 @@ class _DriverVehicleScreenState extends ConsumerState<DriverVehicleScreen> {
                         colorController: _colorController,
                         licensePlateController: _licensePlateController,
                         selectedRange: formState.selectedRange,
+                        selectedSecondaryRange: formState.selectedSecondaryRange,
+                        onSecondaryRangeChanged: ref
+                            .read(driverVehicleFormProvider.notifier)
+                            .setSecondaryRange,
                         airConditioning: formState.airConditioning,
                         enabled:
                             viewData.isEditable &&
@@ -239,7 +243,7 @@ class _DriverVehicleScreenState extends ConsumerState<DriverVehicleScreen> {
                   DriverKycSectionCard(
                     title: 'Documents véhicule',
                     subtitle:
-                        'Ajoutez les cinq photos du véhicule, la carte grise, l\'assurance et la visite technique.',
+                        'Ajoutez les cinq photos du véhicule, la carte grise et la visite technique. L\'assurance est facultative pour le moment.',
                     children: [
                       DriverVehicleDocumentsSection(
                         documents: formState.documents,

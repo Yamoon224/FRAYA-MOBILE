@@ -57,11 +57,27 @@ class DriverVehicleNotifier extends StateNotifier<DriverVehicleFormState> {
 
   void setRange(String value) {
     final range = value.trim().toUpperCase();
+    final nextRange = range.isEmpty ? state.selectedRange : range;
     state = state.copyWith(
-      selectedRange: range.isEmpty ? state.selectedRange : range,
+      selectedRange: nextRange,
+      // La seconde gamme doit rester différente de la gamme principale.
+      selectedSecondaryRange: state.selectedSecondaryRange == nextRange
+          ? null
+          : state.selectedSecondaryRange,
       errorMessage: null,
     );
     unawaited(_saveDraft());
+  }
+
+  /// Choisit la seconde gamme ; `null` ou la gamme principale la retire. Non conservée dans le brouillon.
+  void setSecondaryRange(String? value) {
+    final range = value?.trim().toUpperCase();
+    final isValid =
+        range != null && range.isNotEmpty && range != state.selectedRange;
+    state = state.copyWith(
+      selectedSecondaryRange: isValid ? range : null,
+      errorMessage: null,
+    );
   }
 
   void setAirConditioning(bool value) {
@@ -179,6 +195,7 @@ class DriverVehicleNotifier extends StateNotifier<DriverVehicleFormState> {
           color: state.color.trim(),
           licensePlate: state.licensePlate.trim(),
           range: state.selectedRange.trim().toUpperCase(),
+          secondaryRange: state.selectedSecondaryRange,
           sidUserId: driverId,
           kycDocuments: kycDocuments,
           documents: state.documents,
@@ -303,7 +320,9 @@ class DriverVehicleNotifier extends StateNotifier<DriverVehicleFormState> {
     for (final type in DriverVehicleDocumentType.values) {
       final document = documents[type];
       if (document == null) {
-        return type;
+        // Un document facultatif (assurance) peut être absent ; seuls les obligatoires bloquent.
+        if (requiredVehicleDocuments.contains(type)) return type;
+        continue;
       }
       final exists = await _draftRepository.documentExists(document.path);
       if (!exists) {

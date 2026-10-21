@@ -205,6 +205,44 @@ void main() {
       },
     );
 
+    test('choisit une seconde gamme différente de la gamme principale', () {
+      notifier.setRange('magic');
+      notifier.setSecondaryRange('gladiateur');
+      expect(notifier.state.selectedSecondaryRange, 'GLADIATEUR');
+
+      // La même gamme que la principale n'est pas acceptée.
+      notifier.setSecondaryRange('magic');
+      expect(notifier.state.selectedSecondaryRange, isNull);
+
+      notifier.setSecondaryRange('ELITE');
+      notifier.setSecondaryRange(null);
+      expect(notifier.state.selectedSecondaryRange, isNull);
+    });
+
+    test('retire la seconde gamme quand la gamme principale devient identique', () {
+      notifier.setRange('magic');
+      notifier.setSecondaryRange('GLADIATEUR');
+
+      notifier.setRange('gladiateur');
+
+      expect(notifier.state.selectedRange, 'GLADIATEUR');
+      expect(notifier.state.selectedSecondaryRange, isNull);
+    });
+
+    test('envoie la seconde gamme choisie avec le véhicule', () async {
+      draftRepository.draft = buildKycDraft();
+      draftRepository.existingPaths.addAll(
+        requiredKycTypes.map((type) => '/persisted/${type.name}.png'),
+      );
+      await fillCompleteVehicleForm(notifier);
+      notifier.setSecondaryRange('GLADIATEUR');
+
+      await notifier.submit();
+
+      expect(repository.lastSubmission?.range, 'MAGIC');
+      expect(repository.lastSubmission?.secondaryRange, 'GLADIATEUR');
+    });
+
     test(
       'submits vehicle with aggregated kyc documents and clears draft',
       () async {
@@ -304,6 +342,45 @@ void main() {
         notifier.state.errorMessage,
         'Le document permis - verso est introuvable sur l appareil. Rechargez-le depuis le KYC.',
       );
+      expect(repository.lastSubmission, isNull);
+    });
+
+    test("envoie le dossier sans l'assurance, qui est facultative", () async {
+      draftRepository.draft = buildKycDraft();
+      draftRepository.existingPaths.addAll(
+        requiredKycTypes.map((type) => '/persisted/${type.name}.png'),
+      );
+      await fillCompleteVehicleForm(notifier);
+      await notifier.removeDocument(DriverVehicleDocumentType.insuranceCertificate);
+
+      await notifier.submit();
+
+      expect(notifier.state.errorMessage, isNull);
+      expect(repository.lastSubmission, isNotNull);
+      expect(
+        repository.lastSubmission?.documents.containsKey(
+          DriverVehicleDocumentType.insuranceCertificate,
+        ),
+        isFalse,
+      );
+      expect(
+        repository.lastSubmission?.documents.keys.toSet(),
+        requiredVehicleDocuments.toSet(),
+      );
+    });
+
+    test('un document obligatoire manquant bloque toujours, assurance ou non', () async {
+      draftRepository.draft = buildKycDraft();
+      draftRepository.existingPaths.addAll(
+        requiredKycTypes.map((type) => '/persisted/${type.name}.png'),
+      );
+      await fillCompleteVehicleForm(notifier);
+      await notifier.removeDocument(DriverVehicleDocumentType.insuranceCertificate);
+      draftRepository.existingPaths.remove('/persisted/vehicle_technicalInspection.pdf');
+
+      await notifier.submit();
+
+      expect(notifier.state.errorMessage, isNotNull);
       expect(repository.lastSubmission, isNull);
     });
 

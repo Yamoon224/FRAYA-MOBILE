@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/config/app_config.dart';
@@ -115,11 +116,11 @@ class _Avatar extends StatelessWidget {
                       color: Colors.black87,
                     ),
                   )
-                : Image.network(
-                    resolvedUrl,
+                : CachedNetworkImage(
+                    imageUrl: resolvedUrl,
                     key: ValueKey(resolvedUrl),
                     fit: BoxFit.cover,
-                    errorBuilder: (_, error, stackTrace) {
+                    errorWidget: (_, _, _) {
                       return const Center(
                         child: Icon(
                           Icons.person_outline,

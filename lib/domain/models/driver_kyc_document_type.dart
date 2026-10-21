@@ -67,23 +67,22 @@ extension DriverKycDocumentTypeX on DriverKycDocumentType {
   };
 }
 
+// Le selfie avec permis (photoSelfPermis) n'est plus demandé à l'inscription ; le type est conservé
+// pour lire les dossiers déjà soumis.
 const List<DriverKycDocumentType> driverKycDriverDocuments = [
   DriverKycDocumentType.photoFrontPermis,
   DriverKycDocumentType.photoBackPermis,
-  DriverKycDocumentType.photoSelfPermis,
   DriverKycDocumentType.photoCasier,
 ];
 
 const List<DriverKycDocumentType> driverKycRequiredDocuments = [
   DriverKycDocumentType.photoFrontPermis,
   DriverKycDocumentType.photoBackPermis,
-  DriverKycDocumentType.photoSelfPermis,
 ];
 
 const List<DriverKycDocumentType> driverKycUpdateDocuments = [
   DriverKycDocumentType.photoFrontPermis,
   DriverKycDocumentType.photoBackPermis,
-  DriverKycDocumentType.photoSelfPermis,
   DriverKycDocumentType.photoCasier,
 ];
 

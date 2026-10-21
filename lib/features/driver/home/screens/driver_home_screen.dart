@@ -31,6 +31,9 @@ import '../../../../shared/widgets/ride_cancelled_alert_dialog.dart';
 import '../../auth/providers/driver_admin_status_gate.dart';
 import '../../auth/providers/driver_auth_provider.dart';
 import '../../settings/providers/driver_settings_provider.dart';
+import '../../../../shared/widgets/battery_optimization_prompt.dart';
+import '../../settings/screens/driver_security_screen.dart';
+import '../../../../shared/widgets/pin_migration_prompt.dart';
 import '../widgets/driver_home_incoming_request_bubble.dart';
 import '../widgets/driver_home_map_stage.dart';
 import '../providers/driver_navigation_launcher_provider.dart';
@@ -99,9 +102,27 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     _dismissLoader();
   }
 
+  Timer? _pinPromptTimer;
+
+  /// Propose une fois le passage au mot de passe à 4 chiffres, sans gêner l'arrivée sur la carte.
+  void _schedulePinMigrationPrompt() {
+    _pinPromptTimer = Timer(const Duration(seconds: 4), () {
+      if (!mounted) return;
+      unawaited(
+        maybeShowPinMigrationPrompt(
+          context,
+          onAccept: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const DriverSecurityScreen()),
+          ),
+        ),
+      );
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+    _schedulePinMigrationPrompt();
     // Dismiss loader immediately if the home state is already resolved.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -124,6 +145,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   @override
   void dispose() {
+    _pinPromptTimer?.cancel();
     _locationRequestTimer?.cancel();
     unawaited(_driverOfferSoundService.dispose());
     final notifier = _locationRequestCountController;
@@ -243,10 +265,15 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                             homeState.activeRide == null ||
                             effectiveIsRideMinimized,
                         isNavigationEnabled: canOpenNavigation,
-                        onToggleOnline: (value) {
-                          ref
+                        onToggleOnline: (value) async {
+                          await ref
                               .read(driverHomeProvider.notifier)
                               .setOnline(value);
+                          if (value &&
+                              context.mounted &&
+                              ref.read(driverHomeProvider).isOnline) {
+                            unawaited(maybeShowBatteryOptimizationPrompt(context));
+                          }
                         },
                         onMenuPressed: () {
                           _scaffoldKey.currentState?.openDrawer();

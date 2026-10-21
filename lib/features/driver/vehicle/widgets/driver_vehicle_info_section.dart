@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/fraya_text_field.dart';
 import 'driver_vehicle_range_selector.dart';
+import 'driver_vehicle_secondary_range_selector.dart';
 
 class DriverVehicleInfoSection extends StatelessWidget {
   const DriverVehicleInfoSection({
@@ -25,6 +26,8 @@ class DriverVehicleInfoSection extends StatelessWidget {
     required this.onLicensePlateChanged,
     required this.onRangeChanged,
     required this.onAirConditioningChanged,
+    this.selectedSecondaryRange,
+    this.onSecondaryRangeChanged,
   });
 
   final TextEditingController brandController;
@@ -42,6 +45,10 @@ class DriverVehicleInfoSection extends StatelessWidget {
   final ValueChanged<String> onLicensePlateChanged;
   final ValueChanged<String> onRangeChanged;
   final ValueChanged<bool> onAirConditioningChanged;
+
+  /// Le choix d'une seconde gamme n'apparaît que si [onSecondaryRangeChanged] est fourni.
+  final String? selectedSecondaryRange;
+  final ValueChanged<String?>? onSecondaryRangeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +112,15 @@ class DriverVehicleInfoSection extends StatelessWidget {
           enabled: enabled,
           onSelected: onRangeChanged,
         ),
+        if (onSecondaryRangeChanged != null) ...[
+          const SizedBox(height: AppTheme.spacingMd),
+          DriverVehicleSecondaryRangeSelector(
+            primaryRange: selectedRange,
+            selectedSecondaryRange: selectedSecondaryRange,
+            enabled: enabled,
+            onSelected: onSecondaryRangeChanged!,
+          ),
+        ],
         const SizedBox(height: AppTheme.spacingMd),
         SwitchListTile(
           value: airConditioning,

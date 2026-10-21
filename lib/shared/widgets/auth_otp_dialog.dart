@@ -52,12 +52,14 @@ class _AuthOtpDialog extends StatefulWidget {
 
 class _AuthOtpDialogState extends State<_AuthOtpDialog> {
   static const int _resendCooldownSeconds = 30;
+  static const int _maxResends = 3;
 
   final TextEditingController _otpController = TextEditingController();
   String? _errorText;
   bool _isSubmitting = false;
   bool _isResending = false;
   int _resendSecondsRemaining = 0;
+  int _resendCount = 0;
   Timer? _resendTimer;
 
   @override
@@ -109,9 +111,14 @@ class _AuthOtpDialogState extends State<_AuthOtpDialog> {
       if (!mounted) {
         return;
       }
+      final message = _extractErrorMessage(error);
+      if (message.toLowerCase().contains('expir')) {
+        _resendTimer?.cancel();
+        _resendSecondsRemaining = 0;
+      }
       setState(() {
         _isSubmitting = false;
-        _errorText = _extractErrorMessage(error);
+        _errorText = message;
       });
     }
   }
@@ -129,6 +136,7 @@ class _AuthOtpDialogState extends State<_AuthOtpDialog> {
       if (!mounted) return;
       setState(() {
         _isResending = false;
+        _resendCount += 1;
       });
       _startResendCooldown();
     } catch (error) {
@@ -163,8 +171,11 @@ class _AuthOtpDialogState extends State<_AuthOtpDialog> {
     });
   }
 
+  bool get _resendLimitReached => _resendCount >= _maxResends;
+
   bool get _canResend =>
       widget.onResend != null &&
+      !_resendLimitReached &&
       _resendSecondsRemaining <= 0 &&
       !_isResending &&
       !_isSubmitting;
@@ -225,7 +236,9 @@ class _AuthOtpDialogState extends State<_AuthOtpDialog> {
             if (widget.onResend != null) ...[
               const SizedBox(height: 12),
               FrayaButton(
-                label: _resendSecondsRemaining > 0
+                label: _resendLimitReached
+                    ? 'Limite de renvois atteinte'
+                    : _resendSecondsRemaining > 0
                     ? 'Renvoyer dans ${_resendSecondsRemaining}s'
                     : "Renvoyer l'OTP",
                 variant: FrayaButtonVariant.outline,

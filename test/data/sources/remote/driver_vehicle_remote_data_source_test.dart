@@ -131,6 +131,11 @@ void main() {
         Map<String, String>.fromEntries(capturedFormData!.fields),
         containsPair('vehicleStatus', 'PENDING_VALIDATION'),
       );
+      // Sans seconde gamme choisie, le champ n'est pas envoyé.
+      expect(
+        Map<String, String>.fromEntries(capturedFormData!.fields),
+        isNot(contains('secondaryRange')),
+      );
       expect(capturedFormData!.files.map((entry) => entry.key).toSet(), {
         'insuranceCertificate',
         'technicalInspection',
@@ -142,6 +147,47 @@ void main() {
         'photoInteriorVehicle',
         ..._requiredKycDocuments.map((type) => type.backendField),
       });
+    });
+
+    test('envoie la seconde gamme quand elle est choisie', () async {
+      FormData? capturedFormData;
+      final dio = Dio()
+        ..httpClientAdapter = RecordingHttpClientAdapter((
+          options,
+          requestStream,
+          cancelFuture,
+        ) async {
+          await requestStream?.drain<void>();
+          capturedFormData = options.data as FormData;
+          return ResponseBody.fromString(
+            jsonEncode({'id': 12}),
+            200,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        });
+      final dataSource = DriverVehicleRemoteDataSource(dio: dio);
+
+      await dataSource.submitVehicle(
+        submission: DriverVehicleSubmission(
+          brand: submission.brand,
+          model: submission.model,
+          year: submission.year,
+          color: submission.color,
+          licensePlate: submission.licensePlate,
+          range: 'MAGIC',
+          secondaryRange: 'GLADIATEUR',
+          sidUserId: submission.sidUserId,
+          kycDocuments: submission.kycDocuments,
+          documents: submission.documents,
+          airConditioning: true,
+        ),
+      );
+
+      final fields = Map<String, String>.fromEntries(capturedFormData!.fields);
+      expect(fields, containsPair('range', 'MAGIC'));
+      expect(fields, containsPair('secondaryRange', 'GLADIATEUR'));
     });
 
     test('sends patch payload for descriptive vehicle update', () async {
@@ -253,7 +299,6 @@ void main() {
 const List<DriverKycDocumentType> _requiredKycDocuments = [
   DriverKycDocumentType.photoFrontPermis,
   DriverKycDocumentType.photoBackPermis,
-  DriverKycDocumentType.photoSelfPermis,
 ];
 
 Future<DriverKycDocumentFile> _createDocument(

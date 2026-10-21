@@ -88,11 +88,22 @@ class ApiClient {
                     final response = await _dio.fetch(opts);
                     handler.resolve(response);
                     return;
-                  } catch (_) {}
+                  } on DioException catch (retryError) {
+                    // Le jeton vient d'être renouvelé : un échec de la requête rejouée
+                    // (timeout, 5xx) n'est pas une session expirée.
+                    handler.next(retryError);
+                    return;
+                  } catch (_) {
+                    handler.next(error);
+                    return;
+                  }
                 }
-                if (refreshResult == _RefreshTokenResult.networkFailure) {
+                // Seul un rejet explicite du refresh (401/403) ou l'absence de jeton
+                // déconnecte ; réseau et erreurs serveur gardent la session.
+                if (refreshResult == _RefreshTokenResult.networkFailure ||
+                    refreshResult == _RefreshTokenResult.failed) {
                   logger.warning(
-                    'Refresh token interrompu par le reseau: $path',
+                    'Refresh token non concluant ($refreshResult), session conservée: $path',
                   );
                   handler.next(error);
                   return;

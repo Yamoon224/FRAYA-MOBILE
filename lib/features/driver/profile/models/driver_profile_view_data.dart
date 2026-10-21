@@ -16,12 +16,18 @@ class DriverProfileVehicleViewData {
     required this.subtitle,
     required this.plate,
     required this.rangeLabel,
+    this.range,
+    this.secondaryRange,
   });
 
   final String name;
   final String subtitle;
   final String plate;
   final String rangeLabel;
+
+  /// Gamme principale et seconde gamme (codes bruts, ex. MAGIC), si connues.
+  final String? range;
+  final String? secondaryRange;
 }
 
 class DriverProfileDocumentViewData {

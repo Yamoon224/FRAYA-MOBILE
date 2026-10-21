@@ -58,6 +58,7 @@ class ForgotPasswordNotifier extends StateNotifier<ForgotPasswordState> {
   Future<void> resetPassword(
     String verificationCode,
     String newPassword,
+    String identifier,
   ) async {
     state = state.copyWith(status: ForgotPasswordStatus.loading);
 
@@ -65,6 +66,7 @@ class ForgotPasswordNotifier extends StateNotifier<ForgotPasswordState> {
       ResetPasswordParams(
         verificationCode: verificationCode,
         newPassword: newPassword,
+        identifier: identifier,
       ),
     );
 

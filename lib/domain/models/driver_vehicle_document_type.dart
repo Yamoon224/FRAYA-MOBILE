@@ -11,6 +11,29 @@ enum DriverVehicleDocumentType {
   photoInteriorVehicle,
 }
 
+/// Les cinq photos exigées pour demander une gamme supérieure à celle du véhicule.
+const List<DriverVehicleDocumentType> vehicleRangePhotoTypes = [
+  DriverVehicleDocumentType.photoFrontVehicle,
+  DriverVehicleDocumentType.photoRearVehicle,
+  DriverVehicleDocumentType.photoLeftVehicle,
+  DriverVehicleDocumentType.photoRightVehicle,
+  DriverVehicleDocumentType.photoInteriorVehicle,
+];
+
+/// Niveau d'une gamme (MAGIC < GLADIATEUR < ELITE) ; 0 si inconnue.
+int vehicleRangeLevel(String? range) => switch (range?.trim().toUpperCase()) {
+  'MAGIC' => 1,
+  'GLADIATEUR' => 2,
+  'ELITE' => 3,
+  _ => 0,
+};
+
+/// Documents véhicule obligatoires à l'inscription : l'assurance peut être ajoutée plus tard.
+final List<DriverVehicleDocumentType> requiredVehicleDocuments =
+    DriverVehicleDocumentType.values
+        .where((type) => type != DriverVehicleDocumentType.insuranceCertificate)
+        .toList(growable: false);
+
 extension DriverVehicleDocumentTypeX on DriverVehicleDocumentType {
   String get backendField => switch (this) {
     DriverVehicleDocumentType.insuranceCertificate => 'insuranceCertificate',
@@ -39,7 +62,7 @@ extension DriverVehicleDocumentTypeX on DriverVehicleDocumentType {
 
   String get helperText => switch (this) {
     DriverVehicleDocumentType.insuranceCertificate =>
-      'Ajoutez l\'attestation d\'assurance en image ou PDF.',
+      'Attestation d\'assurance en image ou PDF (facultatif pour l\'instant, à ajouter plus tard).',
     DriverVehicleDocumentType.technicalInspection =>
       'Ajoutez la visite technique en cours de validité.',
     DriverVehicleDocumentType.vehicleRegistration =>

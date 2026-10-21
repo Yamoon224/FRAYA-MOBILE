@@ -40,9 +40,10 @@ void main() {
       find.text(DriverKycDocumentType.photoBackPermis.label),
       findsOneWidget,
     );
+    // Le selfie avec permis n'est plus demandé.
     expect(
       find.text(DriverKycDocumentType.photoSelfPermis.label),
-      findsOneWidget,
+      findsNothing,
     );
     expect(find.text(DriverKycDocumentType.photoCasier.label), findsOneWidget);
     expect(

@@ -8,7 +8,9 @@ class DriverHomeLocationSyncPolicy {
   const DriverHomeLocationSyncPolicy._();
 
   static const double distanceThresholdMeters = 10;
-  static const Duration maxSilentInterval = Duration(seconds: 5);
+  // Sans plancher, un chauffeur à 50 km/h franchit 10 m chaque seconde : ~1 requête/s.
+  static const Duration minSendInterval = Duration(seconds: 3);
+  static const Duration maxSilentInterval = Duration(seconds: 15);
 
   static bool shouldSend({
     required LatLng? previousLocation,
@@ -20,12 +22,12 @@ class DriverHomeLocationSyncPolicy {
       return true;
     }
 
-    final movedDistance = geoDistanceMeters(previousLocation, nextLocation);
-    if (movedDistance >= distanceThresholdMeters) {
-      return true;
+    final elapsed = (now ?? DateTime.now()).difference(lastSentAt);
+    if (elapsed < minSendInterval) {
+      return false;
     }
 
-    final currentTime = now ?? DateTime.now();
-    return currentTime.difference(lastSentAt) >= maxSilentInterval;
+    final movedDistance = geoDistanceMeters(previousLocation, nextLocation);
+    return movedDistance >= distanceThresholdMeters || elapsed >= maxSilentInterval;
   }
 }

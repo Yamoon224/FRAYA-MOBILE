@@ -143,7 +143,7 @@ void main() {
         );
 
         expect(
-          () => repository.resetPassword('1234', 'new-password'),
+          () => repository.resetPassword('1234', 'new-password', '0700000000'),
           throwsA(
             isA<ServerException>().having(
               (error) => error.message,
@@ -163,7 +163,31 @@ void main() {
         apiClient: ApiClient.instance,
       );
 
-      await repository.resetPassword('1234', 'new-password');
+      await repository.resetPassword('1234', 'new-password', '0700000000');
+    });
+
+    test('resetPassword scopes the code to the identifier', () async {
+      final payloads = <Map<String, dynamic>>[];
+      ApiClient.instance.dio.httpClientAdapter = _RecordingHttpClientAdapter((
+        options,
+      ) async {
+        payloads.add(Map<String, dynamic>.from(options.data as Map));
+        return _ok();
+      });
+      final repository = ForgotPasswordRepository(
+        apiClient: ApiClient.instance,
+      );
+
+      await repository.resetPassword('1234', 'new-password', ' 0700000000 ');
+      await repository.resetPassword('1234', 'new-password', 'a@b.ci');
+
+      expect(payloads[0], {
+        'verificationCode': '1234',
+        'newPassword': 'new-password',
+        'phoneNumber': '0700000000',
+      });
+      expect(payloads[1]['email'], 'a@b.ci');
+      expect(payloads[1].containsKey('phoneNumber'), isFalse);
     });
   });
 }

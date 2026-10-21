@@ -9,14 +9,19 @@ import '../../../../shared/widgets/auth_login_layout.dart';
 import '../providers/driver_auth_provider.dart';
 
 class DriverLoginScreen extends ConsumerStatefulWidget {
-  const DriverLoginScreen({super.key});
+  const DriverLoginScreen({this.initialPhone, super.key});
+
+  /// Numéro pré-rempli (ex. chauffeur qui reprend une inscription inachevée).
+  final String? initialPhone;
 
   @override
   ConsumerState<DriverLoginScreen> createState() => _DriverLoginScreenState();
 }
 
 class _DriverLoginScreenState extends ConsumerState<DriverLoginScreen> {
-  final _phoneController = TextEditingController();
+  late final _phoneController = TextEditingController(
+    text: widget.initialPhone ?? '',
+  );
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 

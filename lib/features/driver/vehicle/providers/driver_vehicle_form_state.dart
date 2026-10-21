@@ -11,6 +11,7 @@ class DriverVehicleFormState {
     this.color = '',
     this.licensePlate = '',
     this.selectedRange = 'MAGIC',
+    this.selectedSecondaryRange,
     this.airConditioning = false,
     this.documents = const {},
     this.processingDocuments = const {},
@@ -25,6 +26,7 @@ class DriverVehicleFormState {
   final String color;
   final String licensePlate;
   final String selectedRange;
+  final String? selectedSecondaryRange;
   final bool airConditioning;
   final Map<DriverVehicleDocumentType, DriverKycDocumentFile> documents;
   final Set<DriverVehicleDocumentType> processingDocuments;
@@ -39,7 +41,7 @@ class DriverVehicleFormState {
       color.trim().isNotEmpty &&
       licensePlate.trim().isNotEmpty &&
       selectedRange.trim().isNotEmpty &&
-      DriverVehicleDocumentType.values.every(documents.containsKey) &&
+      requiredVehicleDocuments.every(documents.containsKey) &&
       processingDocuments.isEmpty &&
       !isSubmitting;
 
@@ -50,6 +52,7 @@ class DriverVehicleFormState {
     String? color,
     String? licensePlate,
     String? selectedRange,
+    Object? selectedSecondaryRange = _sentinel,
     bool? airConditioning,
     Map<DriverVehicleDocumentType, DriverKycDocumentFile>? documents,
     Set<DriverVehicleDocumentType>? processingDocuments,
@@ -64,6 +67,9 @@ class DriverVehicleFormState {
       color: color ?? this.color,
       licensePlate: licensePlate ?? this.licensePlate,
       selectedRange: selectedRange ?? this.selectedRange,
+      selectedSecondaryRange: identical(selectedSecondaryRange, _sentinel)
+          ? this.selectedSecondaryRange
+          : selectedSecondaryRange as String?,
       airConditioning: airConditioning ?? this.airConditioning,
       documents: documents ?? this.documents,
       processingDocuments: processingDocuments ?? this.processingDocuments,

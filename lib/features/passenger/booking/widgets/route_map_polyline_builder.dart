@@ -13,8 +13,8 @@ Set<Polyline> buildPrimaryRoutePolylines(DirectionsRoute route) {
       Polyline(
         polylineId: const PolylineId('route_base_0'),
         points: polylineCoords,
-        color: const Color(0xFF2E7D32),
-        width: 6,
+        color: const Color(0xFF0B57D0),
+        width: 8,
         zIndex: 1,
       ),
       ...buildTrafficPolylines(route: route, routeIndex: 0),
@@ -25,8 +25,8 @@ Set<Polyline> buildPrimaryRoutePolylines(DirectionsRoute route) {
     Polyline(
       polylineId: const PolylineId('route_0'),
       points: polylineCoords,
-      color: const Color(0xFF4285F4),
-      width: 6,
+      color: const Color(0xFF0B57D0),
+      width: 8,
       zIndex: 1,
     ),
   };

@@ -59,7 +59,7 @@ class RideDetailsMap extends ConsumerWidget {
         polylineId: const PolylineId('route'),
         points: polylinePoints,
         color: hasRoutedPolyline
-            ? const Color(0xFF4285F4)
+            ? const Color(0xFF0B57D0)
             : const Color(0xFFD4A843),
         width: hasRoutedPolyline ? 6 : 4,
         jointType: JointType.round,
