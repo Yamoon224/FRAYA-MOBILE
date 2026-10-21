@@ -3,7 +3,7 @@ description: "Fraya Taxi — Application VTC pour Abidjan, Côte d'Ivoire"
 publish_to: 'none'
 # Source de verite unique de la version (versionName+versionCode cote Android).
 # A INCREMENTER a chaque APK envoye a un client ou a un testeur.
-version: 1.0.5+11
+version: 1.0.5+12
 
 environment:
   sdk: ^3.11.5
