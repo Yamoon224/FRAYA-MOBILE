@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+import '../../../core/utils/password_policy.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -31,7 +33,6 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
   bool _obscureOld = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
-  String _newPassword = '';
 
   @override
   void dispose() {
@@ -95,27 +96,28 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
                   const _FieldDivider(),
                   _PasswordField(
                     label: 'Nouveau mot de passe',
-                    hint: 'Min. 6 caractères',
+                    hint: PasswordPolicy.hint,
+                    keyboardType: PasswordPolicy.keyboardType,
+                    inputFormatters: PasswordPolicy.inputFormatters,
                     controller: _newPasswordController,
                     obscureText: _obscureNew,
                     prefixIcon: Icons.lock_reset_rounded,
                     onToggleVisibility: () =>
                         setState(() => _obscureNew = !_obscureNew),
-                    onChanged: (v) => setState(() => _newPassword = v),
                     validator: (v) {
-                      if ((v ?? '').trim().length < 6) {
-                        return '6 caractères minimum.';
+                      if (!PasswordPolicy.isValidNew(v)) {
+                        return '${PasswordPolicy.invalidMessage}.';
                       }
                       return null;
                     },
                     textInputAction: TextInputAction.next,
-                    showStrength: true,
-                    strengthValue: _newPassword,
                   ),
                   const _FieldDivider(),
                   _PasswordField(
                     label: 'Confirmer le nouveau mot de passe',
-                    hint: 'Répétez le nouveau mot de passe',
+                    hint: 'Répétez les 4 chiffres',
+                    keyboardType: PasswordPolicy.keyboardType,
+                    inputFormatters: PasswordPolicy.inputFormatters,
                     controller: _confirmController,
                     obscureText: _obscureConfirm,
                     prefixIcon: Icons.check_circle_outline_rounded,
@@ -244,12 +246,11 @@ class _PasswordField extends StatelessWidget {
     required this.obscureText,
     required this.prefixIcon,
     required this.onToggleVisibility,
-    this.onChanged,
     this.validator,
     this.textInputAction,
     this.onSubmitted,
-    this.showStrength = false,
-    this.strengthValue = '',
+    this.keyboardType,
+    this.inputFormatters,
   });
 
   final String label;
@@ -258,12 +259,11 @@ class _PasswordField extends StatelessWidget {
   final bool obscureText;
   final IconData prefixIcon;
   final VoidCallback onToggleVisibility;
-  final ValueChanged<String>? onChanged;
   final String? Function(String?)? validator;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
-  final bool showStrength;
-  final String strengthValue;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -286,7 +286,8 @@ class _PasswordField extends StatelessWidget {
           TextFormField(
             controller: controller,
             obscureText: obscureText,
-            onChanged: onChanged,
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
             validator: validator,
             textInputAction: textInputAction,
             onFieldSubmitted: onSubmitted,
@@ -344,92 +345,8 @@ class _PasswordField extends StatelessWidget {
               errorStyle: AppTextStyles.xs.copyWith(color: errorColor),
             ),
           ),
-          if (showStrength && strengthValue.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            _PasswordStrengthBar(password: strengthValue),
-          ],
         ],
       ),
-    );
-  }
-}
-
-// ─── Password strength bar ────────────────────────────────────────────────────
-
-class _PasswordStrengthBar extends StatelessWidget {
-  const _PasswordStrengthBar({required this.password});
-
-  final String password;
-
-  static const _labels = ['Trop court', 'Faible', 'Moyen', 'Fort'];
-  static const _colors = [
-    Color(0xFFEF4444),
-    Color(0xFFF97316),
-    Color(0xFFD4A843),
-    Color(0xFF10B981),
-  ];
-
-  int _score(String pw) {
-    if (pw.length < 6) return 0;
-    int s = 1;
-    if (pw.length >= 9) s++;
-    if (pw.contains(RegExp(r'[A-Z]')) || pw.contains(RegExp(r'[0-9]'))) s++;
-    if (pw.contains(RegExp(r'[A-Z]')) &&
-        pw.contains(RegExp(r'[0-9]')) &&
-        pw.length >= 10) {
-      s++;
-    }
-    return s.clamp(1, 4);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final score = _score(password);
-    final activeColor = _colors[score - 1];
-    final inactiveColor = context.colors.greyLight;
-    final labelColor = context.colors.textSecondary;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: List.generate(4, (i) {
-            final filled = i < score;
-            return Expanded(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                height: 4,
-                margin: EdgeInsets.only(right: i < 3 ? 4 : 0),
-                decoration: BoxDecoration(
-                  color: filled ? activeColor : inactiveColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            );
-          }),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: activeColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              _labels[score - 1],
-              style: AppTextStyles.xs.copyWith(
-                color: labelColor,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }
@@ -462,8 +379,8 @@ class _PasswordTip extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Utilisez au moins 8 caractères avec des majuscules, chiffres '
-              'et symboles pour un mot de passe fort.',
+              'Choisissez un code de 4 chiffres facile à retenir et ne le partagez '
+              'avec personne. Évitez les codes évidents comme 1234 ou 0000.',
               style: AppTextStyles.xs.copyWith(color: textColor, height: 1.5),
             ),
           ),

@@ -94,12 +94,12 @@ void main() {
       await _goToStep2(tester, typedIdentifier: ' 0700000000 ');
       expect(repository.sentIdentifiers, ['0700000000']);
 
-      await _submitNewPassword(tester, 'Secret123');
+      await _submitNewPassword(tester, '4821');
 
       expect(repository.resetCalls, hasLength(1));
       final call = repository.resetCalls.single;
       expect(call.verificationCode, '1234');
-      expect(call.newPassword, 'Secret123');
+      expect(call.newPassword, '4821');
       expect(call.identifier, '0700000000');
 
       for (var i = 0; i < 5; i++) {
@@ -118,7 +118,7 @@ void main() {
     await _pumpScreen(tester, repository);
 
     await _goToStep2(tester, typedIdentifier: 'awa@fraya.ci', otp: '6543');
-    await _submitNewPassword(tester, 'Secret123');
+    await _submitNewPassword(tester, '4821');
 
     final call = repository.resetCalls.single;
     expect(call.identifier, 'awa@fraya.ci');

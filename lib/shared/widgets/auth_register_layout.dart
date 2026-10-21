@@ -1,3 +1,4 @@
+import '../../core/utils/password_policy.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -66,16 +67,12 @@ class _AuthRegisterLayoutState extends State<AuthRegisterLayout> {
     widget.passwordController,
   ];
 
-  static final _passwordRegex = RegExp(
-    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$',
-  );
-
   bool get _canSubmit =>
       _termsAccepted &&
       !widget.isLoading &&
       widget.firstNamesController.text.trim().isNotEmpty &&
       widget.lastNameController.text.trim().isNotEmpty &&
-      _passwordRegex.hasMatch(widget.passwordController.text);
+      PasswordPolicy.isValidNew(widget.passwordController.text);
 
   @override
   void initState() {
@@ -218,7 +215,9 @@ class _AuthRegisterLayoutState extends State<AuthRegisterLayout> {
                 FrayaTextField(
                   controller: widget.passwordController,
                   label: 'Mot de passe',
-                  hint: '********',
+                  hint: PasswordPolicy.hint,
+                  keyboardType: PasswordPolicy.keyboardType,
+                  inputFormatters: PasswordPolicy.inputFormatters,
                   prefixIcon: Icons.lock_outline,
                   suffixIcon: _isPasswordObscured
                       ? Icons.visibility_off_outlined
@@ -237,7 +236,9 @@ class _AuthRegisterLayoutState extends State<AuthRegisterLayout> {
                 FrayaTextField(
                   controller: widget.confirmPasswordController,
                   label: 'Confirmer le mot de passe',
-                  hint: '********',
+                  hint: PasswordPolicy.hint,
+                  keyboardType: PasswordPolicy.keyboardType,
+                  inputFormatters: PasswordPolicy.inputFormatters,
                   prefixIcon: Icons.lock_clock_outlined,
                   suffixIcon: _isConfirmPasswordObscured
                       ? Icons.visibility_off_outlined
@@ -401,10 +402,6 @@ class _AuthRegisterLayoutState extends State<AuthRegisterLayout> {
   }
 
   String? _validatePassword(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Champ requis';
-    if (!_passwordRegex.hasMatch(value)) {
-      return 'Min. 8 caract\u00e8res, une majuscule, une minuscule et un chiffre';
-    }
-    return null;
+    return PasswordPolicy.validateNew(value);
   }
 }

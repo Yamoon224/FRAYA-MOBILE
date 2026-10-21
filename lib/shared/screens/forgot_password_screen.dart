@@ -1,3 +1,4 @@
+import '../../core/utils/password_policy.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -27,10 +28,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _identifierController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  static final _passwordRegex = RegExp(
-    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$',
-  );
-
   bool _isPasswordObscured = true;
   bool _isConfirmObscured = true;
   bool _isOtpDialogOpen = false;
@@ -40,7 +37,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   bool get _canSubmitReset =>
       _verificationCode != null &&
-      _passwordRegex.hasMatch(_newPasswordController.text) &&
+      PasswordPolicy.isValidNew(_newPasswordController.text) &&
       _confirmPasswordController.text == _newPasswordController.text;
 
   @override
@@ -579,7 +576,9 @@ class _Step2Content extends StatelessWidget {
                 FrayaTextField(
                   controller: newPasswordController,
                   label: 'Nouveau mot de passe',
-                  hint: '••••••••',
+                  hint: PasswordPolicy.hint,
+                  keyboardType: PasswordPolicy.keyboardType,
+                  inputFormatters: PasswordPolicy.inputFormatters,
                   prefixIcon: Icons.lock_outline,
                   obscureText: isPasswordObscured,
                   suffixIcon: isPasswordObscured
@@ -592,12 +591,7 @@ class _Step2Content extends StatelessWidget {
                     if (value == null || value.isEmpty) {
                       return 'Veuillez entrer un mot de passe';
                     }
-                    if (!_ForgotPasswordScreenState._passwordRegex.hasMatch(
-                      value,
-                    )) {
-                      return 'Min. 8 caractères, une majuscule, une minuscule et un chiffre';
-                    }
-                    return null;
+                    return PasswordPolicy.validateNew(value);
                   },
                 ),
                 PasswordRules(password: newPassword),
@@ -615,7 +609,9 @@ class _Step2Content extends StatelessWidget {
             child: FrayaTextField(
               controller: confirmPasswordController,
               label: 'Confirmer le mot de passe',
-              hint: '••••••••',
+              hint: PasswordPolicy.hint,
+              keyboardType: PasswordPolicy.keyboardType,
+              inputFormatters: PasswordPolicy.inputFormatters,
               prefixIcon: Icons.check_circle_outline_rounded,
               obscureText: isConfirmObscured,
               suffixIcon: isConfirmObscured

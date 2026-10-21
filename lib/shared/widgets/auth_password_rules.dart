@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/utils/password_policy.dart';
 
 class PasswordRuleItem extends StatelessWidget {
   const PasswordRuleItem({
@@ -50,26 +51,9 @@ class PasswordRules extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 8, left: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          PasswordRuleItem(
-            label: '8 caractères minimum',
-            satisfied: password.length >= 8,
-          ),
-          PasswordRuleItem(
-            label: 'Une lettre majuscule',
-            satisfied: password.contains(RegExp(r'[A-Z]')),
-          ),
-          PasswordRuleItem(
-            label: 'Une lettre minuscule',
-            satisfied: password.contains(RegExp(r'[a-z]')),
-          ),
-          PasswordRuleItem(
-            label: 'Un chiffre',
-            satisfied: password.contains(RegExp(r'\d')),
-          ),
-        ],
+      child: PasswordRuleItem(
+        label: 'Exactement 4 chiffres',
+        satisfied: PasswordPolicy.isValidNew(password),
       ),
     );
   }
