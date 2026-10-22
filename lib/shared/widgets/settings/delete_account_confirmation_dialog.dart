@@ -16,7 +16,9 @@ Future<bool> showDeleteAccountConfirmationDialog(BuildContext context) async {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Cette action supprimera votre compte Fraya Taxi. Voulez-vous continuer ?',
+              'Cette action est définitive : votre compte Fraya Taxi, vos courses et vos données '
+              'personnelles seront supprimés et ne pourront pas être récupérés. '
+              'Voulez-vous continuer ?',
             ),
             const SizedBox(height: 20),
             ConfirmationActionColumn(

@@ -13,7 +13,15 @@ class AccountDeletionRemoteDataSource {
 
   Future<void> deleteAccount(int userId) async {
     try {
-      await _dio.delete('/sid-users/delete/$userId');
+      final response = await _dio.delete('/sid-users/delete/$userId');
+      // Le serveur répond parfois 200 avec { success: false, message } (par exemple : course en cours).
+      final data = response.data;
+      if (data is Map && data['success'] == false) {
+        throw ServerException(
+          message: data['message']?.toString() ?? 'Impossible de supprimer le compte.',
+          statusCode: (data['statusCode'] as num?)?.toInt(),
+        );
+      }
     } on DioException catch (error) {
       ApiClient.handleDioError(error);
     } catch (error) {
