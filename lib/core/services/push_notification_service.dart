@@ -3,7 +3,9 @@ library;
 export 'push_notification_payload.dart';
 
 import 'dart:async';
+import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
@@ -161,14 +163,37 @@ class PushNotificationService {
     _logDiagnosticState('subscriptionChange');
   }
 
-  String _resolveAppId() {
-    if (AppConfig.instance.isPassenger) {
-      return dotenv.env['ONESIGNAL_APP_ID_PASSENGER']?.trim() ?? '';
+  String _resolveAppId() => resolveOneSignalAppId(
+    isPassenger: AppConfig.instance.isPassenger,
+    isDriver: AppConfig.instance.isDriver,
+    isIOS: !kIsWeb && Platform.isIOS,
+    env: dotenv.env,
+  );
+
+  /// Identifiant de l'application OneSignal. Une application OneSignal ne gère qu'un seul Bundle ID iOS : sur
+  /// iPhone, chaque app (passager, chauffeur) a la sienne (`..._IOS`) ; à défaut, ou sur Android, on garde
+  /// l'identifiant commun.
+  @visibleForTesting
+  static String resolveOneSignalAppId({
+    required bool isPassenger,
+    required bool isDriver,
+    required bool isIOS,
+    required Map<String, String> env,
+  }) {
+    String read(String key) => env[key]?.trim() ?? '';
+    final String role;
+    if (isPassenger) {
+      role = 'PASSENGER';
+    } else if (isDriver) {
+      role = 'DRIVER';
+    } else {
+      return '';
     }
-    if (AppConfig.instance.isDriver) {
-      return dotenv.env['ONESIGNAL_APP_ID_DRIVER']?.trim() ?? '';
+    if (isIOS) {
+      final iosId = read('ONESIGNAL_APP_ID_${role}_IOS');
+      if (iosId.isNotEmpty) return iosId;
     }
-    return '';
+    return read('ONESIGNAL_APP_ID_$role');
   }
 
   PushNotificationPayload _payloadFromNotification(

@@ -31,6 +31,8 @@ workflows:
           SERVER_URL=$SERVER_URL
           ONESIGNAL_APP_ID_PASSENGER=$ONESIGNAL_APP_ID_PASSENGER
           ONESIGNAL_APP_ID_DRIVER=$ONESIGNAL_APP_ID_DRIVER
+          ONESIGNAL_APP_ID_PASSENGER_IOS=$ONESIGNAL_APP_ID_PASSENGER_IOS
+          ONESIGNAL_APP_ID_DRIVER_IOS=$ONESIGNAL_APP_ID_DRIVER_IOS
           WHATSAPP_SUPPORT_NUMBER=$WHATSAPP_SUPPORT_NUMBER
           EOF
           # Le SDK Google Maps iOS lit sa clé au démarrage de l'application (Info.plist, via ce fichier de réglages).
@@ -96,6 +98,8 @@ workflows:
           SERVER_URL=$SERVER_URL
           ONESIGNAL_APP_ID_PASSENGER=$ONESIGNAL_APP_ID_PASSENGER
           ONESIGNAL_APP_ID_DRIVER=$ONESIGNAL_APP_ID_DRIVER
+          ONESIGNAL_APP_ID_PASSENGER_IOS=$ONESIGNAL_APP_ID_PASSENGER_IOS
+          ONESIGNAL_APP_ID_DRIVER_IOS=$ONESIGNAL_APP_ID_DRIVER_IOS
           WHATSAPP_SUPPORT_NUMBER=$WHATSAPP_SUPPORT_NUMBER
           EOF
           # Le SDK Google Maps iOS lit sa clé au démarrage de l'application (Info.plist, via ce fichier de réglages).
