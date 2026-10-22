@@ -4,6 +4,8 @@
 	<dict>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
+		<key>GMSApiKey</key>
+		<string>$(GOOGLE_MAPS_API_KEY_IOS)</string>
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>location</string>

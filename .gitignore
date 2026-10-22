@@ -57,3 +57,6 @@ keystores/
 *.p12
 *.mobileprovision
 *.cer
+
+# Généré par la CI avec la clé Google Maps iOS
+ios/Flutter/MapsKey.xcconfig
