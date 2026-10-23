@@ -7,6 +7,7 @@ import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 
 import '../utils/logger.dart';
 import 'navigation_launcher_service.dart';
+import 'navigation_voice_preference.dart';
 
 final _log = AppLogger.instance;
 
@@ -20,6 +21,7 @@ abstract class NavigationSdkGateway {
   Future<void> initializeSession();
   Future<NavigationSdkRouteResult> setDestination(NavigationTarget target);
   Future<void> startGuidance();
+  Future<void> setVoiceEnabled(bool enabled);
   Stream<void> get onArrival;
   Future<void> stopAndCleanup();
 }
@@ -41,17 +43,24 @@ class GoogleNavigationSdkGateway implements NavigationSdkGateway {
     await GoogleMapsNavigator.initializeNavigationSession(
       taskRemovedBehavior: TaskRemovedBehavior.continueService,
     );
-    // Narration vocale des consignes (en français, langue de l'application) dès le début du guidage.
+    // Narration vocale des consignes (en français, langue de l'application), sauf si le conducteur l'a coupée.
+    await setVoiceEnabled(NavigationVoicePreference.isEnabled);
+  }
+
+  @override
+  Future<void> setVoiceEnabled(bool enabled) async {
     try {
       await GoogleMapsNavigator.setAudioGuidance(
         NavigationAudioGuidanceSettings(
-          guidanceType: NavigationAudioGuidanceType.alertsAndGuidance,
+          guidanceType: enabled
+              ? NavigationAudioGuidanceType.alertsAndGuidance
+              : NavigationAudioGuidanceType.silent,
           isBluetoothAudioEnabled: true,
           isVibrationEnabled: true,
         ),
       );
     } catch (error) {
-      _log.warning('Navigation SDK : voix non activée : $error');
+      _log.warning('Navigation SDK : réglage de la voix impossible : $error');
     }
   }
 

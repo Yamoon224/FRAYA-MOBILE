@@ -2,9 +2,8 @@ library;
 
 import 'package:share_plus/share_plus.dart';
 
-typedef RideTrackingShareInvoker = Future<ShareResult> Function(
-  ShareParams params,
-);
+typedef RideTrackingShareInvoker =
+    Future<ShareResult> Function(ShareParams params);
 
 enum RideTrackingShareStatus { success, dismissed, unavailable }
 

@@ -14,6 +14,7 @@ import '../../../../core/models/directions_models.dart';
 import '../../../../core/services/navigation_launcher_service.dart';
 import '../../../../core/services/navigation_progress.dart';
 import '../../../../core/services/navigation_voice.dart';
+import '../../../../core/services/navigation_voice_preference.dart';
 import '../../../../shared/widgets/map/fraya_map_style.dart';
 import '../../home/providers/driver_home_map_route_provider.dart';
 import '../../home/providers/driver_home_provider.dart';
@@ -54,8 +55,9 @@ class _DriverDirectionsNavigationScreenState
   bool _isFollowing = true;
   bool _isMovingCamera = false;
   bool _isRerouting = false;
-  bool _isVoiceOn = true;
-  final NavigationVoiceGuide _voice = NavigationVoiceGuide(FlutterTtsSpeaker());
+  bool _isVoiceOn = NavigationVoicePreference.isEnabled;
+  final NavigationVoiceGuide _voice = NavigationVoiceGuide(FlutterTtsSpeaker())
+    ..enabled = NavigationVoicePreference.isEnabled;
   int _offRouteCount = 0;
   DateTime? _lastRouteRequestAt;
 
@@ -337,10 +339,10 @@ class _DriverDirectionsNavigationScreenState
                   _isVoiceOn = !_isVoiceOn;
                   _voice.enabled = _isVoiceOn;
                 });
+                unawaited(NavigationVoicePreference.save(_isVoiceOn));
                 if (!_isVoiceOn) unawaited(_voice.dispose());
               },
-              onClose:
-                  widget.onClose ?? () => Navigator.of(context).maybePop(),
+              onClose: widget.onClose ?? () => Navigator.of(context).maybePop(),
               onOpenGoogleMaps: _openGoogleMaps,
             ),
           ),

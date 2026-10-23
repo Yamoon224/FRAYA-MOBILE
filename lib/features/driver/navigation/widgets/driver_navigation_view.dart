@@ -10,6 +10,7 @@ import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 
 import '../../../../core/services/navigation_launcher_service.dart';
 import '../../../../core/services/navigation_sdk_service.dart';
+import '../../../../core/services/navigation_voice_preference.dart';
 import '../screens/driver_directions_navigation_screen.dart';
 
 class DriverNavigationView extends StatefulWidget {
@@ -36,6 +37,7 @@ class _DriverNavigationViewState extends State<DriverNavigationView> {
   GoogleNavigationViewController? _controller;
   bool _isReady = false;
   bool _useFallback = false;
+  bool _isVoiceOn = NavigationVoicePreference.isEnabled;
   StreamSubscription<void>? _arrivalSubscription;
 
   @override
@@ -70,6 +72,13 @@ class _DriverNavigationViewState extends State<DriverNavigationView> {
       return;
     }
     setState(() => _isReady = true);
+  }
+
+  Future<void> _toggleVoice() async {
+    final enabled = !_isVoiceOn;
+    setState(() => _isVoiceOn = enabled);
+    await NavigationVoicePreference.save(enabled);
+    await widget.starter.gateway.setVoiceEnabled(enabled);
   }
 
   Future<void> _applyPadding() async {
@@ -140,14 +149,31 @@ class _DriverNavigationViewState extends State<DriverNavigationView> {
         Positioned(
           right: 12,
           bottom: widget.bottomPadding + 16,
-          child: FloatingActionButton.small(
-            key: const Key('driver_sdk_navigation_close'),
-            heroTag: 'driver_sdk_navigation_close',
-            backgroundColor: Colors.red.shade600,
-            foregroundColor: Colors.white,
-            tooltip: 'Quitter la navigation',
-            onPressed: widget.onClose,
-            child: const Icon(Icons.close_rounded),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FloatingActionButton.small(
+                key: const Key('driver_sdk_navigation_voice_toggle'),
+                heroTag: 'driver_sdk_navigation_voice_toggle',
+                tooltip: _isVoiceOn ? 'Couper la voix' : 'Activer la voix',
+                onPressed: _toggleVoice,
+                child: Icon(
+                  _isVoiceOn
+                      ? Icons.volume_up_rounded
+                      : Icons.volume_off_rounded,
+                ),
+              ),
+              const SizedBox(height: 12),
+              FloatingActionButton.small(
+                key: const Key('driver_sdk_navigation_close'),
+                heroTag: 'driver_sdk_navigation_close',
+                backgroundColor: Colors.red.shade600,
+                foregroundColor: Colors.white,
+                tooltip: 'Quitter la navigation',
+                onPressed: widget.onClose,
+                child: const Icon(Icons.close_rounded),
+              ),
+            ],
           ),
         ),
       ],

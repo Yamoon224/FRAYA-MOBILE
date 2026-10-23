@@ -40,6 +40,10 @@ class _FakeGateway implements NavigationSdkGateway {
   Future<void> startGuidance() async => calls.add('guidance');
 
   @override
+  Future<void> setVoiceEnabled(bool enabled) async =>
+      calls.add('voice:$enabled');
+
+  @override
   Stream<void> get onArrival => const Stream.empty();
 
   @override

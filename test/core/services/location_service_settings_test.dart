@@ -5,7 +5,10 @@ import 'package:geolocator/geolocator.dart';
 void main() {
   group('LocationService.positionSettings', () {
     test("iPhone chauffeur : la position continue en arrière-plan", () {
-      final settings = LocationService.positionSettings(isIOS: true, isDriver: true);
+      final settings = LocationService.positionSettings(
+        isIOS: true,
+        isDriver: true,
+      );
 
       expect(settings, isA<AppleSettings>());
       final apple = settings as AppleSettings;
@@ -17,19 +20,31 @@ void main() {
     });
 
     test("iPhone passager : pas de position en arrière-plan", () {
-      final settings = LocationService.positionSettings(isIOS: true, isDriver: false);
+      final settings = LocationService.positionSettings(
+        isIOS: true,
+        isDriver: false,
+      );
 
       expect(settings, isNot(isA<AppleSettings>()));
       expect(settings.distanceFilter, 5);
     });
 
-    test("Android : réglages standard (le service de premier plan s'en charge)", () {
-      final driver = LocationService.positionSettings(isIOS: false, isDriver: true);
-      final passenger = LocationService.positionSettings(isIOS: false, isDriver: false);
+    test(
+      "Android : réglages standard (le service de premier plan s'en charge)",
+      () {
+        final driver = LocationService.positionSettings(
+          isIOS: false,
+          isDriver: true,
+        );
+        final passenger = LocationService.positionSettings(
+          isIOS: false,
+          isDriver: false,
+        );
 
-      expect(driver, isNot(isA<AppleSettings>()));
-      expect(passenger, isNot(isA<AppleSettings>()));
-      expect(driver.accuracy, LocationAccuracy.high);
-    });
+        expect(driver, isNot(isA<AppleSettings>()));
+        expect(passenger, isNot(isA<AppleSettings>()));
+        expect(driver.accuracy, LocationAccuracy.high);
+      },
+    );
   });
 }
