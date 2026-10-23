@@ -4,7 +4,6 @@ library;
 
 import 'dart:math' as math;
 
-import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 import '../models/directions_models.dart';
@@ -32,8 +31,6 @@ enum VoiceLanguage {
 class FlutterTtsSpeaker implements VoiceSpeaker {
   FlutterTtsSpeaker() : _tts = FlutterTts();
 
-  static const MethodChannel _channel = MethodChannel('fraya_mobile/tts');
-
   final FlutterTts _tts;
   VoiceLanguage _language = VoiceLanguage.fr;
   Future<void>? _ready;
@@ -60,15 +57,6 @@ class FlutterTtsSpeaker implements VoiceSpeaker {
 
   /// Vrai quand la voix française est installée (vérifié à nouveau à chaque appel).
   Future<bool> checkFrench() => useLanguage(VoiceLanguage.fr);
-
-  /// Ouvre l'installation des données vocales françaises du téléphone (Android).
-  static Future<void> openFrenchVoiceInstall() async {
-    try {
-      await _channel.invokeMethod<void>('installFrenchVoice');
-    } catch (_) {
-      // Pas d'écran d'installation sur cet appareil : l'utilisateur passe par les réglages du téléphone.
-    }
-  }
 
   @override
   Future<void> speak(String text) async {

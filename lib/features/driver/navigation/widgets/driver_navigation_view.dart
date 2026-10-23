@@ -192,35 +192,6 @@ class _DriverNavigationViewState extends State<DriverNavigationView>
           initialNavigationUIEnabledPreference:
               NavigationUIEnabledPreference.automatic,
         ),
-        if (_isFrenchVoiceMissing)
-          Positioned(
-            left: 12,
-            right: 76,
-            bottom: widget.bottomPadding + 16,
-            child: Material(
-              key: const Key('driver_navigation_french_voice_missing'),
-              elevation: 4,
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.amber.shade100,
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'La voix française n\'est pas installée : le guidage parle anglais.',
-                        style: TextStyle(fontSize: 12.5, color: Colors.black87),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: FlutterTtsSpeaker.openFrenchVoiceInstall,
-                      child: const Text('Installer'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         Positioned(
           right: 12,
           bottom: widget.bottomPadding + 16,
