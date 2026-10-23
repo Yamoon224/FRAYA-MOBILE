@@ -186,7 +186,6 @@ class BookingFlow extends _$BookingFlow with BookingPollingMixin {
     _isCancelSubmitting = true;
     try {
       final activeRide = ref.read(activeRideControllerProvider);
-      final shouldReturnHomeAfterCancel = _isActiveRideCancellation(activeRide);
       if (_cannotCancelRide(activeRide) || _cannotCancelFlowState(state)) {
         ref.read(bookingErrorProvider.notifier).state =
             'La course ne peut plus être annulée car le chauffeur est déjà arrivé.';
@@ -208,11 +207,10 @@ class BookingFlow extends _$BookingFlow with BookingPollingMixin {
       _clearPassengerBookingSession();
       ref.read(activeRideControllerProvider.notifier).clear();
       ref.read(completedRideControllerProvider.notifier).clear();
-      state = BookingFlowState.routePreview;
-      if (shouldReturnHomeAfterCancel) {
-        state = BookingFlowState.idle;
-        _emitActiveRideCancelledHomeEvent();
-      }
+      // L'annulation quitte l'écran de réservation tout de suite, que le chauffeur soit déjà assigné ou
+      // que la recherche soit encore en cours : plus besoin d'annuler une seconde fois pour revenir.
+      state = BookingFlowState.idle;
+      _emitActiveRideCancelledHomeEvent();
     } finally {
       _isCancelSubmitting = false;
     }
@@ -270,10 +268,6 @@ class BookingFlow extends _$BookingFlow with BookingPollingMixin {
     return flowState == BookingFlowState.arrived ||
         flowState == BookingFlowState.inProgress ||
         flowState == BookingFlowState.completed;
-  }
-
-  bool _isActiveRideCancellation(ActiveRide? ride) {
-    return _isActiveRideStatus(ride?.status) || _isActiveRideFlowState(state);
   }
 
   bool _isActiveRideFlowState(BookingFlowState flowState) {

@@ -270,7 +270,7 @@ void main() {
   });
 
   test(
-    'cancelSearching on pending ride keeps route preview without home event',
+    'cancelSearching on pending ride leaves the booking screens with a home event',
     () async {
       final repository = _FakeBookingRepository();
       final container = _createStartSearchContainer(repository);
@@ -284,11 +284,8 @@ void main() {
           .cancelSearching(reason: 'Recherche annulee');
 
       expect(repository.cancelRideCalls, 1);
-      expect(
-        container.read(bookingFlowProvider),
-        BookingFlowState.routePreview,
-      );
-      expect(container.read(bookingActiveRideCancelledHomeEventProvider), 0);
+      expect(container.read(bookingFlowProvider), BookingFlowState.idle);
+      expect(container.read(bookingActiveRideCancelledHomeEventProvider), 1);
     },
   );
 
