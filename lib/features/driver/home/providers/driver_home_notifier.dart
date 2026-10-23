@@ -6,6 +6,7 @@ import 'dart:collection';
 import 'package:flutter_riverpod/legacy.dart';
 
 import 'package:flutter/foundation.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' show LatLng;
 
 import '../../../../core/realtime/realtime_events.dart';
 import '../../../../core/utils/constants.dart';
@@ -92,6 +93,7 @@ class DriverHomeNotifier extends StateNotifier<DriverHomeState>
 
   DriverRide? get activeRide => state.activeRide;
   bool get isOnline => state.isOnline;
+  LatLng? get currentLocation => state.currentDriverLocation;
   @override
   DriverHomeState withLiveStats(DriverHomeState nextState) {
     return applyArrivalDetectionToState(

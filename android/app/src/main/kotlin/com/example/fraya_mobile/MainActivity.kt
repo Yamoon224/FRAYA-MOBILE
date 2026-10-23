@@ -1,8 +1,5 @@
 package com.carrementweb.fraya_mobile
 
-import android.content.Intent
-import android.os.PowerManager
-import android.provider.Settings
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
@@ -22,19 +19,6 @@ class MainActivity : FlutterActivity() {
                 "stop" -> {
                     DriverPresenceForegroundService.stop(this)
                     result.success(null)
-                }
-                "isIgnoringBatteryOptimizations" -> {
-                    val powerManager = getSystemService(PowerManager::class.java)
-                    result.success(powerManager.isIgnoringBatteryOptimizations(packageName))
-                }
-                "openBatteryOptimizationSettings" -> {
-                    try {
-                        // Écran de liste des optimisations : aucune permission spéciale requise.
-                        startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-                        result.success(true)
-                    } catch (error: Exception) {
-                        result.success(false)
-                    }
                 }
                 else -> result.notImplemented()
             }

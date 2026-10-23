@@ -17,9 +17,7 @@ import '../../../../shared/providers/map_icons_provider.dart';
 import '../../../../shared/providers/places_provider.dart';
 import '../../../../shared/widgets/map/fraya_map.dart';
 import '../../../../core/router/route_names.dart';
-import '../../../../shared/widgets/battery_optimization_prompt.dart';
 import '../../../../shared/widgets/pin_migration_prompt.dart';
-import '../../../passenger/booking/providers/active_ride_provider.dart';
 import '../../../passenger/booking/providers/booking_flow_provider.dart';
 import '../../../passenger/map/providers/nearby_drivers_provider.dart';
 import '../providers/home_search_state_controller.dart';
@@ -157,19 +155,6 @@ class _PassengerHomeScreenState extends ConsumerState<PassengerHomeScreen>
     ref.listen(passengerLocationReadinessProvider, (prev, next) {
       if (next != PassengerLocationReadiness.loading) {
         _dismissLoader();
-      }
-    });
-
-    // Une course en cours : on propose une seule fois de laisser l'app active en arrière-plan,
-    // sinon certains téléphones la ferment et le passager rate l'arrivée du chauffeur.
-    ref.listen(activeRideControllerProvider, (previous, next) {
-      if (previous == null && next != null && mounted) {
-        unawaited(
-          maybeShowBatteryOptimizationPrompt(
-            context,
-            content: BatteryPromptContent.passenger,
-          ),
-        );
       }
     });
 
