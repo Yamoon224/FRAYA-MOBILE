@@ -11,6 +11,7 @@ import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../providers/locally_rated_rides_provider.dart';
 import 'history_ride_rating_sheet.dart';
+import '../../../../shared/widgets/cancellation_reason_note.dart';
 
 class RideHistoryTile extends ConsumerWidget {
   final Ride ride;
@@ -121,6 +122,15 @@ class RideHistoryTile extends ConsumerWidget {
               if (isCancelled && ride.keyRide != null) ...[
                 const SizedBox(height: 10),
                 _RideKeyRow(keyRide: ride.keyRide!),
+              ],
+
+              if (isCancelled) ...[
+                const SizedBox(height: 10),
+                CancellationReasonNote(
+                  cancelledBy: ride.cancelledBy,
+                  reason: ride.cancellationReason,
+                  viewer: CancellationViewer.passenger,
+                ),
               ],
 
               if (!isCancelled) ...[

@@ -11,6 +11,7 @@ import '../../../../core/utils/responsive.dart';
 import '../../../../domain/models/driver_ride.dart';
 import '../../../../domain/models/driver_ride_earnings.dart';
 import '../../../../domain/models/ride_status.dart';
+import '../../../../shared/widgets/cancellation_reason_note.dart';
 
 class DriverHistoryRideCard extends StatelessWidget {
   const DriverHistoryRideCard({
@@ -147,6 +148,14 @@ class DriverHistoryRideCard extends StatelessWidget {
               grossAmount: amount,
               isDark: isDark,
               innerBg: innerBg,
+            ),
+          ],
+          if (isCancelled) ...[
+            const SizedBox(height: 12),
+            CancellationReasonNote(
+              cancelledBy: ride.cancelledBy,
+              reason: ride.cancellationReason,
+              viewer: CancellationViewer.driver,
             ),
           ],
           const SizedBox(height: 12),

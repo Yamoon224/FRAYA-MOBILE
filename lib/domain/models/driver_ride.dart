@@ -38,6 +38,8 @@ class DriverRide {
     this.completedAt,
     this.cancelledAt,
     this.keyRide,
+    this.cancellationReason,
+    this.cancelledBy,
   });
 
   final String rideId;
@@ -50,6 +52,10 @@ class DriverRide {
   final double? driverRatingFromPassenger;
   final String? passengerCommentForDriver;
   String? get driverCommentFromPassenger => passengerCommentForDriver;
+
+  /// Motif donné par celui qui a annulé la course, et son auteur (PASSENGER, DRIVER ou SYSTEM).
+  final String? cancellationReason;
+  final String? cancelledBy;
   final String pickupAddress;
   final String destinationAddress;
   final LatLng pickupLocation;
@@ -109,6 +115,8 @@ class DriverRide {
     Object? completedAt = _sentinel,
     Object? cancelledAt = _sentinel,
     Object? keyRide = _sentinel,
+    Object? cancellationReason = _sentinel,
+    Object? cancelledBy = _sentinel,
   }) {
     return DriverRide(
       rideId: rideId ?? this.rideId,
@@ -188,6 +196,12 @@ class DriverRide {
       keyRide: identical(keyRide, _sentinel)
           ? this.keyRide
           : keyRide as String?,
+      cancellationReason: identical(cancellationReason, _sentinel)
+          ? this.cancellationReason
+          : cancellationReason as String?,
+      cancelledBy: identical(cancelledBy, _sentinel)
+          ? this.cancelledBy
+          : cancelledBy as String?,
     );
   }
 
@@ -287,6 +301,8 @@ class DriverRide {
       passengerCommentForDriver: optionalDriverRideString([
         map['commentDriver'],
       ]),
+      cancellationReason: optionalDriverRideString([map['cancellationReason']]),
+      cancelledBy: optionalDriverRideString([map['cancelledBy']]),
       pickupAddress: pickupAddress,
       destinationAddress: destinationAddress,
       pickupLocation: parseLatLng(

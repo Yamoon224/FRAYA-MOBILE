@@ -70,6 +70,10 @@ class Ride {
   /// (champ `passengerComment` de la course).
   final String? passengerCommentFromDriver;
 
+  /// Motif donné par celui qui a annulé la course, et son auteur (PASSENGER, DRIVER ou SYSTEM).
+  final String? cancellationReason;
+  final String? cancelledBy;
+
   /// Note donnee par le passager au chauffeur pour CETTE course
   /// (champ `driverRating` de la course ; 0/null = pas encore notee).
   final double? driverRatingFromPassenger;
@@ -121,6 +125,8 @@ class Ride {
     this.driverName,
     this.passengerRatingFromDriver,
     this.passengerCommentFromDriver,
+    this.cancellationReason,
+    this.cancelledBy,
     this.driverRatingFromPassenger,
     String? driverCommentFromPassenger,
     @Deprecated('Use driverCommentFromPassenger instead')
@@ -271,6 +277,8 @@ class Ride {
         map['passagerComment'],
         map['passengerComment'],
       ]),
+      cancellationReason: _firstNonEmpty([map['cancellationReason']]),
+      cancelledBy: _firstNonEmpty([map['cancelledBy']]),
       driverRatingFromPassenger: _toDouble(map['driverRating']),
       driverCommentFromPassenger: _firstNonEmpty([map['commentDriver']]),
       driverProfileRating: _toDouble(driver?['rating']),
