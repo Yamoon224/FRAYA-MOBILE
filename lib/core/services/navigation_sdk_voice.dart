@@ -9,6 +9,26 @@ import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 
 import 'navigation_voice.dart';
 
+/// Qui parle pendant le guidage.
+enum SdkVoiceMode {
+  /// Voix française lue par l'app (la voix du SDK est coupée).
+  french,
+
+  /// Voix du SDK, dans la langue du téléphone (anglais) : repli quand la voix française n'est pas installée.
+  sdkDefault,
+
+  /// Voix coupée par le conducteur.
+  off,
+}
+
+SdkVoiceMode resolveVoiceMode({
+  required bool userEnabled,
+  required bool frenchAvailable,
+}) {
+  if (!userEnabled) return SdkVoiceMode.off;
+  return frenchAvailable ? SdkVoiceMode.french : SdkVoiceMode.sdkDefault;
+}
+
 String _side(String name) {
   if (name.contains('Left')) return 'à gauche';
   if (name.contains('Right')) return 'à droite';

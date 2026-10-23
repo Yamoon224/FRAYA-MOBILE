@@ -66,7 +66,22 @@ class _DriverNavigationViewState extends State<DriverNavigationView>
 
   Future<void> _checkFrenchVoice() async {
     final available = await _speaker.checkFrench();
-    if (mounted) setState(() => _isFrenchVoiceMissing = !available);
+    if (!mounted) return;
+    setState(() => _isFrenchVoiceMissing = !available);
+    await _applyVoiceMode();
+  }
+
+  /// Voix française lue par l'app quand elle est installée ; sinon la voix du SDK (anglais) prend le relais.
+  Future<void> _applyVoiceMode() async {
+    final mode = resolveVoiceMode(
+      userEnabled: _isVoiceOn,
+      frenchAvailable: !_isFrenchVoiceMissing,
+    );
+    _voice.enabled = mode == SdkVoiceMode.french;
+    if (!_voice.enabled) unawaited(_voice.dispose());
+    await widget.starter.gateway.setSdkVoiceEnabled(
+      mode == SdkVoiceMode.sdkDefault,
+    );
   }
 
   @override
@@ -102,9 +117,8 @@ class _DriverNavigationViewState extends State<DriverNavigationView>
   Future<void> _toggleVoice() async {
     final enabled = !_isVoiceOn;
     setState(() => _isVoiceOn = enabled);
-    _voice.enabled = enabled;
-    if (!enabled) unawaited(_voice.dispose());
     await NavigationVoicePreference.save(enabled);
+    await _applyVoiceMode();
   }
 
   Future<void> _applyPadding() async {
@@ -121,6 +135,8 @@ class _DriverNavigationViewState extends State<DriverNavigationView>
     _controller = controller;
     await controller.setMyLocationEnabled(true);
     await _applyPadding();
+    // La voix à utiliser est connue avant le début du guidage : pas de silence ni d'anglais inattendu au départ.
+    await _checkFrenchVoice();
     final result = await widget.starter.start(widget.target);
     if (!mounted) return;
     if (result != NavigationSdkStartResult.started) {
@@ -132,7 +148,6 @@ class _DriverNavigationViewState extends State<DriverNavigationView>
     _navInfoSubscription = widget.starter.gateway.navInfo.listen(
       _voice.onNavInfo,
     );
-    unawaited(_checkFrenchVoice());
     _arrivalSubscription = widget.starter.gateway.onArrival.listen((_) {
       if (mounted) widget.onClose();
     });
@@ -193,7 +208,7 @@ class _DriverNavigationViewState extends State<DriverNavigationView>
                   children: [
                     const Expanded(
                       child: Text(
-                        'La voix française n\'est pas installée : la voix du guidage est coupée.',
+                        'La voix française n\'est pas installée : le guidage parle anglais.',
                         style: TextStyle(fontSize: 12.5, color: Colors.black87),
                       ),
                     ),

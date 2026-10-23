@@ -52,6 +52,36 @@ NavInfo _info(
 );
 
 void main() {
+  group('resolveVoiceMode', () {
+    test('lit en français quand la voix française est installée', () {
+      expect(
+        resolveVoiceMode(userEnabled: true, frenchAvailable: true),
+        SdkVoiceMode.french,
+      );
+    });
+
+    test('laisse la voix du SDK (anglais) quand le français est absent', () {
+      expect(
+        resolveVoiceMode(userEnabled: true, frenchAvailable: false),
+        SdkVoiceMode.sdkDefault,
+      );
+    });
+
+    test(
+      'se tait quand le conducteur a coupé la voix, quelle que soit la langue',
+      () {
+        expect(
+          resolveVoiceMode(userEnabled: false, frenchAvailable: true),
+          SdkVoiceMode.off,
+        );
+        expect(
+          resolveVoiceMode(userEnabled: false, frenchAvailable: false),
+          SdkVoiceMode.off,
+        );
+      },
+    );
+  });
+
   group('frenchManeuverPhrase', () {
     test('tourne et nomme la rue', () {
       expect(frenchManeuverPhrase(Maneuver.turnLeft), 'tournez à gauche');

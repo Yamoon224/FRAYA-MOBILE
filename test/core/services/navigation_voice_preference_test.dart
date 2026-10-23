@@ -6,8 +6,11 @@ void main() {
     expect(NavigationVoicePreference.isEnabled, isTrue);
   });
 
-  test('enregistrer le choix ne plante pas quand le stockage est indisponible', () async {
-    await NavigationVoicePreference.save(false);
-    await NavigationVoicePreference.save(true);
-  });
+  test(
+    'enregistrer le choix ne plante pas quand le stockage est indisponible',
+    () async {
+      await NavigationVoicePreference.save(false);
+      await NavigationVoicePreference.save(true);
+    },
+  );
 }

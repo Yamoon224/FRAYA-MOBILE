@@ -20,6 +20,7 @@ abstract class NavigationSdkGateway {
   Future<void> initializeSession();
   Future<NavigationSdkRouteResult> setDestination(NavigationTarget target);
   Future<void> startGuidance();
+  Future<void> setSdkVoiceEnabled(bool enabled);
   Stream<NavInfo> get navInfo;
   Stream<void> get onArrival;
   Future<void> stopAndCleanup();
@@ -42,18 +43,27 @@ class GoogleNavigationSdkGateway implements NavigationSdkGateway {
     await GoogleMapsNavigator.initializeNavigationSession(
       taskRemovedBehavior: TaskRemovedBehavior.continueService,
     );
-    // La voix du SDK suit la langue du téléphone (anglais possible) : on la coupe, la narration française
-    // est assurée par SdkFrenchVoiceGuide à partir des informations de navigation.
+    // Par défaut la voix du SDK est coupée : la narration française est lue par l'app (SdkFrenchVoiceGuide).
+    // Elle n'est rallumée que si la voix française n'est pas installée (voir setSdkVoiceEnabled).
+    await setSdkVoiceEnabled(false);
+  }
+
+  @override
+  Future<void> setSdkVoiceEnabled(bool enabled) async {
     try {
       await GoogleMapsNavigator.setAudioGuidance(
         NavigationAudioGuidanceSettings(
-          guidanceType: NavigationAudioGuidanceType.silent,
+          guidanceType: enabled
+              ? NavigationAudioGuidanceType.alertsAndGuidance
+              : NavigationAudioGuidanceType.silent,
           isBluetoothAudioEnabled: true,
           isVibrationEnabled: true,
         ),
       );
     } catch (error) {
-      _log.warning('Navigation SDK : voix du SDK non coupée : $error');
+      _log.warning(
+        'Navigation SDK : réglage de la voix du SDK impossible : $error',
+      );
     }
   }
 
