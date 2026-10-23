@@ -238,11 +238,8 @@ extension _DriverHomeScreenHelpers on _DriverHomeScreenState {
     return target.hasValidCoordinates;
   }
 
-  Future<void> _openExternalNavigation(
-    BuildContext context,
-    DriverRide ride,
-  ) async {
-    if (_isNavigationLaunchInProgress) return;
+  /// Ouvre le guidage pas à pas dans l'application ; Google Maps reste proposé depuis cet écran.
+  void _openNavigation(BuildContext context, DriverRide ride) {
     final launcher = ref.read(driverNavigationLauncherProvider);
     final target = launcher.resolveDriverTarget(ride);
     if (!target.hasValidCoordinates) {
@@ -252,27 +249,7 @@ extension _DriverHomeScreenHelpers on _DriverHomeScreenState {
       );
       return;
     }
-
-    _isNavigationLaunchInProgress = true;
-    try {
-      final opened = await launcher.openGoogleMapsDriving(
-        lat: target.latitude,
-        lng: target.longitude,
-        label: target.label,
-      );
-      if (!mounted) {
-        _isNavigationLaunchInProgress = false;
-        return;
-      }
-      if (!opened) {
-        AppSnackBar.showError(
-          this.context,
-          'Impossible d\'ouvrir Google Maps sur cet appareil.',
-        );
-      }
-    } finally {
-      _isNavigationLaunchInProgress = false;
-    }
+    context.pushNamed(RouteNames.driverNavigation, extra: target);
   }
 
   Future<void> _showRideStatusPopup({

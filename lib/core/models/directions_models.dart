@@ -45,8 +45,8 @@ class DirectionsResult {
           durationText: json['durationText']?.toString() ?? '',
           durationValue: (json['durationValue'] as num?)?.toInt() ?? 0,
           arrivalTime: json['arrivalTime']?.toString(),
-          durationInTrafficValue:
-              (json['durationInTrafficValue'] as num?)?.toInt(),
+          durationInTrafficValue: (json['durationInTrafficValue'] as num?)
+              ?.toInt(),
           trafficSegments: const [],
           hasTrafficData: false,
         ),
@@ -64,6 +64,72 @@ class DirectionsResult {
   }
 }
 
+/// Une manoeuvre du guidage pas à pas (une « step » de l'API Directions).
+class NavigationStep {
+  const NavigationStep({
+    required this.instruction,
+    required this.distanceMeters,
+    required this.durationSeconds,
+    required this.maneuver,
+    required this.start,
+    required this.end,
+    this.encodedPolyline = '',
+  });
+
+  /// Consigne en texte brut (le HTML de Google est retiré).
+  final String instruction;
+  final int distanceMeters;
+  final int durationSeconds;
+
+  /// Ex. « turn-left », « roundabout-right », « straight » ; vide pour le départ.
+  final String maneuver;
+  final LatLng start;
+  final LatLng end;
+  final String encodedPolyline;
+
+  factory NavigationStep.fromGoogleApi(Map<String, dynamic> json) {
+    LatLng location(dynamic raw) => LatLng(
+      (raw?['lat'] as num?)?.toDouble() ?? 0,
+      (raw?['lng'] as num?)?.toDouble() ?? 0,
+    );
+
+    return NavigationStep(
+      instruction: stripHtmlInstruction(
+        json['html_instructions']?.toString() ?? '',
+      ),
+      distanceMeters: (json['distance']?['value'] as num?)?.toInt() ?? 0,
+      durationSeconds: (json['duration']?['value'] as num?)?.toInt() ?? 0,
+      maneuver: json['maneuver']?.toString() ?? '',
+      start: location(json['start_location']),
+      end: location(json['end_location']),
+      encodedPolyline: json['polyline']?['points']?.toString() ?? '',
+    );
+  }
+
+  /// Points de la manoeuvre ; à défaut de tracé, la ligne droite début → fin.
+  List<LatLng> getPolylinePoints() {
+    if (encodedPolyline.isEmpty) return [start, end];
+    final decoded = PolylinePoints.decodePolyline(encodedPolyline);
+    return decoded
+        .map((point) => LatLng(point.latitude, point.longitude))
+        .toList();
+  }
+
+  /// Google renvoie du HTML (`<b>`, `<div style=…>` pour les compléments) : on garde le texte,
+  /// avec un espace à la place des blocs pour ne pas coller deux phrases.
+  static String stripHtmlInstruction(String html) {
+    return html
+        .replaceAll(RegExp(r'<(div|br|/div)[^>]*>', caseSensitive: false), ' ')
+        .replaceAll(RegExp(r'<[^>]+>'), '')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&quot;', '"')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+}
+
 class DirectionsRoute {
   const DirectionsRoute({
     required this.encodedPolyline,
@@ -75,8 +141,10 @@ class DirectionsRoute {
     required this.durationInTrafficValue,
     required this.trafficSegments,
     required this.hasTrafficData,
+    this.steps = const [],
   });
 
+  final List<NavigationStep> steps;
   final String encodedPolyline;
   final String distanceText;
   final int distanceValue;
@@ -113,10 +181,14 @@ class DirectionsRoute {
       durationText: leg?['duration']?['text']?.toString() ?? '',
       durationValue: (leg?['duration']?['value'] as num?)?.toInt() ?? 0,
       arrivalTime: leg?['duration_in_traffic']?['text']?.toString(),
-      durationInTrafficValue:
-          (leg?['duration_in_traffic']?['value'] as num?)?.toInt(),
+      durationInTrafficValue: (leg?['duration_in_traffic']?['value'] as num?)
+          ?.toInt(),
       trafficSegments: const [],
       hasTrafficData: false,
+      steps: [
+        for (final step in leg?['steps'] as List<dynamic>? ?? const [])
+          NavigationStep.fromGoogleApi(step as Map<String, dynamic>),
+      ],
     );
   }
 
@@ -134,6 +206,7 @@ class DirectionsRoute {
       durationInTrafficValue: durationInTrafficValue,
       trafficSegments: trafficSegments ?? this.trafficSegments,
       hasTrafficData: hasTrafficData ?? this.hasTrafficData,
+      steps: steps,
     );
   }
 }

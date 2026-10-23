@@ -66,6 +66,7 @@ dependencies:
   webview_flutter: ^4.10.0
   font_awesome_flutter: ^11.0.0
   audioplayers: ^6.5.0
+  wakelock_plus: ^1.5.2
 
 dev_dependencies:
   flutter_test:

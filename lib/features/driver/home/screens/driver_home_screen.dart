@@ -64,7 +64,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       DriverOfferSoundService();
   bool _hasRequestedLocation = false;
   bool _pollingPausedForIncomingRequest = false;
-  bool _isNavigationLaunchInProgress = false;
   bool _isRideMinimized = false;
   bool _showLoader = true;
   bool _loaderOpaque = true;
@@ -282,7 +281,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                           context.pushNamed(RouteNames.driverWallet);
                         },
                         onNavigationPressed: canOpenNavigation
-                            ? () => _openExternalNavigation(
+                            ? () => _openNavigation(
                                 context,
                                 homeState.activeRide!,
                               )
