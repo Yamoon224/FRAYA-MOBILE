@@ -171,4 +171,41 @@ void main() {
       },
     );
   });
+
+  group('narration en anglais (voix française absente)', () {
+    test('distances lues en anglais', () {
+      expect(spokenDistance(340, language: VoiceLanguage.en), '350 meters');
+      expect(spokenDistance(1200, language: VoiceLanguage.en), '1.2 kilometer');
+      expect(
+        spokenDistance(2500, language: VoiceLanguage.en),
+        '2.5 kilometers',
+      );
+    });
+
+    test('phrases fixes et distance annoncées en anglais', () {
+      final speaker = _FakeSpeaker();
+      final guide = NavigationVoiceGuide(speaker)..language = VoiceLanguage.en;
+      final route = _route();
+
+      guide.onProgress(route, _progress(0, 800), toPickup: false);
+      guide.announceReroute();
+      guide.onProgress(route, _progress(2, 10, arrived: true), toPickup: true);
+
+      expect(speaker.spoken, [
+        'In 800 meters, Tournez à droite sur Bd Latrille',
+        'Recalculating route',
+        'You have arrived at the passenger',
+      ]);
+    });
+
+    test(
+      'la langue de la voix et celle demandée à Directions vont ensemble',
+      () {
+        expect(VoiceLanguage.fr.ttsLocale, 'fr-FR');
+        expect(VoiceLanguage.fr.directionsLanguage, 'fr');
+        expect(VoiceLanguage.en.ttsLocale, 'en-US');
+        expect(VoiceLanguage.en.directionsLanguage, 'en');
+      },
+    );
+  });
 }

@@ -1,4 +1,5 @@
-/// Narration vocale (en français) du guidage de secours construit avec l'API Directions.
+/// Narration vocale du guidage de secours construit avec l'API Directions : en français, ou en anglais quand
+/// la voix française n'est pas installée sur le téléphone.
 library;
 
 import 'dart:math' as math;
@@ -14,34 +15,51 @@ abstract class VoiceSpeaker {
   Future<void> stop();
 }
 
+/// Langue de la voix et des consignes du guidage de secours.
+enum VoiceLanguage {
+  fr('fr-FR', 'fr'),
+  en('en-US', 'en');
+
+  const VoiceLanguage(this.ttsLocale, this.directionsLanguage);
+
+  /// Langue demandée au moteur de synthèse vocale.
+  final String ttsLocale;
+
+  /// Langue demandée à l'API Directions pour le texte des consignes.
+  final String directionsLanguage;
+}
+
 class FlutterTtsSpeaker implements VoiceSpeaker {
   FlutterTtsSpeaker() : _tts = FlutterTts();
 
   static const MethodChannel _channel = MethodChannel('fraya_mobile/tts');
 
   final FlutterTts _tts;
+  VoiceLanguage _language = VoiceLanguage.fr;
   Future<void>? _ready;
-  bool _frenchReady = false;
+  bool _languageReady = false;
 
   Future<void> _configure() async {
-    // Voix française imposée : si elle n'est pas disponible, on se tait plutôt que de lire du français
-    // avec une voix anglaise.
-    final language = await _tts.setLanguage('fr-FR');
-    _frenchReady = language == 1 || language == true;
+    final result = await _tts.setLanguage(_language.ttsLocale);
+    _languageReady = result == 1 || result == true;
     await _tts.setSpeechRate(0.5);
     await _tts.setVolume(1);
     await _tts.awaitSpeakCompletion(false);
   }
 
-  /// Vrai quand la voix française est installée et utilisable (vérifié à nouveau à chaque appel).
-  Future<bool> checkFrench() async {
+  /// Règle la langue de la voix ; vrai quand la voix de cette langue est installée et utilisable.
+  Future<bool> useLanguage(VoiceLanguage language) async {
+    _language = language;
     try {
       await (_ready = _configure());
     } catch (_) {
-      _frenchReady = false;
+      _languageReady = false;
     }
-    return _frenchReady;
+    return _languageReady;
   }
+
+  /// Vrai quand la voix française est installée (vérifié à nouveau à chaque appel).
+  Future<bool> checkFrench() => useLanguage(VoiceLanguage.fr);
 
   /// Ouvre l'installation des données vocales françaises du téléphone (Android).
   static Future<void> openFrenchVoiceInstall() async {
@@ -56,7 +74,8 @@ class FlutterTtsSpeaker implements VoiceSpeaker {
   Future<void> speak(String text) async {
     try {
       await (_ready ??= _configure());
-      if (!_frenchReady) return;
+      // Du français n'est jamais lu avec une voix anglaise ; l'anglais peut passer par la voix par défaut.
+      if (!_languageReady && _language == VoiceLanguage.fr) return;
       await _tts.stop();
       await _tts.speak(text);
     } catch (_) {
@@ -73,19 +92,71 @@ class FlutterTtsSpeaker implements VoiceSpeaker {
 }
 
 /// « 300 mètres », « 1,2 kilomètre » : distance lue à voix haute.
-String spokenDistance(double meters) {
+String spokenDistance(
+  double meters, {
+  VoiceLanguage language = VoiceLanguage.fr,
+}) {
+  final english = language == VoiceLanguage.en;
   if (meters < 1000) {
     final rounded = meters < 100
         ? (meters / 10).round() * 10
         : (meters / 50).round() * 50;
     final value = math.max(rounded, 10);
-    return '$value mètres';
+    return english ? '$value meters' : '$value mètres';
   }
   final kilometers = meters / 1000;
-  final text = kilometers
-      .toStringAsFixed(kilometers < 10 ? 1 : 0)
-      .replaceAll('.', ',');
+  final fixed = kilometers.toStringAsFixed(kilometers < 10 ? 1 : 0);
+  if (english) {
+    return kilometers < 2 ? '$fixed kilometer' : '$fixed kilometers';
+  }
+  final text = fixed.replaceAll('.', ',');
   return kilometers < 2 ? '$text kilomètre' : '$text kilomètres';
+}
+
+/// Phrases fixes de la narration dans une langue.
+class VoicePhrases {
+  const VoicePhrases._({
+    required this.reroute,
+    required this.arrivedAtPickup,
+    required this.arrivedAtDestination,
+    required this.arrivingAtPickup,
+    required this.arrivingAtDestination,
+    required this.inDistance,
+  });
+
+  final String reroute;
+  final String arrivedAtPickup;
+  final String arrivedAtDestination;
+  final String arrivingAtPickup;
+  final String arrivingAtDestination;
+  final String Function(String distance, String instruction) inDistance;
+
+  static const fr = VoicePhrases._(
+    reroute: "Recalcul de l'itinéraire",
+    arrivedAtPickup: 'Vous êtes arrivé chez le passager',
+    arrivedAtDestination: 'Vous êtes arrivé à destination',
+    arrivingAtPickup: 'vous arrivez chez le passager',
+    arrivingAtDestination: 'vous arrivez à destination',
+    inDistance: _frenchInDistance,
+  );
+
+  static const en = VoicePhrases._(
+    reroute: 'Recalculating route',
+    arrivedAtPickup: 'You have arrived at the passenger',
+    arrivedAtDestination: 'You have arrived at your destination',
+    arrivingAtPickup: 'you are arriving at the passenger',
+    arrivingAtDestination: 'you are arriving at your destination',
+    inDistance: _englishInDistance,
+  );
+
+  static VoicePhrases of(VoiceLanguage language) =>
+      language == VoiceLanguage.en ? en : fr;
+
+  static String _frenchInDistance(String distance, String instruction) =>
+      'Dans $distance, $instruction';
+
+  static String _englishInDistance(String distance, String instruction) =>
+      'In $distance, $instruction';
 }
 
 /// Décide quand lire les consignes : une annonce à distance, une à l'approche, une au virage.
@@ -100,13 +171,18 @@ class NavigationVoiceGuide {
   final Set<String> _announced = {};
   bool enabled = true;
 
+  /// Langue des phrases fixes ; le texte des consignes vient déjà de l'API Directions dans cette langue.
+  VoiceLanguage language = VoiceLanguage.fr;
+
+  VoicePhrases get _phrases => VoicePhrases.of(language);
+
   /// À appeler quand l'itinéraire change (recalcul) : les annonces repartent de zéro.
   void reset() => _announced.clear();
 
   void announceReroute() {
     if (!enabled) return;
     _announced.clear();
-    _speaker.speak("Recalcul de l'itinéraire");
+    _speaker.speak(_phrases.reroute);
   }
 
   void onProgress(
@@ -118,9 +194,7 @@ class NavigationVoiceGuide {
     if (progress.hasArrived) {
       _once(
         'arrived',
-        toPickup
-            ? 'Vous êtes arrivé chez le passager'
-            : 'Vous êtes arrivé à destination',
+        toPickup ? _phrases.arrivedAtPickup : _phrases.arrivedAtDestination,
       );
       return;
     }
@@ -130,18 +204,16 @@ class NavigationVoiceGuide {
     final next = index + 1 < steps.length ? steps[index + 1] : null;
     final instruction =
         next?.instruction ??
-        (toPickup
-            ? 'vous arrivez chez le passager'
-            : 'vous arrivez à destination');
+        (toPickup ? _phrases.arrivingAtPickup : _phrases.arrivingAtDestination);
     final distance = progress.distanceToManeuverMeters;
-    final distanceText = spokenDistance(distance);
+    final distanceText = spokenDistance(distance, language: language);
 
     if (distance <= nowAnnouncementMeters) {
       _once('now:$index', _capitalize(instruction));
     } else if (distance <= nearAnnouncementMeters) {
-      _once('near:$index', 'Dans $distanceText, $instruction');
+      _once('near:$index', _phrases.inDistance(distanceText, instruction));
     } else if (distance > farAnnouncementMeters) {
-      _once('far:$index', 'Dans $distanceText, $instruction');
+      _once('far:$index', _phrases.inDistance(distanceText, instruction));
     }
   }
 

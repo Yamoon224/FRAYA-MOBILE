@@ -56,8 +56,10 @@ class _DriverDirectionsNavigationScreenState
   bool _isMovingCamera = false;
   bool _isRerouting = false;
   bool _isVoiceOn = NavigationVoicePreference.isEnabled;
-  final NavigationVoiceGuide _voice = NavigationVoiceGuide(FlutterTtsSpeaker())
+  final FlutterTtsSpeaker _speaker = FlutterTtsSpeaker();
+  late final NavigationVoiceGuide _voice = NavigationVoiceGuide(_speaker)
     ..enabled = NavigationVoicePreference.isEnabled;
+  VoiceLanguage? _voiceLanguage;
   int _offRouteCount = 0;
   DateTime? _lastRouteRequestAt;
 
@@ -88,6 +90,18 @@ class _DriverDirectionsNavigationScreenState
 
   LatLng? get _position => ref.read(driverHomeProvider).currentDriverLocation;
 
+  /// Français si la voix française est installée, sinon anglais : le texte des consignes (API Directions) et
+  /// la voix suivent la même langue, pour ne jamais lire du français avec une voix anglaise.
+  Future<VoiceLanguage> _chooseVoiceLanguage() async {
+    final known = _voiceLanguage;
+    if (known != null) return known;
+    final french = await _speaker.checkFrench();
+    final language = french ? VoiceLanguage.fr : VoiceLanguage.en;
+    if (!french) await _speaker.useLanguage(VoiceLanguage.en);
+    _voice.language = language;
+    return _voiceLanguage = language;
+  }
+
   Future<void> _loadRoute() async {
     final origin = _position;
     if (origin == null) {
@@ -96,9 +110,14 @@ class _DriverDirectionsNavigationScreenState
     }
     _lastRouteRequestAt = DateTime.now();
     _isLoadingRoute = true;
+    final language = await _chooseVoiceLanguage();
     final result = await ref
         .read(driverHomeDirectionsServiceProvider)
-        .getDirections(origin: origin, destination: _destination);
+        .getDirections(
+          origin: origin,
+          destination: _destination,
+          language: language.directionsLanguage,
+        );
     if (!mounted) return;
 
     final route = result?.mainRoute;
