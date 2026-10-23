@@ -7,7 +7,7 @@ import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../shared/widgets/sheet_handle.dart';
 import '../providers/booking_provider.dart';
-import 'cancel_search_confirmation_dialog.dart';
+import 'active_ride/cancel_ride_sheet.dart';
 
 class SearchingDriverSheet extends ConsumerStatefulWidget {
   const SearchingDriverSheet({
@@ -149,11 +149,12 @@ class _SearchingDriverSheetState extends ConsumerState<SearchingDriverSheet>
   }
 
   Future<void> _confirmCancelSearch() async {
-    final confirmed = await showCancelSearchConfirmationDialog(context);
-    if (!mounted || !confirmed) return;
+    // Le passager choisit le motif de l'annulation ; sans choix, la recherche continue.
+    final reason = await CancelRideSheet.pickSearchReason(context);
+    if (!mounted || reason == null) return;
     await ref
         .read(bookingFlowProvider.notifier)
-        .cancelSearching(reason: 'Recherche annulée par le passager');
+        .cancelSearching(reason: reason);
   }
 }
 

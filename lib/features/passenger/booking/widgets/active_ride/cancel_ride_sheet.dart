@@ -11,7 +11,17 @@ import '../../../../../../shared/widgets/sheet_handle.dart';
 import '../../providers/booking_provider.dart';
 
 class CancelRideSheet extends ConsumerStatefulWidget {
-  const CancelRideSheet({super.key});
+  const CancelRideSheet({
+    super.key,
+    this.isSearch = false,
+    this.returnReason = false,
+  });
+
+  /// Demande encore en recherche de chauffeur (aucun chauffeur n'a accepté).
+  final bool isSearch;
+
+  /// Renvoie le motif choisi à l'appelant au lieu d'annuler directement.
+  final bool returnReason;
 
   static void show(BuildContext context) {
     showModalBottomSheet(
@@ -22,6 +32,16 @@ class CancelRideSheet extends ConsumerStatefulWidget {
     );
   }
 
+  /// Propose les motifs d'annulation d'une demande en recherche ; null si le passager garde sa recherche.
+  static Future<String?> pickSearchReason(BuildContext context) {
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const CancelRideSheet(isSearch: true, returnReason: true),
+    );
+  }
+
   @override
   ConsumerState<CancelRideSheet> createState() => _CancelRideSheetState();
 }
@@ -29,7 +49,7 @@ class CancelRideSheet extends ConsumerStatefulWidget {
 class _CancelRideSheetState extends ConsumerState<CancelRideSheet> {
   String? _selectedReason;
 
-  static const _reasons = [
+  static const _rideReasons = [
     'Attente trop longue',
     'Le chauffeur n\'avance pas',
     'J\'ai trouve un autre moyen',
@@ -37,6 +57,17 @@ class _CancelRideSheetState extends ConsumerState<CancelRideSheet> {
     'Urgence personnelle',
     'Autre',
   ];
+
+  static const _searchReasons = [
+    'Attente trop longue',
+    'Prix trop élevé',
+    'J\'ai trouve un autre moyen',
+    'Mauvaise adresse saisie',
+    'Urgence personnelle',
+    'Autre',
+  ];
+
+  List<String> get _reasons => widget.isSearch ? _searchReasons : _rideReasons;
 
   @override
   Widget build(BuildContext context) {
@@ -52,9 +83,11 @@ class _CancelRideSheetState extends ConsumerState<CancelRideSheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Pourquoi souhaitez-vous annuler cette course ?\n'
+            '${widget.isSearch ? 'Pourquoi souhaitez-vous annuler votre demande ?' : 'Pourquoi souhaitez-vous annuler cette course ?'}\n'
             'Plus de 3 annulations peuvent entraîner une suspension temporaire.',
-            style: AppTextStyles.small.copyWith(color: context.colors.textSecondary),
+            style: AppTextStyles.small.copyWith(
+              color: context.colors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -100,7 +133,7 @@ class _CancelRideSheetState extends ConsumerState<CancelRideSheet> {
             child: TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'Garder la course',
+                widget.isSearch ? 'Continuer la recherche' : 'Garder la course',
                 style: AppTextStyles.body.copyWith(
                   color: context.colors.textSecondary,
                 ),
@@ -113,6 +146,10 @@ class _CancelRideSheetState extends ConsumerState<CancelRideSheet> {
   }
 
   void _confirmCancel() {
+    if (widget.returnReason) {
+      Navigator.pop(context, _selectedReason);
+      return;
+    }
     Navigator.pop(context);
     ref
         .read(bookingFlowProvider.notifier)

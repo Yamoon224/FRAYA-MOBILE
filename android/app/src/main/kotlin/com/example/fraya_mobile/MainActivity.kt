@@ -1,10 +1,23 @@
 package com.carrementweb.fraya_mobile
 
+import android.content.Context
+import android.content.res.Configuration
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
+import java.util.Locale
 
 class MainActivity : FlutterActivity() {
+    // L'application est en français : le guidage du Navigation SDK (consignes écrites et voix) suit la langue
+    // de l'activité, pas celle du téléphone, qui peut être en anglais.
+    override fun attachBaseContext(newBase: Context) {
+        val french = Locale("fr", "FR")
+        Locale.setDefault(french)
+        val configuration = Configuration(newBase.resources.configuration)
+        configuration.setLocale(french)
+        super.attachBaseContext(newBase.createConfigurationContext(configuration))
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(

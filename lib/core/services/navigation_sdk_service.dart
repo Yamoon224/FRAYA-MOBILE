@@ -37,10 +37,23 @@ class GoogleNavigationSdkGateway implements NavigationSdkGateway {
   }
 
   @override
-  Future<void> initializeSession() =>
-      GoogleMapsNavigator.initializeNavigationSession(
-        taskRemovedBehavior: TaskRemovedBehavior.continueService,
+  Future<void> initializeSession() async {
+    await GoogleMapsNavigator.initializeNavigationSession(
+      taskRemovedBehavior: TaskRemovedBehavior.continueService,
+    );
+    // Narration vocale des consignes (en français, langue de l'application) dès le début du guidage.
+    try {
+      await GoogleMapsNavigator.setAudioGuidance(
+        NavigationAudioGuidanceSettings(
+          guidanceType: NavigationAudioGuidanceType.alertsAndGuidance,
+          isBluetoothAudioEnabled: true,
+          isVibrationEnabled: true,
+        ),
       );
+    } catch (error) {
+      _log.warning('Navigation SDK : voix non activée : $error');
+    }
+  }
 
   @override
   Future<NavigationSdkRouteResult> setDestination(

@@ -11,7 +11,11 @@
 			<string>remote-notification</string>
 		</array>
 		<key>CFBundleDevelopmentRegion</key>
-		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<string>fr</string>
+		<key>CFBundleLocalizations</key>
+		<array>
+			<string>fr</string>
+		</array>
 		<key>CFBundleDisplayName</key>
 		<string>$(APP_DISPLAY_NAME)</string>
 		<key>CFBundleExecutable</key>
