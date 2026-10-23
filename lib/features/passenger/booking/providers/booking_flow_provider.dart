@@ -290,8 +290,15 @@ class BookingFlow extends _$BookingFlow with BookingPollingMixin {
     ref.read(bookingRemoteRideCancelledEventProvider.notifier).state++;
   }
 
+  bool _refreshRequestedWhileBusy = false;
+
   Future<void> _refreshRideStatus() async {
-    if (isRefreshing || _currentUserId == null) return;
+    if (_currentUserId == null) return;
+    if (isRefreshing) {
+      // Un sondage est déjà en cours : l'événement du chauffeur ne doit pas être perdu, on relit juste après.
+      _refreshRequestedWhileBusy = true;
+      return;
+    }
     isRefreshing = true;
     try {
       final rideResult = await ref.read(getActiveRideUseCaseProvider)(
@@ -324,6 +331,10 @@ class BookingFlow extends _$BookingFlow with BookingPollingMixin {
       log.error('Erreur refreshStatus: $error');
     } finally {
       isRefreshing = false;
+      if (_refreshRequestedWhileBusy) {
+        _refreshRequestedWhileBusy = false;
+        unawaited(_refreshRideStatus());
+      }
     }
   }
 

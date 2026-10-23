@@ -16,6 +16,11 @@ class SocketIoRealtimeService implements RealtimeService {
   static const int _maxReconnectionAttempts = 8;
   static const int _reconnectionDelayMs = 1000;
   static const int _maxReconnectionDelayMs = 30000;
+  static const Map<String, String> passengerLifecycleStatuses = {
+    'ride_started': 'IN_PROGRESS',
+    'driver_arrived': 'ARRIVED',
+    'ride_completed': 'COMPLETED',
+  };
   static const _rideCancellationEvents = [
     'ride_cancelled',
     'ride_cancelled_driver',
@@ -152,12 +157,17 @@ class SocketIoRealtimeService implements RealtimeService {
       );
     }
     _attachRideCancellationHandlers(socket);
-    for (final e in ['ride_started', 'driver_arrived', 'ride_completed']) {
+    // Ces événements arrivent sans champ « status » (anciens serveurs) : le statut est déduit de leur nom,
+    // sinon ils seraient ignorés et l'écran du passager n'avancerait qu'au prochain sondage.
+    for (final entry in passengerLifecycleStatuses.entries) {
       socket.on(
-        e,
+        entry.key,
         (p) => _tryAdd(
           _passengerLifecycleController,
-          DriverRideStatusRealtimeEvent.tryParse(p),
+          DriverRideStatusRealtimeEvent.tryParse(
+            p,
+            fallbackStatus: entry.value,
+          ),
         ),
       );
     }

@@ -36,6 +36,8 @@ import '../../../../shared/widgets/pin_migration_prompt.dart';
 import '../widgets/driver_home_incoming_request_bubble.dart';
 import '../widgets/driver_home_map_stage.dart';
 import '../providers/driver_navigation_launcher_provider.dart';
+import '../providers/driver_cancellation_notice_provider.dart';
+import '../widgets/driver_cancellation_notice_banner.dart';
 import '../../navigation/widgets/driver_navigation_view.dart';
 import '../providers/driver_contact_provider.dart';
 import '../providers/driver_home_vehicle_color_provider.dart';
@@ -327,6 +329,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                                 setState(() => _isRideMinimized = false),
                           ),
                         ],
+                        const DriverCancellationNoticeBanner(),
                       ],
                     ),
                   ),

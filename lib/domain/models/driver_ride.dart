@@ -238,7 +238,8 @@ class DriverRide {
     final rawDateArrival = parseDriverRideDate(map['dateArrival']);
     final arrivedAt =
         parseDriverRideDate(
-          map['driverArrivedAt'] ??
+          map['pickupArrivedAt'] ??
+              map['driverArrivedAt'] ??
               map['arrivedAt'] ??
               map['dateDriverArrival'] ??
               map['dateArrived'],

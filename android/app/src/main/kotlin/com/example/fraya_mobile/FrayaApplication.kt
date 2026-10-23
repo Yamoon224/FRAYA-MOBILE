@@ -3,12 +3,25 @@ package com.carrementweb.fraya_mobile
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Context
+import android.content.res.Configuration
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.os.Build
 import io.flutter.app.FlutterApplication
+import java.util.Locale
 
 class FrayaApplication : FlutterApplication() {
+    // Le Navigation SDK lit la langue du contexte de l'application (et non seulement celui de l'activité) pour
+    // ses consignes écrites et sa voix : on force le français, quelle que soit la langue du téléphone.
+    override fun attachBaseContext(base: Context) {
+        val french = Locale("fr", "FR")
+        Locale.setDefault(french)
+        val configuration = Configuration(base.resources.configuration)
+        configuration.setLocale(french)
+        super.attachBaseContext(base.createConfigurationContext(configuration))
+    }
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()

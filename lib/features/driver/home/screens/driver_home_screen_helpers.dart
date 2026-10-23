@@ -89,6 +89,15 @@ extension _DriverHomeScreenHelpers on _DriverHomeScreenState {
 
         if (next.isCancelled) {
           final cancelledByDriver = next.changeActor == RideChangeActor.driver;
+          if (!locallyCancelled && !cancelledByDriver) {
+            // Le motif reste affiché à l'écran même si l'annulation a déjà été signalée sans motif.
+            ref.read(driverCancellationNoticeProvider.notifier).state =
+                DriverCancellationNotice(
+                  rideId: next.rideId,
+                  reason: DriverCancellationNotice.cleanReason(next.reason),
+                  at: DateTime.now(),
+                );
+          }
           if (locallyCancelled || cancelledByDriver || alreadyNotified) {
             _locallyCancelledRideIds.remove(next.rideId);
             return;
