@@ -42,6 +42,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // Requis par le Navigation SDK de Google tant que minSdk < 34.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -54,7 +56,8 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // OneSignal Android SDK 5.x requires Android API 23+.
-        minSdk = flutter.minSdkVersion
+        // Le Navigation SDK de Google exige l'API 24 minimum.
+        minSdk = maxOf(flutter.minSdkVersion, 24)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -119,6 +122,16 @@ android {
             )
         }
     }
+}
+
+// Le Navigation SDK embarque déjà les classes de Google Maps : sans cette exclusion, elles sont en
+// double avec play-services-maps (tiré par google_maps_flutter) et la compilation échoue.
+configurations.configureEach {
+    exclude(group = "com.google.android.gms", module = "play-services-maps")
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
 }
 
 flutter {
