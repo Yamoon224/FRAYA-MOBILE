@@ -30,6 +30,7 @@ import 'package:fraya_mobile/shared/models/auth_state.dart';
 import 'package:fraya_mobile/shared/providers/places_provider.dart';
 
 void main() {
+  _registerStaleActiveRideCheckTests();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() async {
@@ -434,4 +435,47 @@ class _TestPassengerAuthNotifier extends PassengerAuthNotifier {
     if (!mounted) return;
     state = AuthState(status: AuthStatus.unauthenticated);
   }
+}
+
+void _registerStaleActiveRideCheckTests() {
+  test(
+    'cancelSearching relance la vérification de course active pour ne plus répondre "course en cours"',
+    () async {
+      final repository = _FakeBookingRepository();
+      var checks = 0;
+      final container = ProviderContainer(
+        overrides: [
+          passengerAuthProvider.overrideWith(
+            (ref) => _TestPassengerAuthNotifier(
+              AuthState(status: AuthStatus.authenticated, userData: {'id': 7}),
+            ),
+          ),
+          activeRideCheckProvider.overrideWith((ref) async {
+            checks++;
+            // Le premier passage garde la course en mémoire, comme avant l'annulation.
+            return checks == 1
+                ? ActiveRide.mock.copyWith(status: RideStatus.accepted)
+                : null;
+          }),
+          passengerBookingRepositoryProvider.overrideWithValue(repository),
+          formattedAddressProvider.overrideWith((ref) => 'Cocody, Angre'),
+          routeDirectionsProvider.overrideWith((ref) async => null),
+          currentLocationProvider.overrideWith((ref) => const Stream.empty()),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(activeRideCheckProvider.future);
+      container
+          .read(activeRideControllerProvider.notifier)
+          .initialize(ActiveRide.mock.copyWith(status: RideStatus.accepted));
+
+      await container
+          .read(bookingFlowProvider.notifier)
+          .cancelSearching(reason: 'Course annulee');
+      await container.read(activeRideCheckProvider.future);
+
+      expect(checks, greaterThanOrEqualTo(2));
+      expect(container.read(activeRideCheckProvider).asData?.value, isNull);
+    },
+  );
 }

@@ -207,6 +207,9 @@ class BookingFlow extends _$BookingFlow with BookingPollingMixin {
       _clearPassengerBookingSession();
       ref.read(activeRideControllerProvider.notifier).clear();
       ref.read(completedRideControllerProvider.notifier).clear();
+      // La vérification de course active garde en mémoire la course annulée : sans la relancer, l'app
+      // répondrait « Vous avez déjà une course en cours » à la prochaine destination choisie.
+      ref.invalidate(activeRideCheckProvider);
       // L'annulation quitte l'écran de réservation tout de suite, que le chauffeur soit déjà assigné ou
       // que la recherche soit encore en cours : plus besoin d'annuler une seconde fois pour revenir.
       state = BookingFlowState.idle;
@@ -350,6 +353,14 @@ class BookingFlow extends _$BookingFlow with BookingPollingMixin {
     Future.microtask(hardRefreshStatus);
   }
 
+  /// Relance la vérification de course active seulement si elle garde une course en cours en mémoire
+  /// (sinon, chaque sondage relancerait une requête pour rien).
+  void _invalidateActiveRideCheckIfStale() {
+    if (ref.read(activeRideCheckProvider).asData?.value != null) {
+      ref.invalidate(activeRideCheckProvider);
+    }
+  }
+
   void _applyBackendStatus(ActiveRide backendRide) {
     final ride = _mergeWithRealtimeLocation(backendRide);
     final shouldReturnHomeForCancellation =
@@ -363,9 +374,12 @@ class BookingFlow extends _$BookingFlow with BookingPollingMixin {
       if (ride.status == RideStatus.completed) {
         ref.read(completedRideControllerProvider.notifier).initialize(ride);
         ref.read(activeRideControllerProvider.notifier).clear();
+        _invalidateActiveRideCheckIfStale();
       } else if (ride.status == RideStatus.cancelled) {
         ref.read(activeRideControllerProvider.notifier).clear();
         ref.read(completedRideControllerProvider.notifier).clear();
+        // Course annulée (par le chauffeur ou à distance) : la vérification en mémoire est périmée.
+        _invalidateActiveRideCheckIfStale();
       } else {
         ref.read(activeRideControllerProvider.notifier).initialize(ride);
         ref.read(completedRideControllerProvider.notifier).clear();
