@@ -36,6 +36,7 @@ import '../../../../shared/widgets/pin_migration_prompt.dart';
 import '../widgets/driver_home_incoming_request_bubble.dart';
 import '../widgets/driver_home_map_stage.dart';
 import '../providers/driver_navigation_launcher_provider.dart';
+import '../../navigation/widgets/driver_navigation_view.dart';
 import '../providers/driver_contact_provider.dart';
 import '../providers/driver_home_vehicle_color_provider.dart';
 import '../providers/driver_home_provider.dart';
@@ -64,10 +65,17 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   bool _hasRequestedLocation = false;
   bool _pollingPausedForIncomingRequest = false;
   bool _isRideMinimized = false;
+  // Guidage affiché dans la carte de la course, à la place de la carte d'accueil.
+  bool _isNavigating = false;
   bool _showLoader = true;
   bool _loaderOpaque = true;
   Timer? _locationRequestTimer;
   StateController<int>? _locationRequestCountController;
+  void _setNavigating(bool value) {
+    if (_isNavigating == value) return;
+    setState(() => _isNavigating = value);
+  }
+
   bool _isRideStatusDialogVisible = false;
   bool _isRideCancellationDialogVisible = false;
   bool _isArrivalPromptDialogVisible = false;
@@ -110,7 +118,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         maybeShowPinMigrationPrompt(
           context,
           onAccept: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const DriverSecurityScreen()),
+            MaterialPageRoute<void>(
+              builder: (_) => const DriverSecurityScreen(),
+            ),
           ),
         ),
       );
@@ -209,6 +219,18 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         homeState.status == DriverHomeStatus.loading;
     final isTopBarBusy = homeState.isRefreshing || isActionBusy;
     final canOpenNavigation = _canOpenNavigation(homeState.activeRide);
+    final navigationActiveRide = homeState.activeRide;
+    final navigationTarget = _isNavigating && navigationActiveRide != null
+        ? ref
+              .read(driverNavigationLauncherProvider)
+              .resolveDriverTarget(navigationActiveRide)
+        : null;
+    if (_isNavigating && navigationActiveRide == null) {
+      // Course terminée ou annulée : le guidage se ferme.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _setNavigating(false);
+      });
+    }
     final panelState = homeState.copyWith(
       availableRides: visibleIncomingRides,
       activeRide: effectiveIsRideMinimized ? null : homeState.activeRide,
@@ -225,14 +247,27 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         fit: StackFit.expand,
         children: [
           Positioned.fill(
-            child: DriverHomeMapStage(
-              bottomPadding:
-                  MediaQuery.sizeOf(context).height * mapBottomPaddingFactor,
-              driverMarkerColor: driverMarkerColor,
-              driverMarkerPosition: driverMarkerPosition,
-              driverMarkerHeading: driverMarkerHeading,
-              activeRide: homeState.activeRide,
-            ),
+            child: navigationTarget != null
+                ? DriverNavigationView(
+                    // Une autre destination (prise en charge puis arrivée) relance le guidage.
+                    key: ValueKey(
+                      '${navigationTarget.leg.name}:${navigationTarget.latitude}:${navigationTarget.longitude}',
+                    ),
+                    target: navigationTarget,
+                    bottomPadding:
+                        MediaQuery.sizeOf(context).height *
+                        mapBottomPaddingFactor,
+                    onClose: () => _setNavigating(false),
+                  )
+                : DriverHomeMapStage(
+                    bottomPadding:
+                        MediaQuery.sizeOf(context).height *
+                        mapBottomPaddingFactor,
+                    driverMarkerColor: driverMarkerColor,
+                    driverMarkerPosition: driverMarkerPosition,
+                    driverMarkerHeading: driverMarkerHeading,
+                    activeRide: homeState.activeRide,
+                  ),
           ),
           if (hasVisibleIncomingRequest)
             Positioned.fill(
@@ -244,59 +279,62 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 ),
               ),
             ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              child: context.responsiveBody(
-                Padding(
-                  padding: context.overlayPadding,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      DriverHomeTopBar(
-                        isOnline: homeState.isOnline,
-                        isBusy: isTopBarBusy,
-                        canToggleOnline: _canToggleOnline(homeState),
-                        showStatusToggle:
-                            homeState.activeRide == null ||
-                            effectiveIsRideMinimized,
-                        isNavigationEnabled: canOpenNavigation,
-                        onToggleOnline: (value) async {
-                          await ref
-                              .read(driverHomeProvider.notifier)
-                              .setOnline(value);
-                        },
-                        onMenuPressed: () {
-                          _scaffoldKey.currentState?.openDrawer();
-                        },
-                        onMoneyPressed: () {
-                          context.pushNamed(RouteNames.driverWallet);
-                        },
-                        onNavigationPressed: canOpenNavigation
-                            ? () => _openNavigation(
-                                context,
-                                homeState.activeRide!,
-                              )
-                            : null,
-                        onBackToHome: hasActiveRide
-                            ? () => setState(() => _isRideMinimized = true)
-                            : null,
-                      ),
-                      if (effectiveIsRideMinimized) ...[
-                        const SizedBox(height: 8),
-                        DriverActiveRideBanner(
-                          onTap: () => setState(() => _isRideMinimized = false),
+          if (navigationTarget == null)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: context.responsiveBody(
+                  Padding(
+                    padding: context.overlayPadding,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        DriverHomeTopBar(
+                          isOnline: homeState.isOnline,
+                          isBusy: isTopBarBusy,
+                          canToggleOnline: _canToggleOnline(homeState),
+                          showStatusToggle:
+                              homeState.activeRide == null ||
+                              effectiveIsRideMinimized,
+                          isNavigationEnabled: canOpenNavigation,
+                          onToggleOnline: (value) async {
+                            await ref
+                                .read(driverHomeProvider.notifier)
+                                .setOnline(value);
+                          },
+                          onMenuPressed: () {
+                            _scaffoldKey.currentState?.openDrawer();
+                          },
+                          onMoneyPressed: () {
+                            context.pushNamed(RouteNames.driverWallet);
+                          },
+                          onNavigationPressed: canOpenNavigation
+                              ? () => _openNavigation(
+                                  context,
+                                  homeState.activeRide!,
+                                )
+                              : null,
+                          onBackToHome: hasActiveRide
+                              ? () => setState(() => _isRideMinimized = true)
+                              : null,
                         ),
+                        if (effectiveIsRideMinimized) ...[
+                          const SizedBox(height: 8),
+                          DriverActiveRideBanner(
+                            onTap: () =>
+                                setState(() => _isRideMinimized = false),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          if (!isIncomingPopupVisible &&
+          if (navigationTarget == null &&
+              !isIncomingPopupVisible &&
               !effectiveIsRideMinimized &&
               (homeState.isOnline || hasActiveRide || homeState.isBlocked))
             Positioned(

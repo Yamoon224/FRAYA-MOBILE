@@ -31,7 +31,6 @@ abstract final class RouteNames {
   static const String driverEarnings = 'driver-earnings';
   static const String driverHistory = 'driver-history';
   static const String driverStatus = 'driver-status';
-  static const String driverNavigation = 'driver-navigation';
   static const String driverWallet = 'driver-wallet';
   static const String driverProfile = 'driver-profile';
   static const String driverSettings = 'driver-settings';
@@ -72,7 +71,6 @@ abstract final class RoutePaths {
   static const String driverEarnings = '/driver/earnings';
   static const String driverHistory = '/driver/history';
   static const String driverStatus = '/driver/status';
-  static const String driverNavigation = '/driver/navigation';
   static const String driverWallet = '/driver/wallet';
   static const String driverProfile = '/driver/profile';
   static const String driverSettings = '/driver/settings';

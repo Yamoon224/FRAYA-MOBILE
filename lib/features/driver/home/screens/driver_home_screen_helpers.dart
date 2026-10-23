@@ -238,7 +238,7 @@ extension _DriverHomeScreenHelpers on _DriverHomeScreenState {
     return target.hasValidCoordinates;
   }
 
-  /// Ouvre le guidage pas à pas dans l'application ; Google Maps reste proposé depuis cet écran.
+  /// Lance le guidage directement dans la carte de la course ; Google Maps reste proposé en secours.
   void _openNavigation(BuildContext context, DriverRide ride) {
     final launcher = ref.read(driverNavigationLauncherProvider);
     final target = launcher.resolveDriverTarget(ride);
@@ -249,7 +249,7 @@ extension _DriverHomeScreenHelpers on _DriverHomeScreenState {
       );
       return;
     }
-    context.pushNamed(RouteNames.driverNavigation, extra: target);
+    _setNavigating(true);
   }
 
   Future<void> _showRideStatusPopup({

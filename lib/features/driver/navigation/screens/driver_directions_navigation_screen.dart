@@ -13,6 +13,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../../core/models/directions_models.dart';
 import '../../../../core/services/navigation_launcher_service.dart';
 import '../../../../core/services/navigation_progress.dart';
+import '../../../../core/services/navigation_voice.dart';
 import '../../../../shared/widgets/map/fraya_map_style.dart';
 import '../../home/providers/driver_home_map_route_provider.dart';
 import '../../home/providers/driver_home_provider.dart';
@@ -26,9 +27,16 @@ const _followZoom = 17.5;
 const _followTilt = 55.0;
 
 class DriverDirectionsNavigationScreen extends ConsumerStatefulWidget {
-  const DriverDirectionsNavigationScreen({super.key, required this.target});
+  const DriverDirectionsNavigationScreen({
+    super.key,
+    required this.target,
+    this.onClose,
+  });
 
   final NavigationTarget target;
+
+  /// Fermeture demandée par l'écran qui l'héberge ; à défaut, retour à l'écran précédent.
+  final VoidCallback? onClose;
 
   @override
   ConsumerState<DriverDirectionsNavigationScreen> createState() =>
@@ -46,6 +54,8 @@ class _DriverDirectionsNavigationScreenState
   bool _isFollowing = true;
   bool _isMovingCamera = false;
   bool _isRerouting = false;
+  bool _isVoiceOn = true;
+  final NavigationVoiceGuide _voice = NavigationVoiceGuide(FlutterTtsSpeaker());
   int _offRouteCount = 0;
   DateTime? _lastRouteRequestAt;
 
@@ -62,6 +72,7 @@ class _DriverDirectionsNavigationScreenState
   @override
   void dispose() {
     unawaited(_setWakelock(false));
+    unawaited(_voice.dispose());
     super.dispose();
   }
 
@@ -106,6 +117,16 @@ class _DriverDirectionsNavigationScreenState
       _routeFailed = false;
       _offRouteCount = 0;
     });
+    // Nouvel itinéraire : les annonces vocales repartent de zéro.
+    _voice.reset();
+    final firstProgress = _progress;
+    if (firstProgress != null) {
+      _voice.onProgress(
+        route,
+        firstProgress,
+        toPickup: widget.target.leg == DriverNavigationLeg.toPickup,
+      );
+    }
     unawaited(_followCamera(origin));
   }
 
@@ -127,6 +148,11 @@ class _DriverDirectionsNavigationScreenState
 
     _offRouteCount = progress.isOffRoute ? _offRouteCount + 1 : 0;
     setState(() => _progress = progress);
+    _voice.onProgress(
+      route,
+      progress,
+      toPickup: widget.target.leg == DriverNavigationLeg.toPickup,
+    );
     if (_isFollowing) unawaited(_followCamera(next));
 
     if (_offRouteCount >= _offRouteConfirmations &&
@@ -136,6 +162,7 @@ class _DriverDirectionsNavigationScreenState
       if (last == null ||
           DateTime.now().difference(last) >= _minRerouteInterval) {
         setState(() => _isRerouting = true);
+        _voice.announceReroute();
         unawaited(_loadRoute());
       }
     }
@@ -304,7 +331,16 @@ class _DriverDirectionsNavigationScreenState
             bottom: 0,
             child: _BottomBar(
               progress: progress,
-              onClose: () => Navigator.of(context).maybePop(),
+              isVoiceOn: _isVoiceOn,
+              onToggleVoice: () {
+                setState(() {
+                  _isVoiceOn = !_isVoiceOn;
+                  _voice.enabled = _isVoiceOn;
+                });
+                if (!_isVoiceOn) unawaited(_voice.dispose());
+              },
+              onClose:
+                  widget.onClose ?? () => Navigator.of(context).maybePop(),
               onOpenGoogleMaps: _openGoogleMaps,
             ),
           ),
@@ -469,11 +505,15 @@ class _TopBanner extends StatelessWidget {
 class _BottomBar extends StatelessWidget {
   const _BottomBar({
     required this.progress,
+    required this.isVoiceOn,
+    required this.onToggleVoice,
     required this.onClose,
     required this.onOpenGoogleMaps,
   });
 
   final NavigationProgress? progress;
+  final bool isVoiceOn;
+  final VoidCallback onToggleVoice;
   final VoidCallback onClose;
   final VoidCallback onOpenGoogleMaps;
 
@@ -517,6 +557,16 @@ class _BottomBar extends StatelessWidget {
                           ),
                         ],
                       ),
+              ),
+              IconButton(
+                key: const Key('driver_navigation_voice_toggle'),
+                tooltip: isVoiceOn ? 'Couper la voix' : 'Activer la voix',
+                onPressed: onToggleVoice,
+                icon: Icon(
+                  isVoiceOn
+                      ? Icons.volume_up_rounded
+                      : Icons.volume_off_rounded,
+                ),
               ),
               IconButton(
                 key: const Key('driver_navigation_open_google_maps'),

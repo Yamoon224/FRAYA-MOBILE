@@ -15,7 +15,6 @@ import '../../features/driver/earnings/screens/driver_earnings_screen.dart';
 import '../../features/driver/history/screens/driver_history_screen.dart';
 import '../../features/driver/home/screens/driver_home_screen.dart';
 import '../../features/driver/kyc/screens/driver_kyc_screen.dart';
-import '../../features/driver/navigation/screens/driver_navigation_screen.dart';
 import '../../features/driver/profile/screens/driver_profile_screen.dart';
 import '../../features/driver/settings/screens/driver_settings_screen.dart';
 import '../../features/driver/status/screens/driver_ride_completion_screen.dart';
@@ -24,7 +23,6 @@ import '../../features/driver/vehicle/screens/driver_vehicle_entry_screen.dart';
 import '../../features/driver/wallet/screens/driver_wallet_screen.dart';
 import '../../features/driver/auth/screens/driver_wrong_account_screen.dart';
 import '../../domain/models/driver_ride.dart';
-import '../services/navigation_launcher_service.dart';
 import '../../shared/screens/forgot_password_screen.dart';
 import '../../shared/models/auth_state.dart';
 import '../../shared/widgets/fraya_skeleton.dart';
@@ -110,20 +108,6 @@ GoRouter createDriverRouter(Ref ref) {
             );
           }
           return DriverRideCompletionScreen(ride: ride);
-        },
-      ),
-      GoRoute(
-        path: RoutePaths.driverNavigation,
-        name: RouteNames.driverNavigation,
-        builder: (context, state) {
-          final target = state.extra;
-          if (target is! NavigationTarget) {
-            return const _DriverRouteErrorScreen(
-              title: 'Navigation indisponible',
-              message: 'Impossible d\'ouvrir le guidage.',
-            );
-          }
-          return DriverNavigationScreen(target: target);
         },
       ),
       GoRoute(

@@ -296,7 +296,7 @@ void main() {
   });
 
   testWidgets(
-    'opens in-app navigation to the pickup when active ride is present',
+    'starts in-map navigation to the pickup when active ride is present',
     (tester) async {
       final launcher = _FakeNavigationLauncherService();
       await _pumpHome(
@@ -317,13 +317,13 @@ void main() {
       await tester.tap(find.byIcon(Icons.navigation_rounded));
       await tester.pumpAndSettle();
 
-      expect(find.text('navigation-page:toPickup:5.4:-3.9'), findsOneWidget);
+      expect(find.text('navigation:toPickup:5.4:-3.9'), findsOneWidget);
       expect(launcher.openCalls, 0);
     },
   );
 
   testWidgets(
-    'opens in-app navigation to the destination when ride is in progress',
+    'starts in-map navigation to the destination when ride is in progress',
     (tester) async {
       final launcher = _FakeNavigationLauncherService();
       await _pumpHome(
@@ -345,7 +345,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('navigation-page:toDestination:5.32:-4.01'),
+        find.text('navigation:toDestination:5.32:-4.01'),
         findsOneWidget,
       );
       expect(launcher.openCalls, 0);
@@ -943,18 +943,6 @@ Future<FakeDriverAuthNotifier> _pumpHome(
         builder: (context, state) => const Scaffold(body: Text('status-page')),
       ),
       GoRoute(
-        path: '/navigation',
-        name: RouteNames.driverNavigation,
-        builder: (context, state) {
-          final target = state.extra as NavigationTarget;
-          return Scaffold(
-            body: Text(
-              'navigation-page:${target.leg.name}:${target.latitude}:${target.longitude}',
-            ),
-          );
-        },
-      ),
-      GoRoute(
         path: '/kyc',
         name: RouteNames.driverKyc,
         builder: (context, state) => const Scaffold(body: Text('kyc-page')),
@@ -1059,18 +1047,6 @@ Future<_HomeHarness> _pumpHomeHarness(
         path: '/driver-status',
         name: RouteNames.driverStatus,
         builder: (context, state) => const Scaffold(body: Text('status-page')),
-      ),
-      GoRoute(
-        path: '/navigation',
-        name: RouteNames.driverNavigation,
-        builder: (context, state) {
-          final target = state.extra as NavigationTarget;
-          return Scaffold(
-            body: Text(
-              'navigation-page:${target.leg.name}:${target.latitude}:${target.longitude}',
-            ),
-          );
-        },
       ),
       GoRoute(
         path: '/kyc',
