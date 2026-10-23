@@ -3,6 +3,7 @@ library;
 
 import 'dart:math' as math;
 
+import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 import '../models/directions_models.dart';
@@ -16,20 +17,46 @@ abstract class VoiceSpeaker {
 class FlutterTtsSpeaker implements VoiceSpeaker {
   FlutterTtsSpeaker() : _tts = FlutterTts();
 
+  static const MethodChannel _channel = MethodChannel('fraya_mobile/tts');
+
   final FlutterTts _tts;
   Future<void>? _ready;
+  bool _frenchReady = false;
 
   Future<void> _configure() async {
-    await _tts.setLanguage('fr-FR');
+    // Voix française imposée : si elle n'est pas disponible, on se tait plutôt que de lire du français
+    // avec une voix anglaise.
+    final language = await _tts.setLanguage('fr-FR');
+    _frenchReady = language == 1 || language == true;
     await _tts.setSpeechRate(0.5);
     await _tts.setVolume(1);
     await _tts.awaitSpeakCompletion(false);
+  }
+
+  /// Vrai quand la voix française est installée et utilisable (vérifié à nouveau à chaque appel).
+  Future<bool> checkFrench() async {
+    try {
+      await (_ready = _configure());
+    } catch (_) {
+      _frenchReady = false;
+    }
+    return _frenchReady;
+  }
+
+  /// Ouvre l'installation des données vocales françaises du téléphone (Android).
+  static Future<void> openFrenchVoiceInstall() async {
+    try {
+      await _channel.invokeMethod<void>('installFrenchVoice');
+    } catch (_) {
+      // Pas d'écran d'installation sur cet appareil : l'utilisateur passe par les réglages du téléphone.
+    }
   }
 
   @override
   Future<void> speak(String text) async {
     try {
       await (_ready ??= _configure());
+      if (!_frenchReady) return;
       await _tts.stop();
       await _tts.speak(text);
     } catch (_) {

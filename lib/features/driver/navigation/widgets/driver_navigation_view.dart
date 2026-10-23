@@ -10,6 +10,8 @@ import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 
 import '../../../../core/services/navigation_launcher_service.dart';
 import '../../../../core/services/navigation_sdk_service.dart';
+import '../../../../core/services/navigation_sdk_voice.dart';
+import '../../../../core/services/navigation_voice.dart';
 import '../../../../core/services/navigation_voice_preference.dart';
 import '../screens/driver_directions_navigation_screen.dart';
 
@@ -33,18 +35,38 @@ class DriverNavigationView extends StatefulWidget {
   State<DriverNavigationView> createState() => _DriverNavigationViewState();
 }
 
-class _DriverNavigationViewState extends State<DriverNavigationView> {
+class _DriverNavigationViewState extends State<DriverNavigationView>
+    with WidgetsBindingObserver {
   GoogleNavigationViewController? _controller;
   bool _isReady = false;
   bool _useFallback = false;
   bool _isVoiceOn = NavigationVoicePreference.isEnabled;
+  bool _isFrenchVoiceMissing = false;
   StreamSubscription<void>? _arrivalSubscription;
+  StreamSubscription<NavInfo>? _navInfoSubscription;
+  final FlutterTtsSpeaker _speaker = FlutterTtsSpeaker();
+  late final SdkFrenchVoiceGuide _voice = SdkFrenchVoiceGuide(_speaker)
+    ..enabled = NavigationVoicePreference.isEnabled;
 
   @override
   void initState() {
     super.initState();
     if (_isWidgetTestEnvironment()) return;
+    WidgetsBinding.instance.addObserver(this);
     unawaited(_prepare());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Retour de l'écran d'installation des voix : on revérifie la voix française.
+    if (state == AppLifecycleState.resumed && _isFrenchVoiceMissing) {
+      unawaited(_checkFrenchVoice());
+    }
+  }
+
+  Future<void> _checkFrenchVoice() async {
+    final available = await _speaker.checkFrench();
+    if (mounted) setState(() => _isFrenchVoiceMissing = !available);
   }
 
   @override
@@ -57,6 +79,9 @@ class _DriverNavigationViewState extends State<DriverNavigationView> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(_navInfoSubscription?.cancel());
+    unawaited(_voice.dispose());
     unawaited(_arrivalSubscription?.cancel());
     if (!_isWidgetTestEnvironment()) {
       unawaited(widget.starter.gateway.stopAndCleanup());
@@ -77,8 +102,9 @@ class _DriverNavigationViewState extends State<DriverNavigationView> {
   Future<void> _toggleVoice() async {
     final enabled = !_isVoiceOn;
     setState(() => _isVoiceOn = enabled);
+    _voice.enabled = enabled;
+    if (!enabled) unawaited(_voice.dispose());
     await NavigationVoicePreference.save(enabled);
-    await widget.starter.gateway.setVoiceEnabled(enabled);
   }
 
   Future<void> _applyPadding() async {
@@ -102,6 +128,11 @@ class _DriverNavigationViewState extends State<DriverNavigationView> {
       return;
     }
     await controller.followMyLocation(CameraPerspective.tilted);
+    // Narration en français : la voix du SDK est coupée, les consignes sont lues ici.
+    _navInfoSubscription = widget.starter.gateway.navInfo.listen(
+      _voice.onNavInfo,
+    );
+    unawaited(_checkFrenchVoice());
     _arrivalSubscription = widget.starter.gateway.onArrival.listen((_) {
       if (mounted) widget.onClose();
     });
@@ -146,6 +177,35 @@ class _DriverNavigationViewState extends State<DriverNavigationView> {
           initialNavigationUIEnabledPreference:
               NavigationUIEnabledPreference.automatic,
         ),
+        if (_isFrenchVoiceMissing)
+          Positioned(
+            left: 12,
+            right: 76,
+            bottom: widget.bottomPadding + 16,
+            child: Material(
+              key: const Key('driver_navigation_french_voice_missing'),
+              elevation: 4,
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.amber.shade100,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'La voix française n\'est pas installée : la voix du guidage est coupée.',
+                        style: TextStyle(fontSize: 12.5, color: Colors.black87),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: FlutterTtsSpeaker.openFrenchVoiceInstall,
+                      child: const Text('Installer'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         Positioned(
           right: 12,
           bottom: widget.bottomPadding + 16,

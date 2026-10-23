@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_navigation_flutter/google_navigation_flutter.dart' show NavInfo;
 import 'package:fraya_mobile/core/services/navigation_launcher_service.dart';
 import 'package:fraya_mobile/core/services/navigation_sdk_service.dart';
 
@@ -40,8 +41,7 @@ class _FakeGateway implements NavigationSdkGateway {
   Future<void> startGuidance() async => calls.add('guidance');
 
   @override
-  Future<void> setVoiceEnabled(bool enabled) async =>
-      calls.add('voice:$enabled');
+  Stream<NavInfo> get navInfo => const Stream.empty();
 
   @override
   Stream<void> get onArrival => const Stream.empty();
