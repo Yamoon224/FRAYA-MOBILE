@@ -5,12 +5,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fraya_mobile/core/config/app_config.dart';
 import 'package:fraya_mobile/core/config/app_flavor.dart';
 import 'package:fraya_mobile/core/services/passenger_contact_launcher_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fraya_mobile/data/sources/local_storage.dart';
 import 'package:fraya_mobile/domain/models/active_ride.dart';
 import 'package:fraya_mobile/features/passenger/booking/providers/passenger_contact_provider.dart';
 import 'package:fraya_mobile/features/passenger/booking/widgets/active_ride/driver_info_card.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 void main() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await LocalStorage.instance.init();
+  });
+
   setUpAll(() {
     AppConfig.instance.init(flavor: AppFlavor.dev);
   });
@@ -74,7 +81,7 @@ void main() {
     await tester.tap(
       find.byWidgetPredicate(
         (widget) =>
-            widget is FaIcon && widget.icon == FontAwesomeIcons.whatsapp,
+            widget is FaIcon && widget.icon == FontAwesomeIcons.whatsapp.data,
       ),
     );
     await tester.pumpAndSettle();

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,8 +22,15 @@ import 'package:fraya_mobile/features/passenger/profile/providers/profile_provid
 import 'package:fraya_mobile/shared/models/auth_state.dart';
 import 'package:fraya_mobile/shared/providers/special_offer_dependencies.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fraya_mobile/data/sources/local_storage.dart';
 
 void main() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await LocalStorage.instance.init();
+  });
+
   testWidgets('navigates to settings route from drawer settings item', (
     tester,
   ) async {
@@ -77,10 +85,8 @@ void main() {
     );
 
     final networkImageUrls = tester
-        .widgetList<Image>(find.byType(Image))
-        .map((image) => image.image)
-        .whereType<NetworkImage>()
-        .map((image) => image.url);
+        .widgetList<CachedNetworkImage>(find.byType(CachedNetworkImage))
+        .map((image) => image.imageUrl);
 
     expect(
       networkImageUrls,
