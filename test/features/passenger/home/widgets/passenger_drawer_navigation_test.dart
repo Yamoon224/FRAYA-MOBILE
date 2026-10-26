@@ -84,7 +84,7 @@ void main() {
 
     expect(
       networkImageUrls,
-      contains('http://83.228.247.227/profiles/passenger.jpg'),
+      contains('https://manager.frayataxi.ci/profiles/passenger.jpg'),
     );
   });
 }

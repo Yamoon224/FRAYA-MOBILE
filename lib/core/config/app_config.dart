@@ -50,22 +50,16 @@ class AppConfig {
 class Env {
   Env._();
 
-  // static const String devBaseUrl = 'http://83.228.247.227/api/v1/fraya_taxi';
-  // static const String stagingBaseUrl =
-  //     'http://83.228.247.227/api/v1/fraya_taxi';
-  // static const String prodBaseUrl = 'http://83.228.247.227/api/v1/fraya_taxi';
-
-  // static const String drivesBaseUrl = 'http://83.228.247.227/drives';
-  // static const String profilesBaseUrl = 'http://83.228.247.227/profiles';
-
-  static const String devBaseUrl = 'http://83.228.247.227/api/v1/fraya_taxi';
+  // Tout passe en HTTPS sur le domaine : l'APK n'embarque plus d'IP ni de trafic en clair.
+  static const String devBaseUrl =
+      'https://manager.frayataxi.ci/api/v1/fraya_taxi';
   static const String stagingBaseUrl =
-      'http://83.228.247.227/api/v1/fraya_taxi';
+      'https://manager.frayataxi.ci/api/v1/fraya_taxi';
   static const String prodBaseUrl =
       'https://manager.frayataxi.ci/api/v1/fraya_taxi';
 
-  static const String drivesBaseUrl = 'http://83.228.247.227/drives';
-  static const String profilesBaseUrl = 'http://83.228.247.227/profiles';
+  static const String drivesBaseUrl = 'https://manager.frayataxi.ci/drives';
+  static const String profilesBaseUrl = 'https://manager.frayataxi.ci/profiles';
 
   static String? resolveProfilePhotoUrl(String? value) {
     if (value == null || value.trim().isEmpty) return null;

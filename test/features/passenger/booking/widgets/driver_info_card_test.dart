@@ -32,7 +32,7 @@ void main() {
       find.byType(CachedNetworkImage),
     );
 
-    expect(image.imageUrl, 'http://83.228.247.227/profiles/awa.jpg');
+    expect(image.imageUrl, 'https://manager.frayataxi.ci/profiles/awa.jpg');
   });
 
   testWidgets('uses driver placeholder when photo is missing', (tester) async {
