@@ -62,6 +62,31 @@
             android:exported="false"
             android:stopWithTask="true"
             android:foregroundServiceType="location" />
+        <!-- Récepteurs OneSignal qui ne reçoivent que des diffusions système ou des PendingIntent de
+             l'app elle-même : inutile de les exposer aux autres applications. -->
+        <receiver
+            android:name="com.onesignal.notifications.receivers.BootUpReceiver"
+            android:exported="false"
+            tools:node="merge"
+            tools:replace="android:exported" />
+        <receiver
+            android:name="com.onesignal.notifications.receivers.UpgradeReceiver"
+            android:exported="false"
+            tools:node="merge"
+            tools:replace="android:exported" />
+        <receiver
+            android:name="com.onesignal.notifications.receivers.NotificationDismissReceiver"
+            android:exported="false"
+            tools:node="merge"
+            tools:replace="android:exported" />
+        <!-- Outils de diagnostic pilotés par adb (WorkManager, ProfileInstaller) : inutiles en production. -->
+        <receiver
+            android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"
+            tools:node="remove" />
+        <receiver
+            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+            tools:node="remove" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
