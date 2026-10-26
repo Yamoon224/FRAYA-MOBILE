@@ -87,6 +87,12 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  # google_navigation_flutter charge le SDK Google Maps via Swift Package Manager alors que
+  # google_maps_flutter_ios le charge via CocoaPods : deux copies du SDK, donc des milliers de
+  # symboles en double à l'édition de liens. Tout passe par CocoaPods pour n'avoir qu'une copie.
+  config:
+    enable-swift-package-manager: false
+
   assets:
     - .env
     - assets/config/
