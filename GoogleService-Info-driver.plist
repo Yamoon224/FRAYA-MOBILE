@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyD4Abl_d8PDm4JYOw9q-F2z5_eeweyB8Qk</string>
+	<key>GCM_SENDER_ID</key>
+	<string>836939608149</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.carrementweb.frayaMobile.driver</string>
+	<key>PROJECT_ID</key>
+	<string>fraya-67411</string>
+	<key>STORAGE_BUCKET</key>
+	<string>fraya-67411.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:836939608149:ios:93b4e050288ffa992424dc</string>
+</dict>
+</plist>
