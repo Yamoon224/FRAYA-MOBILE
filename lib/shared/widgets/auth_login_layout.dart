@@ -9,6 +9,29 @@ import '../../core/utils/responsive.dart';
 import 'fraya_button.dart';
 import 'fraya_text_field.dart';
 
+/// Ramène un numéro collé (« +225 07 12 34 56 78 », « 00225… ») au format local à 10 chiffres :
+/// le backend cherche le numéro exact à la connexion, sans retirer l'indicatif.
+class LocalPhoneInputFormatter extends TextInputFormatter {
+  const LocalPhoneInputFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    var digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith('00225')) digits = digits.substring(2);
+    if (digits.startsWith('225') && digits.length > 10) {
+      digits = digits.substring(3);
+    }
+    if (digits == newValue.text) return newValue;
+    return TextEditingValue(
+      text: digits,
+      selection: TextSelection.collapsed(offset: digits.length),
+    );
+  }
+}
+
 class AuthLoginLayout extends StatefulWidget {
   const AuthLoginLayout({
     super.key,
@@ -144,6 +167,7 @@ class _AuthLoginLayoutState extends State<AuthLoginLayout> {
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.telephoneNumber],
                         inputFormatters: [
+                          const LocalPhoneInputFormatter(),
                           FilteringTextInputFormatter.digitsOnly,
                           LengthLimitingTextInputFormatter(10),
                         ],

@@ -143,10 +143,12 @@ class SelectedPickup extends _$SelectedPickup {
   Future<bool> selectPlace(String placeId) async {
     final service = ref.read(placesServiceProvider);
     final details = await service.getPlaceDetails(placeId);
-    state = details?.copyWith(
+    // Échec réseau : on garde le lieu déjà choisi au lieu de l'effacer.
+    if (details == null) return false;
+    state = details.copyWith(
       address: _addressFormatter.normalize(details.address),
     );
-    return details != null;
+    return true;
   }
 
   void setPlace(PlaceDetails details) {
@@ -172,10 +174,12 @@ class SelectedDestination extends _$SelectedDestination {
   Future<bool> selectPlace(String placeId) async {
     final service = ref.read(placesServiceProvider);
     final details = await service.getPlaceDetails(placeId);
-    state = details?.copyWith(
+    // Échec réseau : on garde le lieu déjà choisi au lieu de l'effacer.
+    if (details == null) return false;
+    state = details.copyWith(
       address: _addressFormatter.normalize(details.address),
     );
-    return details != null;
+    return true;
   }
 
   void setPlace(PlaceDetails details) {

@@ -39,6 +39,7 @@ class RideHistory extends _$RideHistory {
         'FINISHED',
         'CANCELLED_PASSENGER',
         'CANCELLED_DRIVER',
+        'CANCELLED_SYSTEM',
       };
       final rides = <Ride>[];
       final ignoredStatuses = <String, int>{};

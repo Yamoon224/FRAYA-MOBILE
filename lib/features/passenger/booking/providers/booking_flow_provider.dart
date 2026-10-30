@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/realtime/socket_health_state.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../data/sources/local_storage.dart';
 import '../../../../domain/models/active_ride.dart';
@@ -227,6 +228,7 @@ class BookingFlow extends _$BookingFlow with BookingPollingMixin {
     }
     if (failure != null) throw StateError(failure.message);
     _activeRideId = result.fold((_) => '', (rideId) => rideId);
+    _rideCreatedAt = DateTime.now();
     if (_activeRideId != null && _activeRideId!.isNotEmpty) {
       _savePassengerBookingSession(_activeRideId!);
       _clearRideSearchFields();
@@ -295,6 +297,19 @@ class BookingFlow extends _$BookingFlow with BookingPollingMixin {
 
   bool _refreshRequestedWhileBusy = false;
 
+  /// Instant de création de la course suivie : la liste GET /rides/maps du backend est en cache 30 s et
+  /// peut ne pas contenir une course neuve, ce qui ne veut pas dire qu'elle est terminée.
+  DateTime? _rideCreatedAt;
+  static const _newRideListGrace = Duration(seconds: 35);
+
+  /// Temps réel connecté : les événements du chauffeur arrivent par socket, le sondage ne sert plus
+  /// que de filet de sécurité (toutes les 16 s au lieu de 4 s).
+  @override
+  int get pollEveryTicks =>
+      ref.read(realtimeHealthStateProvider) == SocketHealthState.connected
+      ? 4
+      : 1;
+
   Future<void> _refreshRideStatus() async {
     if (_currentUserId == null) return;
     if (isRefreshing) {
@@ -314,6 +329,12 @@ class BookingFlow extends _$BookingFlow with BookingPollingMixin {
       if (ride != null) {
         _applyBackendStatus(ride);
       } else if (_activeRideId != null) {
+        final createdAt = _rideCreatedAt;
+        if (createdAt != null &&
+            DateTime.now().difference(createdAt) < _newRideListGrace) {
+          // Course absente juste après sa création : liste en cache, on relit au prochain sondage.
+          return;
+        }
         final shouldReturnHome = _isActiveRideFlowState(state);
         // Plus de course active côté serveur → terminée ou annulée
         _activeRideId = null;

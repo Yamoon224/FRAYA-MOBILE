@@ -80,7 +80,15 @@ class BookingRepositoryImpl implements BookingRepository {
 
     if (rideId != null && rideId.isNotEmpty) {
       final selectedRide = _findRideById(rides, rideId);
-      if (selectedRide == null) return null;
+      if (selectedRide == null) {
+        // Liste possiblement en cache côté backend (course neuve absente) : on interroge la course active
+        // et on ne la retient que si c'est bien celle qu'on suit.
+        final active = await _getActiveRideFromEndpoint(userId);
+        if (active != null && _extractId(active) == rideId) {
+          return ActiveRide.fromMap(await _enrichWithDriverGps(active));
+        }
+        return null;
+      }
       return ActiveRide.fromMap(await _enrichWithDriverGps(selectedRide));
     }
 

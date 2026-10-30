@@ -4,7 +4,7 @@ enum RideStatus {
   arrived, // ARRIVED, DRIVER_ARRIVED, WAITING_FOR_PASSENGER
   inProgress, // ONGOING, STARTED, IN_PROGRESS, ON_TRIP, PICKED_UP
   completed, // COMPLETED, FINISHED
-  cancelled; // CANCELLED, CANCELED
+  cancelled; // CANCELLED, CANCELED, CANCELLED_PASSENGER, CANCELLED_DRIVER, CANCELLED_SYSTEM
 
   static RideStatus fromBackend(String status) {
     switch (status.toUpperCase()) {
@@ -37,6 +37,7 @@ enum RideStatus {
       case 'CANCELED':
       case 'CANCELLED_PASSENGER':
       case 'CANCELLED_DRIVER':
+      case 'CANCELLED_SYSTEM': // auto-annulation backend « Aucun chauffeur disponible »
         return RideStatus.cancelled;
       case 'CONFIRMED':
       case 'ACCEPTED':

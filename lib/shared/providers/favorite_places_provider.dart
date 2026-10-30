@@ -10,6 +10,7 @@ import '../../core/services/places_service.dart';
 import '../../features/passenger/auth/providers/passenger_auth_provider.dart';
 import '../../features/passenger/auth/providers/passenger_auth_user_id.dart';
 import '../../features/passenger/history/providers/history_provider.dart';
+import '../widgets/app_snack_bar.dart';
 import 'places_provider.dart';
 
 part 'favorite_places_provider.g.dart';
@@ -99,7 +100,15 @@ class FavoritePlacesNotifier extends _$FavoritePlacesNotifier {
       details = await _resolveFromCoordinates(service, favorite);
     }
 
-    if (details == null || !context.mounted) return;
+    if (!context.mounted) return;
+    if (details == null) {
+      // Favori sans placeId dont la résolution échoue (hors connexion) : on le dit au lieu de rester muet.
+      AppSnackBar.showError(
+        context,
+        'Impossible de retrouver ce lieu. Vérifiez votre connexion et réessayez.',
+      );
+      return;
+    }
 
     // Fermer la vue actuelle (modal ou écran favoris) avant de setter la destination,
     // pour que PassengerHomeScreen soit actif quand son listener déclenche la navigation.

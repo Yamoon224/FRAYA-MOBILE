@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/models/places_models.dart';
@@ -78,8 +79,33 @@ class PassengerHome extends _$PassengerHome {
     final readiness = ref.read(passengerLocationReadinessProvider);
     if (readiness == PassengerLocationReadiness.ready) return true;
 
-    AppSnackBar.showError(context, passengerLocationBlockingMessage(readiness));
+    final message = passengerLocationBlockingMessage(readiness);
+    if (readiness == PassengerLocationReadiness.unavailable) {
+      // Permission refusée définitivement ou GPS coupé : impossible à corriger sans passer par les réglages.
+      AppSnackBar.showErrorWithAction(
+        context,
+        message,
+        actionLabel: 'Réglages',
+        onAction: openLocationSettingsForPassenger,
+      );
+    } else {
+      AppSnackBar.showError(context, message);
+    }
     return false;
+  }
+
+  /// GPS coupé -> réglages de localisation ; GPS actif mais permission refusée -> réglages de l'application.
+  @visibleForTesting
+  static Future<void> openLocationSettingsForPassenger() async {
+    try {
+      if (await Geolocator.isLocationServiceEnabled()) {
+        await Geolocator.openAppSettings();
+      } else {
+        await Geolocator.openLocationSettings();
+      }
+    } catch (_) {
+      // Réglages indisponibles sur cet appareil : le message d'erreur reste affiché.
+    }
   }
 
   void _showError(BuildContext context) {

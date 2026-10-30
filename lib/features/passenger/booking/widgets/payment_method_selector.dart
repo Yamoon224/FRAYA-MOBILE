@@ -26,7 +26,8 @@ class PaymentMethodSelector extends StatelessWidget {
         ),
         const SizedBox(height: AppTheme.spacingSm),
         SizedBox(
-          height: 76,
+          // Hauteur suivie sur la taille de police système (libellé xs ~12 px) : évite le débordement à 130 %.
+          height: 76 + (MediaQuery.textScalerOf(context).scale(12) - 12),
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: PaymentMethod.values.map((method) {

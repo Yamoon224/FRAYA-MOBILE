@@ -27,6 +27,55 @@ abstract final class AppSnackBar {
     );
   }
 
+  /// Message d'erreur (en bas, comme `showError(atTop: false)`) avec un bouton d'action, par exemple
+  /// « Réglages » quand l'utilisateur doit corriger lui-même une permission.
+  static void showErrorWithAction(
+    BuildContext context,
+    String message, {
+    required String actionLabel,
+    required VoidCallback onAction,
+    Duration duration = const Duration(seconds: 10),
+  }) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: duration,
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          content: Row(
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          action: SnackBarAction(
+            label: actionLabel,
+            textColor: Colors.white,
+            onPressed: onAction,
+          ),
+        ),
+      );
+  }
+
   static void showSuccess(
     BuildContext context,
     String message, {
