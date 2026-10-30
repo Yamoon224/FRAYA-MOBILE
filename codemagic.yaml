@@ -62,8 +62,23 @@ workflows:
             --build-number=$BUILD_NUMBER \
             --export-options-plist=/Users/builder/export_options.plist
 
+      - name: Envoyer les dSYM à Crashlytics (passager)
+        # Sans les dSYM, Crashlytics ne peut pas lire les crashs iOS (mail « Fichier dSYM manquant »).
+        # Un échec d'envoi ne doit pas faire échouer la livraison de l'IPA.
+        ignore_failure: true
+        script: |
+          cd "$CM_BUILD_DIR"
+          ARCHIVE=build/ios/archive/Runner.xcarchive
+          UPLOADER=ios/Pods/FirebaseCrashlytics/upload-symbols
+          if [ ! -d "$ARCHIVE/dSYMs" ]; then echo "Aucun dossier dSYMs dans $ARCHIVE"; exit 1; fi
+          find "$ARCHIVE/dSYMs" -name "*.dSYM" -print0 | while IFS= read -r -d '' dsym; do
+            echo "Envoi de $dsym"
+            "$UPLOADER" -gsp ios/config/passenger/GoogleService-Info.plist -p ios "$dsym"
+          done
+
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/ios/archive/Runner.xcarchive/dSYMs/**
       - /tmp/xcodebuild_logs/*.log
 
     publishing:
@@ -129,8 +144,23 @@ workflows:
             --build-number=$BUILD_NUMBER \
             --export-options-plist=/Users/builder/export_options.plist
 
+      - name: Envoyer les dSYM à Crashlytics (chauffeur)
+        # Sans les dSYM, Crashlytics ne peut pas lire les crashs iOS (mail « Fichier dSYM manquant »).
+        # Un échec d'envoi ne doit pas faire échouer la livraison de l'IPA.
+        ignore_failure: true
+        script: |
+          cd "$CM_BUILD_DIR"
+          ARCHIVE=build/ios/archive/Runner.xcarchive
+          UPLOADER=ios/Pods/FirebaseCrashlytics/upload-symbols
+          if [ ! -d "$ARCHIVE/dSYMs" ]; then echo "Aucun dossier dSYMs dans $ARCHIVE"; exit 1; fi
+          find "$ARCHIVE/dSYMs" -name "*.dSYM" -print0 | while IFS= read -r -d '' dsym; do
+            echo "Envoi de $dsym"
+            "$UPLOADER" -gsp ios/config/driver/GoogleService-Info.plist -p ios "$dsym"
+          done
+
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/ios/archive/Runner.xcarchive/dSYMs/**
       - /tmp/xcodebuild_logs/*.log
 
     publishing:
