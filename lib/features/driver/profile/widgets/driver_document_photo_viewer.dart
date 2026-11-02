@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/utils/constants.dart';
 import '../../../../../core/utils/extensions.dart';
+import '../../../../../data/sources/local_storage.dart';
 import '../models/driver_profile_view_data.dart';
 
 class DriverDocumentPhotoViewer extends StatelessWidget {
@@ -84,13 +86,30 @@ class DriverDocumentPhotoViewer extends StatelessWidget {
         child: InteractiveViewer(
           minScale: 0.8,
           maxScale: 4.0,
-          child: CachedNetworkImage(
-            imageUrl: url,
-            fit: BoxFit.contain,
-            placeholder: (_, _) => const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+          // Les pièces du dossier chauffeur ne sont plus publiques : le serveur exige le jeton de session.
+          child: FutureBuilder<String?>(
+            future: LocalStorage.instance.getSecure(
+              AppConstants.driverAccessTokenKey,
             ),
-            errorWidget: (_, _, _) => _buildError(context),
+            builder: (ctx, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                );
+              }
+              final token = snapshot.data;
+              return CachedNetworkImage(
+                imageUrl: url,
+                httpHeaders: token == null
+                    ? null
+                    : {'Authorization': 'Bearer $token'},
+                fit: BoxFit.contain,
+                placeholder: (_, _) => const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+                errorWidget: (_, _, _) => _buildError(context),
+              );
+            },
           ),
         ),
       ),
