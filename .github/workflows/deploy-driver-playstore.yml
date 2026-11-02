@@ -29,19 +29,20 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Validate required secrets
+      - name: Check publishing secrets
+        id: check
         shell: bash
         run: |
-          set -euo pipefail
+          missing=""
           for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD PLAY_SERVICE_ACCOUNT_JSON MOBILE_ENV_FILE; do
-            if [[ -z "${!name:-}" ]]; then
-              echo "::error::Missing secret: $name. Configure it before deploying."
-              exit 1
-            fi
+            [[ -z "${!name:-}" ]] && missing="$missing $name"
           done
+          if [[ -n "$missing" ]]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Play Store publication skipped::Missing secrets:${missing}. Add them in Settings > Secrets and variables > Actions to enable automatic publishing."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -50,27 +51,36 @@ jobs:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           MOBILE_ENV_FILE: ${{ secrets.MOBILE_ENV_FILE }}
 
+      - name: Checkout
+        if: steps.check.outputs.ready == 'true'
+        uses: actions/checkout@v5
+
       - name: Setup Java
+        if: steps.check.outputs.ready == 'true'
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Setup Flutter
+        if: steps.check.outputs.ready == 'true'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
       - name: Install dependencies
+        if: steps.check.outputs.ready == 'true'
         run: flutter pub get
 
       - name: Create .env
+        if: steps.check.outputs.ready == 'true'
         run: printf '%s\n' "$MOBILE_ENV_FILE" > .env
         env:
           MOBILE_ENV_FILE: ${{ secrets.MOBILE_ENV_FILE }}
 
       - name: Decode signing keystore
+        if: steps.check.outputs.ready == 'true'
         run: |
           set -euo pipefail
           mkdir -p android/keystore
@@ -79,6 +89,7 @@ jobs:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
 
       - name: Create key.properties
+        if: steps.check.outputs.ready == 'true'
         run: |
           set -euo pipefail
           cat > android/key.properties <<EOF
@@ -93,12 +104,15 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
       - name: Bump build number from Play Store track
+        if: steps.check.outputs.ready == 'true'
         run: echo "Using versionCode from pubspec.yaml (version x.y.z+code)."
 
       - name: Build driver App Bundle (release)
+        if: steps.check.outputs.ready == 'true'
         run: flutter build appbundle --release --flavor driver -t lib/main_driver.dart
 
       - name: Upload to Play Store (internal track)
+        if: steps.check.outputs.ready == 'true'
         uses: r0adkll/upload-google-play@v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
@@ -108,7 +122,7 @@ jobs:
           status: completed
 
       - name: Remove signing material
-        if: always()
+        if: always() && steps.check.outputs.ready == 'true'
         run: |
           rm -f android/keystore/fraya-release.jks
           rm -f android/key.properties
