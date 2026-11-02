@@ -53,6 +53,17 @@ void main() {
         },
       );
 
+      // Le bouton n'est actif que si le prénom, le nom et un mot de passe à 4 chiffres sont saisis
+      // et que les conditions sont acceptées.
+      final fields = find.byType(EditableText);
+      await tester.enterText(fields.at(0), 'Awa');
+      await tester.enterText(fields.at(1), 'Kone');
+      await tester.enterText(fields.at(4), '1234');
+      await tester.enterText(fields.at(5), '1234');
+      await tester.ensureVisible(find.byType(Checkbox));
+      await tester.tap(find.byType(Checkbox));
+      await tester.pump();
+
       await tester.ensureVisible(
         find.byIcon(Icons.visibility_off_outlined).first,
       );
