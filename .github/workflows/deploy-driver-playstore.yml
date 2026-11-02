@@ -22,6 +22,9 @@ concurrency:
 jobs:
   build-and-upload:
     name: Build & upload driver AAB
+    # Seul le dépôt de l'entreprise publie sur le Play Store : un miroir ou un fork n'a pas (et ne doit pas avoir)
+    # les secrets de signature, il ignore ce workflow au lieu d'échouer sur « Missing secret ».
+    if: github.repository == 'carrementweb/fraya_mobile'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
