@@ -511,7 +511,7 @@ class _Step1Content extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Un code à 6 chiffres vous sera envoyé par SMS ou e-mail pour vérifier votre identité.',
+                  'Un code à 4 chiffres vous sera envoyé par SMS ou e-mail pour vérifier votre identité.',
                   style: AppTextStyles.xs.copyWith(
                     color: infoTextColor,
                     height: 1.5,
