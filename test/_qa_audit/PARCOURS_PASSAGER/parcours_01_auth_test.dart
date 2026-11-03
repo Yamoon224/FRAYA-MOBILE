@@ -261,15 +261,15 @@ void main() {
       expect(find.text('ACCUEIL_PASSAGER'), findsOneWidget);
     });
 
-    testWidgets('inscription : numero colle avec +225 accepte jusqu a 15 chiffres (incoherent avec la connexion)', (tester) async {
+    testWidgets('inscription : numero colle avec +225 ramene au format local a 10 chiffres (comme a la connexion)', (tester) async {
       final repo = FakePassengerAuthRepository();
       await _pumpApp(tester, _router(RoutePaths.register), repo: repo);
       await tester.enterText(find.byType(TextFormField).at(0), '+225 07 12 34 56 78');
       await tester.ensureVisible(find.text('Recevoir le code'));
       await tester.tap(find.text('Recevoir le code'));
       await tester.pumpAndSettle();
-      // Le backend normalise 225xxxxxxxxxx (13 chiffres) -> 0xxxxxxxxx ; l'inscription passe donc.
-      expect(repo.step1Calls.single.$1, '2250712345678');
+      // L'indicatif +225 est retire a la saisie : le backend recoit le numero local.
+      expect(repo.step1Calls.single.$1, '0712345678');
     });
 
     testWidgets('numero a 9 chiffres refuse a l inscription', (tester) async {

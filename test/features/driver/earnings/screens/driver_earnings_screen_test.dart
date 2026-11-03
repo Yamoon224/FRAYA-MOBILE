@@ -20,6 +20,10 @@ void main() {
     await _pumpEarnings(tester, repository);
 
     expect(find.text('Mes recettes'), findsOneWidget);
+    await _scrollToText(
+      tester,
+      'Aucune course terminée aujourd\'hui pour cette vue.',
+    );
     expect(
       find.text('Aucune course terminée aujourd\'hui pour cette vue.'),
       findsOneWidget,
@@ -72,16 +76,30 @@ void main() {
     await tester.tap(find.text('Semaine'));
     await tester.pumpAndSettle();
 
+    await _scrollToText(
+      tester,
+      'Aucune course terminée sur les 7 derniers jours.',
+    );
     expect(
       find.text('Aucune course terminée sur les 7 derniers jours.'),
       findsOneWidget,
     );
 
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, 360));
-    await tester.pump();
+    // Dans la feuille déplaçable, le geste « tirer vers le bas » replie la feuille
+    // au lieu d'armer le RefreshIndicator : on déclenche donc son rafraîchissement
+    // directement, ce qui exécute le même onRefresh.
+    // Sans await : show() ne rend la main qu'à la fin du rafraîchissement, qui
+    // avance avec pumpAndSettle.
+    tester
+        .state<RefreshIndicatorState>(find.byType(RefreshIndicator))
+        .show();
     await tester.pumpAndSettle();
 
     expect(repository.historyRidesCalls, 2);
+    await _scrollToText(
+      tester,
+      'Aucune course terminée aujourd\'hui pour cette vue.',
+    );
     expect(
       find.text('Aucune course terminée aujourd\'hui pour cette vue.'),
       findsOneWidget,
@@ -131,6 +149,10 @@ void main() {
     await tester.tap(find.byIcon(Icons.file_download_outlined));
     await tester.pumpAndSettle();
 
+    await _scrollToText(
+      tester,
+      'Aucune course terminée à exporter sur cette période.',
+    );
     expect(
       find.text('Aucune course terminée à exporter sur cette période.'),
       findsOneWidget,
@@ -185,6 +207,17 @@ Future<void> _pumpEarnings(
       overrides: [driverRideRepositoryProvider.overrideWithValue(repository)],
       child: const MaterialApp(home: DriverEarningsScreen()),
     ),
+  );
+  await tester.pumpAndSettle();
+}
+
+// Le message vide est sous les cartes de synthèse : hors écran dans la feuille
+// (liste paresseuse), on fait donc défiler jusqu'à lui.
+Future<void> _scrollToText(WidgetTester tester, String text) async {
+  await tester.scrollUntilVisible(
+    find.text(text),
+    200,
+    scrollable: find.byType(Scrollable).first,
   );
   await tester.pumpAndSettle();
 }

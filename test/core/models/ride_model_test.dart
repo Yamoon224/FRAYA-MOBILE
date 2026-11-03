@@ -15,7 +15,8 @@ void main() {
       });
 
       expect(ride.departureAddress, 'Riviera Palmeraie, Cocody');
-      expect(ride.arrivalAddress, 'Plateau, Abidjan');
+      // Abidjan est redondant derrière une commune précise : le formateur le retire.
+      expect(ride.arrivalAddress, 'Plateau');
     });
 
     test('uses backend history timestamps and received passenger comment', () {

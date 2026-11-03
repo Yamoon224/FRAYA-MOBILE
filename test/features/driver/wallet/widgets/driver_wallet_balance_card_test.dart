@@ -22,7 +22,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Solde de credit'), findsOneWidget);
+    expect(find.text('Solde de crédit'), findsOneWidget);
     expect(find.text('Recharger'), findsOneWidget);
     expect(find.text('Retirer'), findsNothing);
     expect(tester.takeException(), isNull);

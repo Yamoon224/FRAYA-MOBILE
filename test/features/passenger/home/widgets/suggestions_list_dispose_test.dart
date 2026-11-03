@@ -150,7 +150,7 @@ void main() {
     expect(title.style?.fontSize, 13);
     expect(title.style?.fontWeight, FontWeight.w700);
     expect(subtitle.style?.fontSize, 11);
-    expect(subtitle.style?.fontWeight, FontWeight.w500);
+    expect(subtitle.style?.fontWeight, FontWeight.w400);
     expect(leading.size, 20);
     expect(star.size, 20);
     expect(tester.takeException(), isNull);

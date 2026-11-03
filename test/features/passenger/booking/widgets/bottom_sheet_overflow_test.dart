@@ -75,6 +75,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // Sur 320x640 la liste des motifs défile sous l'en-tête : on l'amène
+    // d'abord dans la zone visible.
+    await tester.ensureVisible(find.text('Attente trop longue'));
+    await tester.pump();
     await tester.tap(find.text('Attente trop longue'));
     await tester.pump();
     await tester.tap(find.text('Confirmer l\'annulation'));

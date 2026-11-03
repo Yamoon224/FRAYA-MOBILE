@@ -27,10 +27,12 @@ enum RideStatus {
       case 'TRIP_IN_PROGRESS':
       case 'ON_TRIP':
       case 'PICKED_UP':
+      case 'SOS': // alerte déclenchée pendant la course : elle reste en cours
         return RideStatus.inProgress;
       case 'DONE':
       case 'COMPLETED':
       case 'FINISHED':
+      case 'DISPUTE': // course terminée puis contestée (le support la repasse en COMPLETED)
         return RideStatus.completed;
       case 'ABORTED':
       case 'CANCELLED':

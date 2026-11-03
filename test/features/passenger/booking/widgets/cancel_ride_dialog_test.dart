@@ -54,7 +54,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Annuler la course ?'), findsOneWidget);
-      _expectAbove(tester, find.text('Annuler'), find.text('Garder la course'));
+      _expectAbove(tester, find.text('Annuler la course'), find.text('Garder la course'));
 
       await tester.tap(find.widgetWithText(OutlinedButton, 'Garder la course'));
       await tester.pumpAndSettle();
@@ -82,7 +82,7 @@ void main() {
 
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Annuler'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Annuler la course'));
     await tester.pumpAndSettle();
 
     expect(_ResettableBookingFlow.resetCalled, isTrue);

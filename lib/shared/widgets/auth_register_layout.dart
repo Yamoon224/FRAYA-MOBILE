@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/theme/app_theme.dart';
 import 'fraya_button.dart';
+import 'auth_login_layout.dart' show LocalPhoneInputFormatter;
 import 'fraya_text_field.dart';
 import 'legal_document_dialog.dart';
 import 'settings/legal_content.dart';
@@ -203,7 +204,8 @@ class _AuthRegisterLayoutState extends State<AuthRegisterLayout> {
                   keyboardType: TextInputType.phone,
                   isRequired: true,
                   inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
+                    // Retire l'indicatif +225 collé, comme à la connexion.
+                    const LocalPhoneInputFormatter(),
                     LengthLimitingTextInputFormatter(10),
                   ],
                   validator: (value) => value == null || value.length < 10

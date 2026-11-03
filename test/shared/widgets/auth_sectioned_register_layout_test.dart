@@ -10,7 +10,7 @@ void main() {
     ) async {
       await _pumpLayout(tester, step: AuthRegisterFlowStep.contact);
 
-      expect(find.text('Numero de telephone'), findsOneWidget);
+      expect(find.text('Numéro de téléphone'), findsOneWidget);
       expect(find.text('Email (optionnel)'), findsOneWidget);
       expect(find.text('Recevoir le code'), findsOneWidget);
     });

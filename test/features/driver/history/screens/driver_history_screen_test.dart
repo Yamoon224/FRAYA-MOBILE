@@ -89,7 +89,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('driver-history-tab-1')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Filtrer par date'), findsOneWidget);
+    expect(find.text('Période personnalisée'), findsOneWidget);
 
     await tester.drag(find.byType(Scrollable).first, const Offset(0, 360));
     await tester.pump();
@@ -97,7 +97,7 @@ void main() {
 
     expect(repository.historyRidesCalls, 2);
     expect(find.textContaining('Aucune course termin'), findsOneWidget);
-    expect(find.text('Filtrer par date'), findsNothing);
+    expect(find.text('Période personnalisée'), findsNothing);
   });
 
   testWidgets('stays responsive on narrow screens with long card content', (

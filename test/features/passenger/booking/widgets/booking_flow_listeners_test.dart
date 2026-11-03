@@ -329,7 +329,7 @@ void main() {
 
       expect(find.text('Course annulée'), findsOneWidget);
       expect(find.text('Votre chauffeur a annulé la course.'), findsOneWidget);
-      expect(find.text('Redirection automatique dans 10 s'), findsOneWidget);
+      expect(find.text('Redirection dans 10 s'), findsOneWidget);
       expect(find.byType(ConfirmationActionColumn), findsOneWidget);
       expect(find.text('Rechercher un chauffeur'), findsOneWidget);
       expect(find.text("Revenir à l'accueil"), findsOneWidget);

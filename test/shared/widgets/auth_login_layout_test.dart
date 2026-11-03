@@ -91,6 +91,10 @@ void main() {
         },
       );
 
+      // Le formulaire est validé avant l'appel : on saisit des identifiants valides.
+      final fields = find.byType(EditableText);
+      await tester.enterText(fields.first, '0565855202');
+      await tester.enterText(fields.last, '1234');
       await tester.tap(find.byIcon(Icons.visibility_off_outlined));
       await tester.pump();
       await tester.tap(find.text('Se connecter'));

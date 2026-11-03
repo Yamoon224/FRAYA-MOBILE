@@ -12,6 +12,18 @@ class FakeDriverRideRemoteDataSource extends DriverRideRemoteDataSource {
   Future<List<Map<String, dynamic>>> getAllRides() async => rides;
 
   @override
+  Future<Map<String, dynamic>?> getActiveRideForDriver(int driverId) async {
+    // Le serveur filtre déjà par chauffeur (/driver/:id/active) ; on simule ce filtre.
+    for (final ride in rides) {
+      if (ride['driverId'] == driverId) {
+        final status = ride['status'];
+        if (status != 'PENDING') return ride;
+      }
+    }
+    return null;
+  }
+
+  @override
   Future<List<Map<String, dynamic>>> getAvailableRides({
     required double lat,
     required double lng,

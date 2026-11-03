@@ -167,12 +167,16 @@ void main() {
         isOnline: true,
         canGoOnline: true,
       ),
+      settle: false,
     );
 
     final loadingSwitch = tester.widget<CupertinoSwitch>(
       find.byType(CupertinoSwitch),
     );
     expect(loadingSwitch.onChanged, isNull);
+
+    // Démonte l'écran en chargement (spinner infini) avant le second cas.
+    await tester.pumpWidget(const SizedBox());
 
     await _pumpHome(
       tester,
@@ -181,8 +185,8 @@ void main() {
         status: DriverHomeStatus.ready,
         isOnline: true,
         canGoOnline: true,
+        // Le sélecteur est masqué pendant une course : on teste sans course.
         isSubmittingAction: true,
-        activeRide: buildDriverRide(id: '202', status: RideStatus.accepted),
       ),
     );
 
@@ -289,6 +293,17 @@ void main() {
     await tester.tap(find.byIcon(Icons.menu_rounded));
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('connexion'));
+    await tester.pumpAndSettle();
+
+    // La déconnexion passe désormais par une confirmation.
+    expect(find.text('Se déconnecter ?'), findsOneWidget);
+    expect(authNotifier.logoutCalls, 0);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Déconnexion'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(authNotifier.logoutCalls, 1);
@@ -434,7 +449,8 @@ void main() {
       await tester.tap(
         find.byWidgetPredicate(
           (widget) =>
-              widget is FaIcon && widget.icon == FontAwesomeIcons.whatsapp,
+              widget is FaIcon &&
+              widget.icon == FontAwesomeIcons.whatsapp.data,
         ),
       );
       await tester.pumpAndSettle();
@@ -565,7 +581,7 @@ void main() {
 
       expect(find.text('Êtes-vous arrivé à destination ?'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(FilledButton, 'OK, je suis arrivé'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Oui, je suis arrivé'));
       await tester.pumpAndSettle();
 
       expect(find.text('status-page'), findsOneWidget);
@@ -667,7 +683,7 @@ void main() {
 
       expect(find.text('Course annulée'), findsOneWidget);
       expect(find.textContaining('Motif : Client a annule'), findsOneWidget);
-      expect(find.text('Redirection automatique dans 10 s'), findsOneWidget);
+      expect(find.text('Redirection dans 10 s'), findsOneWidget);
       expect(find.byType(ConfirmationActionColumn), findsOneWidget);
       expect(find.text('J\'ai compris'), findsOneWidget);
       expect(harness.homeNotifier.state.activeRide, isNull);
@@ -765,6 +781,9 @@ void main() {
     expect(harness.homeNotifier.state.ignoredIncomingRideIds, [
       'ride-declined-popup',
     ]);
+
+    // Le refus relance le polling : on l'arrête pour ne laisser aucun timer.
+    harness.homeNotifier.stopPolling();
   });
 
   testWidgets(
@@ -789,8 +808,10 @@ void main() {
       harness.homeNotifier.syncUserData(_approvedAuthState.userData);
       harness.homeNotifier.repository.availableRides = [firstRide, secondRide];
 
+      // La bulle n'affiche qu'une demande à la fois, avec le nombre en attente.
       expect(find.text('Premier passager'), findsOneWidget);
-      expect(find.text('Second passager'), findsOneWidget);
+      expect(find.text('Second passager'), findsNothing);
+      expect(find.text('2 demandes attendent votre reponse.'), findsOneWidget);
 
       await tester.tap(find.text('Refuser').first);
       await tester.pumpAndSettle();
@@ -801,11 +822,9 @@ void main() {
         'ride-list-1',
       ]);
 
-      harness.homeNotifier.setTestState(
-        harness.homeNotifier.state.copyWith(
-          availableRides: [firstRide, secondRide],
-        ),
-      );
+      // Le filtrage des demandes ignorées se fait au chargement : on simule
+      // un rafraîchissement qui renvoie encore la demande refusée.
+      await harness.homeNotifier.refreshHome();
       await tester.pumpAndSettle();
 
       expect(find.text('Premier passager'), findsNothing);
@@ -875,11 +894,22 @@ void main() {
         ),
       );
 
+      // Le padding de zone sûre est interne au panneau (sous la poignée), pas
+      // sur le conteneur : on le cherche parmi ses descendants.
       final panel = tester.widget<Container>(
         find.byKey(driverHomeBottomPanelSurfaceKey),
       );
-      final padding = panel.padding! as EdgeInsets;
-      expect(padding.bottom, closeTo(42, 0.01));
+      expect(panel.padding, isNull);
+      final paddings = tester
+          .widgetList<Padding>(
+            find.descendant(
+              of: find.byKey(driverHomeBottomPanelSurfaceKey),
+              matching: find.byType(Padding),
+            ),
+          )
+          .map((p) => p.padding)
+          .whereType<EdgeInsets>();
+      expect(paddings.any((p) => (p.bottom - 42).abs() < 0.01), isTrue);
 
       final screenBottom = tester.getSize(find.byType(Scaffold)).height;
       final panelBottom = tester
@@ -897,6 +927,9 @@ Future<FakeDriverAuthNotifier> _pumpHome(
   NavigationLauncherService? navigationLauncher,
   PassengerContactLauncherService? contactLauncher,
   MediaQueryData? mediaQueryData,
+  // Le loader de démarrage affiche un spinner infini tant que l'état est
+  // « loading » : pumpAndSettle ne se termine alors jamais.
+  bool settle = true,
 }) async {
   SharedPreferences.setMockInitialValues({});
   await LocalStorage.instance.init();
@@ -986,7 +1019,11 @@ Future<FakeDriverAuthNotifier> _pumpHome(
       child: app,
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump(const Duration(seconds: 1));
+  }
   return authNotifier;
 }
 

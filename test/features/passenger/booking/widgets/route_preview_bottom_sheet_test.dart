@@ -9,7 +9,7 @@ import 'package:fraya_mobile/features/passenger/booking/widgets/route_preview_bo
 import 'package:fraya_mobile/features/passenger/map/providers/nearby_drivers_provider.dart';
 
 void main() {
-  testWidgets('keeps active ride bottom sheet at a fixed height', (
+  testWidgets('active ride bottom sheet opens at its default height and stays draggable', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -46,14 +46,16 @@ void main() {
     final sheet = tester.widget<DraggableScrollableSheet>(
       find.byType(DraggableScrollableSheet),
     );
+    // La feuille s'ouvre à 0.46 mais le passager peut la réduire ou l'agrandir.
     expect(sheet.initialChildSize, 0.46);
-    expect(sheet.minChildSize, 0.46);
-    expect(sheet.maxChildSize, 0.46);
-    expect(sheet.snap, isFalse);
+    expect(sheet.minChildSize, 0.2);
+    expect(sheet.maxChildSize, 0.92);
+    expect(sheet.snap, isTrue);
+    expect(sheet.snapSizes, [0.46]);
   });
 
   testWidgets(
-    'searching driver sheet hugs content instead of using a draggable height',
+    'searching driver sheet is draggable and snaps to its default height',
     (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -86,7 +88,13 @@ void main() {
       );
 
       expect(find.text('Recherche en cours...'), findsOneWidget);
-      expect(find.byType(DraggableScrollableSheet), findsNothing);
+      final sheet = tester.widget<DraggableScrollableSheet>(
+        find.byType(DraggableScrollableSheet),
+      );
+      expect(sheet.initialChildSize, 0.44);
+      expect(sheet.minChildSize, 0.2);
+      expect(sheet.snap, isTrue);
+      expect(sheet.snapSizes, [0.44]);
     },
   );
 
@@ -126,7 +134,7 @@ void main() {
     final sheet = tester.widget<DraggableScrollableSheet>(
       find.byType(DraggableScrollableSheet),
     );
-    expect(sheet.initialChildSize, 0.35);
+    expect(sheet.initialChildSize, 0.55);
     expect(sheet.snap, isTrue);
     expect(find.byType(ActiveRideSheet), findsNothing);
   });

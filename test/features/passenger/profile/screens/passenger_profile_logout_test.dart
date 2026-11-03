@@ -51,7 +51,7 @@ void main() {
     expect(authNotifier.logoutCalls, 1);
   });
 
-  testWidgets('profile promotions menu shows active passenger offer count', (
+  testWidgets('profile promotions menu stays hidden even with active passenger offers', (
     tester,
   ) async {
     final authNotifier = _PassengerAuthNotifierFake(
@@ -72,10 +72,12 @@ void main() {
       ],
     );
 
-    await tester.scrollUntilVisible(find.text('Offres & Promotions'), 300);
+    // L'entrée « Offres & Promotions » est volontairement masquée du profil
+    // passager : même avec des offres actives, ni menu ni badge.
+    await tester.scrollUntilVisible(find.text('Déconnexion'), 300);
 
-    expect(find.text('Offres & Promotions'), findsOneWidget);
-    expect(_badgeText('2'), findsOneWidget);
+    expect(find.text('Offres & Promotions'), findsNothing);
+    expect(_badgeText('2'), findsNothing);
   });
 
   testWidgets('profile promotions menu hides badge when no passenger offer', (
@@ -97,9 +99,9 @@ void main() {
       ],
     );
 
-    await tester.scrollUntilVisible(find.text('Offres & Promotions'), 300);
+    await tester.scrollUntilVisible(find.text('Déconnexion'), 300);
 
-    expect(find.text('Offres & Promotions'), findsOneWidget);
+    expect(find.text('Offres & Promotions'), findsNothing);
     expect(_badgeText('0'), findsNothing);
     expect(_badgeText('3'), findsNothing);
   });

@@ -20,6 +20,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(find.text('Supprimer mon compte'), 300);
+    // « Visible » peut vouloir dire collé au bord de l'écran de test (800x600) : on
+    // amène le bouton au centre pour que le tap l'atteigne vraiment.
+    await tester.ensureVisible(find.text('Supprimer mon compte'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Supprimer mon compte'));
     await tester.pumpAndSettle();
 

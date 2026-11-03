@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'auth_login_layout.dart' show LocalPhoneInputFormatter;
 import 'auth_register_section_widgets.dart';
 import 'fraya_button.dart';
 import 'fraya_text_field.dart';
@@ -43,8 +44,9 @@ class _AuthRegisterContactStepState extends State<AuthRegisterContactStep> {
             keyboardType: TextInputType.phone,
             isRequired: true,
             inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(15),
+              // Retire l'indicatif +225 collé, comme à la connexion.
+              const LocalPhoneInputFormatter(),
+              LengthLimitingTextInputFormatter(10),
             ],
             validator: (value) => value == null || value.trim().length < 10
                 ? 'Numéro invalide'

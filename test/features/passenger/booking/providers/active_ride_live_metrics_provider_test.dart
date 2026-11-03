@@ -13,7 +13,7 @@ import 'package:fraya_mobile/shared/providers/realtime_providers.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() {
-  test('uses backend metrics when socket is offline', () async {
+  test('uses approximate metrics when socket is offline', () async {
     final directions = _FakeDirectionsRepository();
     final container = ProviderContainer(
       overrides: [directionsRepositoryProvider.overrideWithValue(directions)],
@@ -34,9 +34,11 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     final metrics = container.read(activeRideLiveMetricsControllerProvider);
-    expect(metrics.source, ActiveRideLiveMetricsSource.backend);
-    expect(metrics.etaText, '12 min');
-    expect(metrics.distanceText, '5.5 km');
+    // En course, sans temps réel, l'estimation vient de la position du
+    // chauffeur vers la destination (et non plus des valeurs du backend).
+    expect(metrics.source, ActiveRideLiveMetricsSource.approximate);
+    expect(metrics.etaText, '9 min');
+    expect(metrics.distanceText, '3.5 km');
     expect(directions.callCount, 0);
   });
 
@@ -151,7 +153,7 @@ void main() {
     },
   );
 
-  test('falls back to backend metrics when directions lookup fails', () async {
+  test('falls back to approximate metrics when directions lookup fails', () async {
     final directions = _FakeDirectionsRepository(route: null);
     final container = ProviderContainer(
       overrides: [directionsRepositoryProvider.overrideWithValue(directions)],
@@ -174,9 +176,10 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     final metrics = container.read(activeRideLiveMetricsControllerProvider);
-    expect(metrics.source, ActiveRideLiveMetricsSource.backend);
-    expect(metrics.etaText, '10 min');
-    expect(metrics.distanceText, '4.7 km');
+    // Itinéraire indisponible : repli sur l'estimation à vol d'oiseau en course.
+    expect(metrics.source, ActiveRideLiveMetricsSource.approximate);
+    expect(metrics.etaText, '9 min');
+    expect(metrics.distanceText, '3.5 km');
   });
 
   test(

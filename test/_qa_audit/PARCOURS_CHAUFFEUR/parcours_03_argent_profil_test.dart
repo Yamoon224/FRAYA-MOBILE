@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fraya_mobile/core/error/exceptions.dart';
 import 'package:fraya_mobile/core/realtime/realtime_events.dart';
+import 'package:fraya_mobile/core/realtime/socket_io_realtime_service.dart';
 import 'package:fraya_mobile/core/utils/extensions.dart';
 import 'package:fraya_mobile/data/repositories/driver_ride_repository_impl.dart';
 import 'package:fraya_mobile/data/sources/local_storage.dart';
@@ -217,7 +218,7 @@ void main() {
         'message': 'La course est terminée. Bravo pour cette course !',
         'rideDetails': {'id': 9, 'finalPrice': 3500, 'commissionPrice': 525},
         'timestamp': DateTime.now().toIso8601String(),
-      });
+      }, fallbackStatus: SocketIoRealtimeService.driverLifecycleStatuses['ride_completed_driver']);
       final cancelled = DriverRideStatusRealtimeEvent.tryParse({
         'rideId': 9,
         'cancelledBy': 'PASSENGER',

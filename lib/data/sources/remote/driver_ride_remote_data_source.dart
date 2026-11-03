@@ -11,10 +11,27 @@ class DriverRideRemoteDataSource {
 
   final Dio _dio;
 
+  static const int _historyPageSize = 100;
+  // Garde-fou contre une méta incohérente (5000 courses au maximum).
+  static const int _maxHistoryPages = 50;
+
   Future<List<Map<String, dynamic>>> getAllRides() async {
     try {
-      final response = await _dio.get('/rides/maps');
-      return _extractRides(response: response);
+      // GET /rides/maps est paginé (20 par défaut) : sans parcourir les pages,
+      // l'historique et les gains s'arrêtaient aux 20 dernières courses.
+      final rides = <Map<String, dynamic>>[];
+      var page = 1;
+      var totalPages = 1;
+      do {
+        final response = await _dio.get(
+          '/rides/maps',
+          queryParameters: {'page': page, 'limit': _historyPageSize},
+        );
+        rides.addAll(_extractRides(response: response));
+        totalPages = _extractTotalPages(response.data);
+        page++;
+      } while (page <= totalPages && page <= _maxHistoryPages);
+      return rides;
     } on DioException catch (error) {
       ApiClient.handleDioError(error);
     } catch (error) {
@@ -32,7 +49,12 @@ class DriverRideRemoteDataSource {
     try {
       final response = await _dio.get(
         '/rides/maps/available',
-        queryParameters: {'lat': lat, 'lng': lng, 'radius': radiusKm},
+        // Le backend lit radiusMeters (mètres) ; « radius » en km était ignoré.
+        queryParameters: {
+          'lat': lat,
+          'lng': lng,
+          'radiusMeters': (radiusKm * 1000).round(),
+        },
       );
       return _extractRides(response: response);
     } on DioException catch (error) {
@@ -202,6 +224,13 @@ class DriverRideRemoteDataSource {
       return [map];
     }
     return const [];
+  }
+
+  int _extractTotalPages(dynamic data) {
+    if (data is! Map) return 1;
+    final meta = data['meta'];
+    if (meta is! Map) return 1;
+    return int.tryParse('${meta['totalPages']}') ?? 1;
   }
 
   List<Map<String, dynamic>> _extractRides({

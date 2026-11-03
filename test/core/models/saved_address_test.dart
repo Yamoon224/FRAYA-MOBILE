@@ -23,7 +23,8 @@ void main() {
     expect(restored.label, 'Salle de sport');
     expect(restored.type, SavedAddressType.custom);
     expect(restored.iconKey, 'gym');
-    expect(restored.place.address, 'Cocody, Abidjan');
+    // Abidjan est redondant derrière une commune précise : le formateur le retire.
+    expect(restored.place.address, 'Cocody');
   });
 
   test('SavedAddress keeps backward compatibility when iconKey is absent', () {

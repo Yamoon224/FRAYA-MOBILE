@@ -7,7 +7,7 @@ import 'package:fraya_mobile/data/sources/remote/driver_ride_remote_data_source.
 
 void main() {
   test(
-    'temporarily loads available rides from the all rides endpoint',
+    'loads available rides from the available endpoint with radiusMeters',
     () async {
       RequestOptions? capturedOptions;
       final dio = Dio()
@@ -19,7 +19,8 @@ void main() {
 
       await dataSource.getAvailableRides(lat: 5.3, lng: -4, radiusKm: 10);
 
-      expect(capturedOptions?.path, '/rides/maps');
+      expect(capturedOptions?.path, '/rides/maps/available');
+      expect(capturedOptions?.queryParameters['radiusMeters'], 10000);
     },
   );
 }

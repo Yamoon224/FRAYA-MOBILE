@@ -110,10 +110,10 @@ void main() {
 
     await tester.tap(find.text('Afficher'));
     await tester.pump();
-    expect(find.text('Redirection automatique dans 10 s'), findsOneWidget);
+    expect(find.text('Redirection dans 10 s'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 9));
-    expect(find.text('Redirection automatique dans 1 s'), findsOneWidget);
+    expect(find.text('Redirection dans 1 s'), findsOneWidget);
     expect(result, isNull);
 
     await tester.pump(const Duration(seconds: 1));

@@ -21,6 +21,10 @@ class SocketIoRealtimeService implements RealtimeService {
     'driver_arrived': 'ARRIVED',
     'ride_completed': 'COMPLETED',
   };
+  static const Map<String, String> driverLifecycleStatuses = {
+    'ride_started_driver': 'IN_PROGRESS',
+    'ride_completed_driver': 'COMPLETED',
+  };
   static const _rideCancellationEvents = [
     'ride_cancelled',
     'ride_cancelled_driver',
@@ -147,12 +151,17 @@ class SocketIoRealtimeService implements RealtimeService {
       'new_ride_available',
       (p) => _tryAdd(_newRideOfferController, NewRideOfferEvent.tryParse(p)),
     );
-    for (final e in ['ride_started_driver', 'ride_completed_driver']) {
+    // Le backend n'envoie pas de champ « status » avec ces deux événements : le
+    // statut vient de leur nom, sinon ils étaient ignorés.
+    for (final entry in driverLifecycleStatuses.entries) {
       socket.on(
-        e,
+        entry.key,
         (p) => _tryAdd(
           _driverRideStatusController,
-          DriverRideStatusRealtimeEvent.tryParse(p),
+          DriverRideStatusRealtimeEvent.tryParse(
+            p,
+            fallbackStatus: entry.value,
+          ),
         ),
       );
     }

@@ -8,7 +8,9 @@ import 'package:fraya_mobile/core/models/places_models.dart';
 import 'package:fraya_mobile/core/services/geocoding_service.dart';
 import 'package:fraya_mobile/core/services/home_navigation_notifier.dart';
 import 'package:fraya_mobile/core/services/location_service.dart';
+import 'package:fraya_mobile/data/sources/local_storage.dart';
 import 'package:fraya_mobile/features/passenger/booking/providers/booking_flow_provider.dart';
+import 'package:fraya_mobile/features/passenger/home/providers/home_controller.dart';
 import 'package:fraya_mobile/features/passenger/home/screens/passenger_home_screen.dart';
 import 'package:fraya_mobile/features/passenger/home/widgets/destination_search_sheet.dart';
 import 'package:fraya_mobile/features/passenger/home/widgets/home_address_pill.dart';
@@ -103,6 +105,8 @@ void main() {
     ) async {
       SharedPreferences.setMockInitialValues({});
       FlutterSecureStorage.setMockInitialValues({});
+      // Le tiroir lit les préférences passager via LocalStorage.
+      await LocalStorage.instance.init();
       await tester.binding.setSurfaceSize(const Size(1024, 1366));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -224,6 +228,8 @@ void main() {
 
       expect(find.byType(DestinationSearchSheet), findsOneWidget);
       expect(tester.takeException(), isNull);
+      // Laisse finir le fondu du loader (480 ms) avant la fin du test.
+      await tester.pump(const Duration(milliseconds: 500));
     },
   );
 
@@ -305,7 +311,7 @@ void main() {
 
       expect(fakeLocationService.currentPositionCallCount, 1);
 
-      await tester.tap(find.text('Ou allez-vous ?'));
+      await tester.tap(find.text('Où allez-vous ?'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
@@ -348,7 +354,21 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      await tester.tap(find.text('Ou allez-vous ?'));
+      // Tant que la position charge, l'écran de chargement absorbe les
+      // appuis : la recherche ne peut pas s'ouvrir.
+      await tester.tap(find.text('Où allez-vous ?'), warnIfMissed: false);
+      await tester.pump();
+      expect(find.byType(DestinationSearchSheet), findsNothing);
+
+      // Le garde-fou du contrôleur reste actif si l'accueil est atteint.
+      final context = tester.element(find.byType(HomeBottomSheet));
+      final container = ProviderScope.containerOf(context);
+      expect(
+        container
+            .read(passengerHomeProvider.notifier)
+            .ensurePassengerLocationReady(context),
+        isFalse,
+      );
       await tester.pump();
 
       expect(find.byType(DestinationSearchSheet), findsNothing);
@@ -408,7 +428,15 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      await tester.tap(find.text('Maison'));
+      // L'écran de chargement absorbe l'appui tant que la position charge.
+      await tester.tap(find.text('Maison'), warnIfMissed: false);
+      await tester.pump();
+      await container
+          .read(passengerHomeProvider.notifier)
+          .selectRecentPlace(
+            tester.element(find.byType(HomeBottomSheet)),
+            recentPlace,
+          );
       await tester.pump();
 
       expect(container.read(selectedDestinationProvider), isNull);
