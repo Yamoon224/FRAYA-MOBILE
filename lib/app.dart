@@ -26,6 +26,7 @@ import 'shared/providers/push_notification_coordinator_provider.dart';
 import 'shared/providers/realtime_session_provider.dart';
 import 'shared/widgets/app_snack_bar.dart';
 import 'shared/widgets/app_startup_splash.dart';
+import 'shared/widgets/app_update_prompt.dart';
 import 'shared/widgets/completed_ride_summary_listener.dart';
 import 'shared/widgets/global_app_alert_listener.dart';
 
@@ -42,6 +43,7 @@ class _FrayaAppState extends ConsumerState<FrayaApp> {
   StreamSubscription<String?>? _sessionSub;
   StreamSubscription<PushNotificationPayload>? _pushTapSub;
   late final AppResumeRefreshLifecycleCoordinator _resumeRefreshCoordinator;
+  Timer? _updatePromptTimer;
 
   @override
   void initState() {
@@ -73,12 +75,32 @@ class _FrayaAppState extends ConsumerState<FrayaApp> {
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       PushNotificationService.instance.markAppReady();
+      _scheduleUpdatePrompt();
+    });
+  }
+
+  /// Après le lancement, propose la dernière version publiée sur le store (Play Store ou App Store).
+  void _scheduleUpdatePrompt() {
+    _updatePromptTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      unawaited(
+        maybeShowAppUpdatePrompt(
+          () => ref
+              .read(appRouterProvider)
+              .routerDelegate
+              .navigatorKey
+              .currentState
+              ?.overlay
+              ?.context,
+        ),
+      );
     });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(_resumeRefreshCoordinator);
+    _updatePromptTimer?.cancel();
     _sessionSub?.cancel();
     _pushTapSub?.cancel();
     super.dispose();
