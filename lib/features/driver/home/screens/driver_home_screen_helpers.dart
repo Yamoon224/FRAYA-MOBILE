@@ -215,6 +215,22 @@ extension _DriverHomeScreenHelpers on _DriverHomeScreenState {
     context.pushNamed(RouteNames.driverStatus, extra: ride);
   }
 
+  Future<void> _stopRideEarly(BuildContext context, DriverRide ride) async {
+    final confirmed = await showDriverEarlyStopConfirmationDialog(context);
+    if (!context.mounted || !confirmed) return;
+    final stopped = await ref
+        .read(driverHomeProvider.notifier)
+        .stopRideEarly(ride);
+    if (!context.mounted) return;
+    if (stopped) {
+      AppSnackBar.showSuccess(
+        context,
+        'Course terminée. Le prix a été calculé sur le trajet parcouru.',
+      );
+    }
+    // En cas d'échec, l'erreur du notifier est déjà affichée par l'écran.
+  }
+
   Future<void> _callPassenger(BuildContext context, DriverRide ride) async {
     final opened = await ref
         .read(driverContactControllerProvider)

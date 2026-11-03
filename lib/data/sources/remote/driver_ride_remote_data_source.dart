@@ -128,6 +128,7 @@ class DriverRideRemoteDataSource {
     required int finalDurationMin,
     required int finalPrice,
     required int additionnalFreeSeconds,
+    bool earlyStop = false,
   }) async {
     await _postDriverAction(
       '/rides/maps/$rideId/complete',
@@ -137,6 +138,8 @@ class DriverRideRemoteDataSource {
         'finalDurationMin': finalDurationMin.toString(),
         'finalPrice': finalPrice.toString(),
         'additionnalFree': additionnalFreeSeconds,
+        // Le serveur recalcule distance, durée et prix sur le trajet parcouru.
+        if (earlyStop) 'earlyStop': true,
       },
     );
   }

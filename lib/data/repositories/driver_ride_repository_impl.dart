@@ -82,6 +82,7 @@ class DriverRideRepositoryImpl implements DriverRideRepository {
     required int finalDurationMin,
     required int finalPrice,
     required int additionnalFreeSeconds,
+    bool earlyStop = false,
   }) {
     return _remoteDataSource.completeRide(
       rideId,
@@ -89,6 +90,7 @@ class DriverRideRepositoryImpl implements DriverRideRepository {
       finalDurationMin: finalDurationMin,
       finalPrice: finalPrice,
       additionnalFreeSeconds: additionnalFreeSeconds,
+      earlyStop: earlyStop,
     );
   }
 

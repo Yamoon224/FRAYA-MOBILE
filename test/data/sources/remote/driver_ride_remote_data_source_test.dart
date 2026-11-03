@@ -116,6 +116,33 @@ void main() {
       expect(capturedOptions?.data, isNot(contains('additionnalFee')));
     });
 
+    test('completeRide envoie earlyStop uniquement pour un arrêt anticipé', () async {
+      RequestOptions? capturedOptions;
+      final dataSource = DriverRideRemoteDataSource(
+        dio: Dio()
+          ..httpClientAdapter = RecordingHttpClientAdapter((
+            options,
+            requestStream,
+            cancelFuture,
+          ) async {
+            await requestStream?.drain<void>();
+            capturedOptions = options;
+            return _jsonResponse({'success': true}, 200);
+          }),
+      );
+
+      await dataSource.completeRide(
+        '34',
+        finalDistanceKm: 3,
+        finalDurationMin: 9,
+        finalPrice: 1000,
+        additionnalFreeSeconds: 0,
+        earlyStop: true,
+      );
+
+      expect(capturedOptions?.data, containsPair('earlyStop', true));
+    });
+
     test('sendDriverLocation posts active ride position payload', () async {
       RequestOptions? capturedOptions;
       final dataSource = DriverRideRemoteDataSource(

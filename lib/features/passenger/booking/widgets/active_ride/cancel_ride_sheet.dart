@@ -84,7 +84,7 @@ class _CancelRideSheetState extends ConsumerState<CancelRideSheet> {
           const SizedBox(height: 4),
           Text(
             '${widget.isSearch ? 'Pourquoi souhaitez-vous annuler votre demande ?' : 'Pourquoi souhaitez-vous annuler cette course ?'}\n'
-            'Plus de 3 annulations peuvent entraîner une suspension temporaire.',
+            'Des annulations répétées peuvent entraîner une suspension temporaire.',
             style: AppTextStyles.small.copyWith(
               color: context.colors.textSecondary,
             ),

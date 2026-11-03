@@ -23,6 +23,7 @@ class DriverHomeRideSection extends StatelessWidget {
     required this.onStart,
     required this.onComplete,
     required this.onCancel,
+    this.onEarlyStop,
   });
 
   final bool isOnline;
@@ -37,6 +38,7 @@ class DriverHomeRideSection extends StatelessWidget {
   final Future<void> Function(DriverRide ride) onStart;
   final Future<void> Function(DriverRide ride) onComplete;
   final Future<void> Function(DriverRide ride) onCancel;
+  final Future<void> Function(DriverRide ride)? onEarlyStop;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +59,9 @@ class DriverHomeRideSection extends StatelessWidget {
         onStart: () => onStart(activeRide!),
         onComplete: () => onComplete(activeRide!),
         onCancel: () => onCancel(activeRide!),
+        onEarlyStop: onEarlyStop == null
+            ? null
+            : () => onEarlyStop!(activeRide!),
       );
     }
     if (availableRides.isEmpty) {

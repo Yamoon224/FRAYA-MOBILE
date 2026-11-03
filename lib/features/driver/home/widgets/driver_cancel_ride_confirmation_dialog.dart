@@ -98,7 +98,7 @@ class _WarningBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Plus de 2 annulations peuvent entraîner une suspension temporaire de votre compte.',
+              'Des annulations répétées peuvent entraîner une suspension temporaire de votre compte.',
               style: context.textSmall.copyWith(
                 color: const Color(0xFF92400E),
                 height: 1.5,

@@ -514,7 +514,7 @@ void main() {
 
     expect(find.text('Annuler la course ?'), findsOneWidget);
     expect(find.byType(ConfirmationActionColumn), findsOneWidget);
-    expect(find.textContaining('Plus de 2 annulations'), findsOneWidget);
+    expect(find.textContaining('Des annulations répétées'), findsOneWidget);
     _expectAbove(
       tester,
       find.text('Oui, annuler'),
@@ -547,6 +547,71 @@ void main() {
     await tester.pump();
 
     expect(find.text('Course annulée'), findsNothing);
+  });
+
+  testWidgets('arrêt anticipé : confirmation puis fin de course avec earlyStop', (
+    tester,
+  ) async {
+    final activeRide = buildDriverRide(
+      id: 'ride-early-stop',
+      status: RideStatus.inProgress,
+    );
+    final harness = await _pumpHomeHarness(
+      tester,
+      authState: _approvedAuthState,
+      homeState: DriverHomeState(
+        status: DriverHomeStatus.ready,
+        isOnline: true,
+        canGoOnline: true,
+        activeRide: activeRide,
+      ),
+    );
+    harness.homeNotifier.syncUserData(_approvedAuthState.userData);
+    harness.homeNotifier.repository.activeRide = activeRide;
+
+    await tester.tap(find.text('Le client descend ici'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Terminer la course ici ?'), findsOneWidget);
+    expect(
+      find.text('Le prix sera calculé sur le trajet parcouru.'),
+      findsOneWidget,
+    );
+
+    // Refus : aucun appel au backend.
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Continuer la course'));
+    await tester.pumpAndSettle();
+    expect(harness.homeNotifier.repository.completeRideCalls, 0);
+
+    await tester.tap(find.text('Le client descend ici'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Oui, terminer ici'));
+    await tester.pumpAndSettle();
+
+    expect(harness.homeNotifier.repository.completeRideCalls, 1);
+    expect(harness.homeNotifier.repository.lastEarlyStop, isTrue);
+    expect(
+      find.text('Course terminée. Le prix a été calculé sur le trajet parcouru.'),
+      findsOneWidget,
+    );
+    await tester.pump(const Duration(seconds: 10));
+  });
+
+  testWidgets('action Le client descend ici absente avant le départ', (
+    tester,
+  ) async {
+    await _pumpHomeHarness(
+      tester,
+      authState: _approvedAuthState,
+      homeState: DriverHomeState(
+        status: DriverHomeStatus.ready,
+        isOnline: true,
+        canGoOnline: true,
+        activeRide: buildDriverRide(id: 'ride-accepted', status: RideStatus.accepted),
+      ),
+    );
+
+    expect(find.text('Le client descend ici'), findsNothing);
   });
 
   testWidgets(

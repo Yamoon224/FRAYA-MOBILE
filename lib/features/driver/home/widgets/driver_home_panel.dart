@@ -30,6 +30,7 @@ class DriverHomePanel extends StatelessWidget {
     required this.onStart,
     required this.onComplete,
     required this.onCancel,
+    this.onEarlyStop,
     required this.onOpenEarnings,
     required this.onRefresh,
   });
@@ -46,6 +47,7 @@ class DriverHomePanel extends StatelessWidget {
   final Future<void> Function(DriverRide ride) onStart;
   final Future<void> Function(DriverRide ride) onComplete;
   final Future<void> Function(DriverRide ride) onCancel;
+  final Future<void> Function(DriverRide ride)? onEarlyStop;
   final VoidCallback onOpenEarnings;
   final Future<void> Function() onRefresh;
 
@@ -130,6 +132,7 @@ class DriverHomePanel extends StatelessWidget {
                           onStart: onStart,
                           onComplete: onComplete,
                           onCancel: onCancel,
+                          onEarlyStop: onEarlyStop,
                         ),
                       ],
                     ],

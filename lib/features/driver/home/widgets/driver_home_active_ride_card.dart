@@ -22,6 +22,7 @@ class DriverHomeActiveRideCard extends StatelessWidget {
     required this.onStart,
     required this.onComplete,
     required this.onCancel,
+    this.onEarlyStop,
   });
 
   final DriverRide ride;
@@ -32,6 +33,8 @@ class DriverHomeActiveRideCard extends StatelessWidget {
   final Future<void> Function() onStart;
   final Future<void> Function() onComplete;
   final Future<void> Function() onCancel;
+  // Client descendu avant la destination : absent = action masquée.
+  final Future<void> Function()? onEarlyStop;
   static const _addressFormatter = AddressFormatterService();
 
   @override
@@ -124,6 +127,13 @@ class DriverHomeActiveRideCard extends StatelessWidget {
             isDisabled: isBusy,
             onTap: onComplete,
           ),
+          if (onEarlyStop != null) ...[
+            const SizedBox(height: 12),
+            DriverHomeEarlyStopTextAction(
+              isDisabled: isBusy,
+              onTap: onEarlyStop!,
+            ),
+          ],
           const SizedBox(height: 12),
           DriverHomeCancelRideTextAction(isDisabled: isBusy, onTap: onCancel),
         ];

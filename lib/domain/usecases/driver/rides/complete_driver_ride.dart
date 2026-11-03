@@ -14,6 +14,7 @@ class CompleteDriverRideParams {
     required this.finalDurationMin,
     required this.finalPrice,
     required this.additionnalFreeSeconds,
+    this.earlyStop = false,
   });
 
   final String rideId;
@@ -21,6 +22,7 @@ class CompleteDriverRideParams {
   final int finalDurationMin;
   final int finalPrice;
   final int additionnalFreeSeconds;
+  final bool earlyStop;
 }
 
 class CompleteDriverRideUseCase
@@ -38,6 +40,7 @@ class CompleteDriverRideUseCase
         finalDurationMin: params.finalDurationMin,
         finalPrice: params.finalPrice,
         additionnalFreeSeconds: params.additionnalFreeSeconds,
+        earlyStop: params.earlyStop,
       );
       return const Right(null);
     } catch (error) {

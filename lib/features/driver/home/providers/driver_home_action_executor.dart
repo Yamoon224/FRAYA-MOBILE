@@ -68,6 +68,7 @@ class DriverHomeActionExecutor {
     required int finalDurationMin,
     required int finalPrice,
     int additionnalFreeSeconds = 0,
+    bool earlyStop = false,
   }) async {
     final result = await _completeRideUseCase(
       CompleteDriverRideParams(
@@ -76,6 +77,7 @@ class DriverHomeActionExecutor {
         finalDurationMin: finalDurationMin,
         finalPrice: finalPrice,
         additionnalFreeSeconds: additionnalFreeSeconds,
+        earlyStop: earlyStop,
       ),
     );
     return _mapResult(result);

@@ -33,6 +33,7 @@ abstract class DriverRideRepository {
     required int finalDurationMin,
     required int finalPrice,
     required int additionnalFreeSeconds,
+    bool earlyStop = false,
   });
 
   Future<void> cancelRide(String rideId, {String? reason});

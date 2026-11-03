@@ -53,6 +53,40 @@ class DriverHomePrimaryRideActionButton extends StatelessWidget {
   }
 }
 
+class DriverHomeEarlyStopTextAction extends StatelessWidget {
+  const DriverHomeEarlyStopTextAction({
+    super.key,
+    required this.isDisabled,
+    required this.onTap,
+  });
+
+  final bool isDisabled;
+  final Future<void> Function() onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: InkWell(
+        onTap: isDisabled ? null : () => onTap(),
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Text(
+            'Le client descend ici',
+            style: AppTextStyles.h4.copyWith(
+              color: isDisabled
+                  ? context.colors.textTertiary
+                  : AppColors.primaryDark,
+              fontSize: 15.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class DriverHomeCancelRideTextAction extends StatelessWidget {
   const DriverHomeCancelRideTextAction({
     super.key,

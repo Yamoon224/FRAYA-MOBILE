@@ -37,6 +37,7 @@ class RecordingDriverRideRepository implements DriverRideRepository {
     required int finalDurationMin,
     required int finalPrice,
     required int additionnalFreeSeconds,
+    bool earlyStop = false,
   }) {
     throw UnimplementedError();
   }

@@ -97,6 +97,7 @@ mixin DriverHomeCriticalActions on StateNotifier<DriverHomeState> {
     required int finalDurationMin,
     required int finalPrice,
     int additionnalFreeSeconds = 0,
+    bool earlyStop = false,
   }) {
     if (rideId.trim().isEmpty) {
       return _rejectAction('Course introuvable.');
@@ -119,7 +120,20 @@ mixin DriverHomeCriticalActions on StateNotifier<DriverHomeState> {
         finalDurationMin: finalDurationMin,
         finalPrice: finalPrice,
         additionnalFreeSeconds: additionnalFreeSeconds,
+        earlyStop: earlyStop,
       ),
+    );
+  }
+
+  /// Le client descend en route : le serveur termine la course à la dernière
+  /// position connue et facture le trajet réellement parcouru.
+  Future<bool> stopRideEarly(DriverRide ride) {
+    return completeRide(
+      rideId: ride.rideId,
+      finalDistanceKm: ride.estimatedDistanceKm ?? 0,
+      finalDurationMin: ride.estimatedDurationMin ?? 0,
+      finalPrice: ride.estimatedPrice.round(),
+      earlyStop: true,
     );
   }
 

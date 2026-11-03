@@ -42,6 +42,7 @@ class _StubRideRepository implements DriverRideRepository {
     required int finalDurationMin,
     required int finalPrice,
     required int additionnalFreeSeconds,
+    bool earlyStop = false,
   }) async {}
 
   @override

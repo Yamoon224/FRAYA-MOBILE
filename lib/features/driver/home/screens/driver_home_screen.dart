@@ -46,6 +46,7 @@ import '../providers/driver_home_state.dart';
 import '../widgets/driver_active_ride_banner.dart';
 import '../widgets/driver_arrival_confirmation_dialog.dart';
 import '../widgets/driver_cancel_ride_confirmation_dialog.dart';
+import '../widgets/driver_early_stop_confirmation_dialog.dart';
 import '../widgets/driver_drawer.dart';
 import '../widgets/driver_home_panel.dart';
 import '../widgets/driver_home_queued_ride_banner.dart';
@@ -455,6 +456,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                           .startRide(ride.rideId);
                     },
                     onComplete: (ride) => _completeRide(context, ride),
+                    onEarlyStop: (ride) => _stopRideEarly(context, ride),
                     onCancel: (ride) async {
                       final confirmed =
                           await showDriverCancelRideConfirmationDialog(context);

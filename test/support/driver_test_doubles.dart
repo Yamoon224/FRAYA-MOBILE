@@ -148,6 +148,7 @@ class FakeDriverRideRepository implements DriverRideRepository {
   int cancelRideCalls = 0;
   int historyRidesCalls = 0;
   int? lastFinalPrice;
+  bool? lastEarlyStop;
   int? lastAdditionnalFreeSeconds;
 
   @override
@@ -179,8 +180,10 @@ class FakeDriverRideRepository implements DriverRideRepository {
     required int finalDurationMin,
     required int finalPrice,
     required int additionnalFreeSeconds,
+    bool earlyStop = false,
   }) async {
     completeRideCalls++;
+    lastEarlyStop = earlyStop;
     lastFinalPrice = finalPrice;
     lastAdditionnalFreeSeconds = additionnalFreeSeconds;
     if (completeRideError != null) {
