@@ -7,6 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../domain/models/ride_status.dart';
+import '../../../../shared/widgets/realtime_connection_banner.dart';
 import '../models/booking_flow_state.dart';
 import 'active_ride/ride_status_banner.dart';
 import 'top_action_buttons.dart';
@@ -58,23 +59,40 @@ class RoutePreviewMapStack extends StatelessWidget {
             bottom: _resetButtonBottomOffset(context, flowState),
             child: _ResetCameraButton(onPressed: onResetCameraPressed),
           ),
-        if (showBanner &&
-            (flowState == BookingFlowState.driverAssigned ||
-                flowState == BookingFlowState.arrived))
-          Positioned(
-            top: MediaQuery.paddingOf(context).top + 65,
-            left: 0,
-            right: 0,
-            child: RideStatusBanner(
-              status: activeRideStatus ?? RideStatus.pending,
-              arrivedAt: activeRideArrivedAt,
-              distance: liveDistanceText,
-              onClose: onCloseBanner,
-            ),
+        Positioned(
+          top: MediaQuery.paddingOf(context).top + 65,
+          left: 0,
+          right: 0,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (showBanner &&
+                  (flowState == BookingFlowState.driverAssigned ||
+                      flowState == BookingFlowState.arrived))
+                RideStatusBanner(
+                  status: activeRideStatus ?? RideStatus.pending,
+                  arrivedAt: activeRideArrivedAt,
+                  distance: liveDistanceText,
+                  onClose: onCloseBanner,
+                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: RealtimeConnectionBanner(
+                  isRideActive: _isRideActive,
+                  message: kPassengerConnectionBannerMessage,
+                ),
+              ),
+            ],
           ),
+        ),
       ],
     );
   }
+
+  bool get _isRideActive =>
+      flowState == BookingFlowState.driverAssigned ||
+      flowState == BookingFlowState.arrived ||
+      flowState == BookingFlowState.inProgress;
 
   String? get _arrivalTime =>
       activeRideStatus == RideStatus.accepted ? liveArrivalTimeText : null;

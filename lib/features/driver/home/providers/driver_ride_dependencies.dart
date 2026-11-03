@@ -17,7 +17,9 @@ import '../../../passenger/booking/providers/booking_dependencies.dart';
 
 final driverRideRemoteDataSourceProvider = Provider<DriverRideRemoteDataSource>(
   (ref) {
-    return DriverRideRemoteDataSource();
+    final dataSource = DriverRideRemoteDataSource();
+    ref.onDispose(dataSource.dispose);
+    return dataSource;
   },
 );
 

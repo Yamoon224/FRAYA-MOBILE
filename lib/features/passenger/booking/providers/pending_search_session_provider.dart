@@ -16,7 +16,8 @@ import 'booking_dependencies.dart';
 import 'booking_flow_utils.dart';
 import 'passenger_booking_session_store.dart';
 
-const kPendingSearchTimeout = Duration(minutes: 2);
+// Aligné sur le serveur, qui annule une course sans chauffeur au bout de 3 min (réglable au back-office).
+const kPendingSearchTimeout = Duration(minutes: 3);
 
 final pendingSearchTimeoutProvider = Provider<Duration>(
   (_) => kPendingSearchTimeout,

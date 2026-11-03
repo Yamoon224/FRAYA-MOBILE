@@ -57,7 +57,8 @@ abstract final class AppConstants {
   static const double defaultMapZoom = 14.0;
 
   // ── Ride ──
-  static const Duration driverSearchTimeout = Duration(minutes: 2);
+  // Aligné sur le serveur (annulation d'une course sans chauffeur après 3 min).
+  static const Duration driverSearchTimeout = Duration(minutes: 3);
   static const int maxMatchingAttempts = 5;
   static const double driverAvailableRidesRadiusKm = 8.0;
   static const double driverPreArrivalOffersRadiusMeters = 1000.0;

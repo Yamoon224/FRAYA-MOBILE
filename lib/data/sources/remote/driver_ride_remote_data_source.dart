@@ -1,15 +1,32 @@
 library;
 
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 
 import '../../../core/error/exceptions.dart';
 import '../../../core/utils/logger.dart';
 import '../../sources/api_client.dart';
+import 'driver_position_queue.dart';
 
 class DriverRideRemoteDataSource {
-  DriverRideRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance.dio;
+  DriverRideRemoteDataSource({
+    Dio? dio,
+    DriverPositionQueue? positionQueue,
+    Stream<List<ConnectivityResult>>? connectivityChanges,
+  }) : _dio = dio ?? ApiClient.instance.dio,
+       _positionQueue = positionQueue ?? DriverPositionQueue(),
+       _connectivityChanges = connectivityChanges;
 
   final Dio _dio;
+  final DriverPositionQueue _positionQueue;
+  final Stream<List<ConnectivityResult>>? _connectivityChanges;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+  bool _isFlushing = false;
+
+  // Plafond par rejeu : le reste part au prochain envoi ou au prochain changement de connectivité.
+  static const int maxReplayPerRun = 50;
 
   static const int _historyPageSize = 100;
   // Garde-fou contre une méta incohérente (5000 courses au maximum).
@@ -354,29 +371,130 @@ class DriverRideRemoteDataSource {
     'taken',
   ];
 
+  /// Envoie la position de course. Ne lève jamais d'erreur : en cas de coupure réseau la position
+  /// est gardée en file puis rejouée dans l'ordre (prochain envoi réussi ou retour de connectivité).
   Future<void> sendDriverLocation({
     required String rideId,
     required int driverId,
     required double lat,
     required double lng,
   }) async {
-    final path = '/rides/maps/$rideId/positions';
-    final payload = {
-      'driverId': driverId,
-      'latitude': lat,
-      'longitude': lng,
-      'timestamp': DateTime.now().toIso8601String(),
-    };
+    final position = QueuedDriverPosition(
+      rideId: rideId,
+      driverId: driverId,
+      latitude: lat,
+      longitude: lng,
+      timestamp: DateTime.now(),
+    );
+
+    if (_positionQueue.isNotEmpty) {
+      // Des positions plus anciennes attendent : on s'ajoute derrière elles pour que le serveur
+      // reçoive la plus récente en dernier, puis on rejoue sans bloquer l'appelant.
+      _positionQueue.add(position);
+      unawaited(flushPendingPositions());
+      return;
+    }
+
     try {
-      logger.debug('sendDriverLocation request: path=$path payload=$payload');
-      final response = await _dio.post(path, data: payload);
-      logger.debug(
-        'sendDriverLocation response: status=${response.statusCode} data=${response.data}',
-      );
+      await _postPosition(position);
     } catch (error, stackTrace) {
       logger.warning('sendDriverLocation failed', error, stackTrace);
-      // fire-and-forget : les erreurs réseau ne bloquent pas l'UX
+      if (_isRetryableFailure(error)) {
+        _enqueue(position);
+      }
+      // Refus 4xx (course terminée, chauffeur incorrect...) : inutile de réessayer.
     }
+  }
+
+  /// Rejoue les positions en attente, de la plus ancienne à la plus récente, par lot limité.
+  /// S'arrête à la première coupure réseau ; une seule exécution à la fois (pas de doublon).
+  Future<void> flushPendingPositions() async {
+    if (_isFlushing) return;
+    _isFlushing = true;
+    try {
+      var replayed = 0;
+      while (replayed < maxReplayPerRun) {
+        final next = _positionQueue.peek();
+        if (next == null) break;
+        try {
+          await _postPosition(next);
+        } catch (error, stackTrace) {
+          if (_isRetryableFailure(error)) {
+            logger.warning('flushPendingPositions paused', error, stackTrace);
+            return;
+          }
+          // Refus métier : cette position ne sera jamais acceptée, on la jette.
+        }
+        _positionQueue.remove(next);
+        replayed++;
+      }
+    } finally {
+      _isFlushing = false;
+      if (_positionQueue.isEmpty) {
+        _stopConnectivityWatch();
+      }
+    }
+  }
+
+  void dispose() {
+    _stopConnectivityWatch();
+    _positionQueue.clear();
+  }
+
+  Future<void> _postPosition(QueuedDriverPosition position) async {
+    final path = '/rides/maps/${position.rideId}/positions';
+    final payload = position.toPayload();
+    logger.debug('sendDriverLocation request: path=$path payload=$payload');
+    final response = await _dio.post(path, data: payload);
+    logger.debug(
+      'sendDriverLocation response: status=${response.statusCode} data=${response.data}',
+    );
+  }
+
+  /// Panne réseau ou serveur injoignable (pas de réponse, timeout, 5xx) ; un 4xx est un refus métier.
+  static bool _isRetryableFailure(Object error) {
+    if (error is! DioException) return false;
+    switch (error.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+      case DioExceptionType.connectionError:
+        return true;
+      case DioExceptionType.badResponse:
+        final status = error.response?.statusCode;
+        return status != null && status >= 500;
+      case DioExceptionType.unknown:
+        // Socket coupée sans réponse HTTP.
+        return error.response == null;
+      case DioExceptionType.badCertificate:
+      case DioExceptionType.cancel:
+        return false;
+    }
+  }
+
+  void _enqueue(QueuedDriverPosition position) {
+    _positionQueue.add(position);
+    _startConnectivityWatch();
+  }
+
+  // N'écoute la connectivité que tant que des positions attendent : pas d'abonnement inutile.
+  void _startConnectivityWatch() {
+    if (_connectivitySub != null) return;
+    try {
+      final stream =
+          _connectivityChanges ?? Connectivity().onConnectivityChanged;
+      _connectivitySub = stream.listen((results) {
+        final hasTransport = results.any((r) => r != ConnectivityResult.none);
+        if (hasTransport) unawaited(flushPendingPositions());
+      }, onError: (_) {});
+    } catch (error, stackTrace) {
+      logger.warning('connectivity watch unavailable', error, stackTrace);
+    }
+  }
+
+  void _stopConnectivityWatch() {
+    _connectivitySub?.cancel();
+    _connectivitySub = null;
   }
 
   Future<void> sendDriverAvailabilityLocation({

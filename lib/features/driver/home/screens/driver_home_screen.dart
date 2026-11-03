@@ -33,6 +33,7 @@ import '../../auth/providers/driver_auth_provider.dart';
 import '../../settings/providers/driver_settings_provider.dart';
 import '../../settings/screens/driver_security_screen.dart';
 import '../../../../shared/widgets/pin_migration_prompt.dart';
+import '../../../../shared/widgets/realtime_connection_banner.dart';
 import '../widgets/driver_home_incoming_request_bubble.dart';
 import '../widgets/driver_home_map_stage.dart';
 import '../providers/driver_navigation_launcher_provider.dart';
@@ -331,6 +332,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                           ),
                         ],
                         const DriverCancellationNoticeBanner(),
+                        RealtimeConnectionBanner(
+                          isRideActive: hasActiveRide,
+                          message: kDriverConnectionBannerMessage,
+                        ),
                       ],
                     ),
                   ),

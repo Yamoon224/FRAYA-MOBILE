@@ -55,6 +55,56 @@ void main() {
     );
   });
 
+  test('le délai de recherche est de 3 minutes (comme le serveur)', () {
+    expect(kPendingSearchTimeout, const Duration(minutes: 3));
+    final container = _createContainer(_FakeBookingRepository());
+    addTearDown(container.dispose);
+    expect(
+      container.read(pendingSearchTimeoutProvider),
+      const Duration(minutes: 3),
+    );
+  });
+
+  test('startup cleanup garde une recherche de 2 min 30 encore valide', () async {
+    await LocalStorage.instance.setString(
+      AppConstants.pendingSearchRideIdKey,
+      'ride_pending_1',
+    );
+    await LocalStorage.instance.setInt(
+      AppConstants.pendingSearchStartedAtKey,
+      DateTime.now()
+          .subtract(const Duration(minutes: 2, seconds: 30))
+          .millisecondsSinceEpoch,
+    );
+    final repository = _FakeBookingRepository(activeRideResult: _pendingRide);
+    final container = _createContainer(repository);
+    addTearDown(container.dispose);
+
+    await container.read(pendingSearchStartupCleanupProvider.future);
+
+    expect(repository.cancelRideCalls, 0);
+  });
+
+  test('startup cleanup annule une recherche de plus de 3 minutes', () async {
+    await LocalStorage.instance.setString(
+      AppConstants.pendingSearchRideIdKey,
+      'ride_pending_1',
+    );
+    await LocalStorage.instance.setInt(
+      AppConstants.pendingSearchStartedAtKey,
+      DateTime.now()
+          .subtract(const Duration(minutes: 3, seconds: 5))
+          .millisecondsSinceEpoch,
+    );
+    final repository = _FakeBookingRepository(activeRideResult: _pendingRide);
+    final container = _createContainer(repository);
+    addTearDown(container.dispose);
+
+    await container.read(pendingSearchStartupCleanupProvider.future);
+
+    expect(repository.cancelRideCalls, 1);
+  });
+
   test('startup cleanup migrates legacy pending active ride id', () async {
     await LocalStorage.instance.setString(
       AppConstants.activeRideIdKey,
