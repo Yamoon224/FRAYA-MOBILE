@@ -69,6 +69,12 @@ class PassengerSettingsScreen extends ConsumerWidget {
             onTap: () => _push(context, const PassengerSecurityScreen()),
           ),
           AppSettingsItem(
+            icon: Icons.delete_forever_outlined,
+            iconColor: Colors.red,
+            title: 'Supprimer mon compte',
+            onTap: () => _deleteAccount(context, ref),
+          ),
+          AppSettingsItem(
             icon: Icons.description_outlined,
             iconColor: const Color(0xFF475569),
             title: 'Politique de confidentialité',
