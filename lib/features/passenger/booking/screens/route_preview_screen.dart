@@ -53,8 +53,14 @@ class _RoutePreviewScreenState extends ConsumerState<RoutePreviewScreen> {
   @override
   void dispose() {
     if (_hasRequestedLocation) {
-      final notifier = ref.read(locationTrackingRequestCountProvider.notifier);
-      notifier.state = notifier.state > 0 ? notifier.state - 1 : 0;
+      try {
+        final notifier =
+            ref.read(locationTrackingRequestCountProvider.notifier);
+        notifier.state = notifier.state > 0 ? notifier.state - 1 : 0;
+      } catch (_) {
+        // Le ProviderContainer peut déjà être détruit (ex: reset de session
+        // en cours pendant le démontage de cet écran) ; rien à décrémenter.
+      }
     }
     _sheetController.dispose();
     super.dispose();
