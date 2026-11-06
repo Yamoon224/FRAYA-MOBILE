@@ -71,34 +71,41 @@ class RideHistoryTile extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        size: 16,
-                        color: context.colors.textSecondary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${_formatDate(ride.date)}  •  ',
-                        style: AppTextStyles.small.copyWith(
-                          fontWeight: FontWeight.w500,
+                  Flexible(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          size: 16,
+                          color: context.colors.textSecondary,
                         ),
-                      ),
-                      Icon(
-                        Icons.access_time,
-                        size: 16,
-                        color: context.colors.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        timeFormat.format(ride.date),
-                        style: AppTextStyles.small.copyWith(
-                          fontWeight: FontWeight.w500,
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            '${_formatDate(ride.date)}  •  ',
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.small.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                        Icon(
+                          Icons.access_time,
+                          size: 16,
+                          color: context.colors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          timeFormat.format(ride.date),
+                          style: AppTextStyles.small.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   if (isCancelled)
                     _CancelledBadge()
                   else

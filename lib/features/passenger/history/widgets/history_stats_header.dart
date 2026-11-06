@@ -20,15 +20,26 @@ class HistoryStatsHeader extends ConsumerWidget {
         data: (stats) => Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _StatItem(value: stats['totalRides'].toString(), label: 'Courses'),
-            _StatItem(
-              value: MeasurementFormatter.formatCurrency(stats['totalSpent']),
-              label: 'Dépenses',
+            Flexible(
+              child: _StatItem(
+                value: stats['totalRides'].toString(),
+                label: 'Courses',
+              ),
             ),
-            _StatItem(
-              value: stats['avgRating'].toStringAsFixed(1),
-              label: 'Note moyenne',
-              isRating: true,
+            Flexible(
+              child: _StatItem(
+                value: MeasurementFormatter.formatCurrency(
+                  stats['totalSpent'],
+                ),
+                label: 'Dépenses',
+              ),
+            ),
+            Flexible(
+              child: _StatItem(
+                value: stats['avgRating'].toStringAsFixed(1),
+                label: 'Note moyenne',
+                isRating: true,
+              ),
             ),
           ],
         ),
@@ -64,11 +75,14 @@ class _StatItem extends StatelessWidget {
               const Icon(Icons.star, color: AppColors.primary, size: 20),
               const SizedBox(width: 4),
             ],
-            Text(
-              value,
-              style: AppTextStyles.h1.copyWith(
-                color: AppColors.primaryDark,
-                fontWeight: FontWeight.bold,
+            Flexible(
+              child: Text(
+                value,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.h1.copyWith(
+                  color: AppColors.primaryDark,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -76,6 +90,7 @@ class _StatItem extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
+          overflow: TextOverflow.ellipsis,
           style: AppTextStyles.xs.copyWith(color: context.colors.textSecondary),
         ),
       ],

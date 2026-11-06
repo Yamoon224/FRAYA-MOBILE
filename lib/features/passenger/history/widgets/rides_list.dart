@@ -134,11 +134,14 @@ class RidesList extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'Voir toutes les courses',
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.primaryDark,
-                        fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: Text(
+                        'Voir toutes les courses',
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.primaryDark,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),

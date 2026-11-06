@@ -37,15 +37,23 @@ class RideDetailsSection extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'Montant total',
-          style: AppTextStyles.body.copyWith(color: context.colors.textSecondary),
+        Flexible(
+          child: Text(
+            'Montant total',
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.body.copyWith(color: context.colors.textSecondary),
+          ),
         ),
-        Text(
-          ride.estimatedPrice.toCFA,
-          style: AppTextStyles.h3.copyWith(
-            color: const Color(0xFFCBA153),
-            fontWeight: FontWeight.bold,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            ride.estimatedPrice.toCFA,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: AppTextStyles.h3.copyWith(
+              color: const Color(0xFFCBA153),
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],

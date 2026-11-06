@@ -70,9 +70,14 @@ class FrayaTextField extends StatelessWidget {
       children: [
         if (label != null) ...[
           Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(label!, style: AppTextStyles.h4),
+              Flexible(
+                child: Text(
+                  label!,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.h4,
+                ),
+              ),
               if (isRequired) ...[
                 const SizedBox(width: 4),
                 Text(
