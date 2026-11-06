@@ -29,6 +29,8 @@ void main() {
 
     expect(find.text('Préférences'), findsOneWidget);
     expect(find.text('Sécurité & Confidentialité'), findsOneWidget);
+
+    await tester.scrollUntilVisible(find.text('Paiement'), 300);
     expect(find.text('Paiement'), findsOneWidget);
   });
 
