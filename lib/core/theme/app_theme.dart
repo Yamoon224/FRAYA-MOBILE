@@ -6,7 +6,6 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 import 'app_text_styles.dart';
@@ -62,7 +61,7 @@ abstract final class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
 
-      textTheme: GoogleFonts.interTextTheme().copyWith(
+      textTheme: ThemeData.light().textTheme.apply(fontFamily: 'Inter').copyWith(
         headlineLarge: AppTextStyles.h1.copyWith(color: AppColors.textPrimary),
         headlineMedium: AppTextStyles.h2.copyWith(color: AppColors.textPrimary),
         headlineSmall: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
@@ -221,7 +220,7 @@ abstract final class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.darkBackground,
 
-      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
+      textTheme: ThemeData.dark().textTheme.apply(fontFamily: 'Inter').copyWith(
         headlineLarge: AppTextStyles.h1.copyWith(color: AppColors.darkTextPrimary),
         headlineMedium: AppTextStyles.h2.copyWith(color: AppColors.darkTextPrimary),
         headlineSmall: AppTextStyles.h3.copyWith(color: AppColors.darkTextPrimary),

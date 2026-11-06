@@ -7,7 +7,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 abstract final class AppTextStyles {
   // ──────────────────────────────────────────
@@ -15,28 +14,32 @@ abstract final class AppTextStyles {
   // ──────────────────────────────────────────
 
   /// 20px / medium — Titres majeurs (écrans principaux).
-  static TextStyle get h1 => GoogleFonts.inter(
+  static TextStyle get h1 => TextStyle(
+    fontFamily: 'Inter',
     fontSize: 20,
     fontWeight: FontWeight.w500,
     height: 1.5,
   );
 
   /// 16px / medium — Titres de sections.
-  static TextStyle get h2 => GoogleFonts.inter(
+  static TextStyle get h2 => TextStyle(
+    fontFamily: 'Inter',
     fontSize: 16,
     fontWeight: FontWeight.w500,
     height: 1.5,
   );
 
   /// 14px / medium — Sous-titres.
-  static TextStyle get h3 => GoogleFonts.inter(
+  static TextStyle get h3 => TextStyle(
+    fontFamily: 'Inter',
     fontSize: 14,
     fontWeight: FontWeight.w500,
     height: 1.5,
   );
 
   /// 13px / medium — Labels importants.
-  static TextStyle get h4 => GoogleFonts.inter(
+  static TextStyle get h4 => TextStyle(
+    fontFamily: 'Inter',
     fontSize: 13,
     fontWeight: FontWeight.w500,
     height: 1.5,
@@ -47,21 +50,24 @@ abstract final class AppTextStyles {
   // ──────────────────────────────────────────
 
   /// 16px / normal — Texte standard.
-  static TextStyle get body => GoogleFonts.inter(
+  static TextStyle get body => TextStyle(
+    fontFamily: 'Inter',
     fontSize: 16,
     fontWeight: FontWeight.w400,
     height: 1.5,
   );
 
   /// 14px / normal — Metadata, descriptions courtes.
-  static TextStyle get small => GoogleFonts.inter(
+  static TextStyle get small => TextStyle(
+    fontFamily: 'Inter',
     fontSize: 14,
     fontWeight: FontWeight.w400,
     height: 1.5,
   );
 
   /// 12px / normal — Labels secondaires, badges.
-  static TextStyle get xs => GoogleFonts.inter(
+  static TextStyle get xs => TextStyle(
+    fontFamily: 'Inter',
     fontSize: 12,
     fontWeight: FontWeight.w400,
     height: 1.5,
@@ -72,21 +78,24 @@ abstract final class AppTextStyles {
   // ──────────────────────────────────────────
 
   /// 16px / medium — Texte de bouton standard.
-  static TextStyle get button => GoogleFonts.inter(
+  static TextStyle get button => TextStyle(
+    fontFamily: 'Inter',
     fontSize: 16,
     fontWeight: FontWeight.w500,
     height: 1.5,
   );
 
   /// 14px / medium — Texte de bouton compact.
-  static TextStyle get buttonSmall => GoogleFonts.inter(
+  static TextStyle get buttonSmall => TextStyle(
+    fontFamily: 'Inter',
     fontSize: 14,
     fontWeight: FontWeight.w500,
     height: 1.5,
   );
 
   /// 18px / medium — Texte de bouton CTA.
-  static TextStyle get buttonLarge => GoogleFonts.inter(
+  static TextStyle get buttonLarge => TextStyle(
+    fontFamily: 'Inter',
     fontSize: 18,
     fontWeight: FontWeight.w500,
     height: 1.5,

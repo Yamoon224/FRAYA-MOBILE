@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fraya_mobile/app.dart';
@@ -10,9 +9,6 @@ import 'package:fraya_mobile/core/config/app_flavor.dart';
 import 'package:fraya_mobile/data/sources/local_storage.dart';
 
 void main() {
-  // Désactive Google Fonts pour les tests
-  GoogleFonts.config.allowRuntimeFetching = false;
-
   testWidgets('FrayaApp renders without error and shows login', (WidgetTester tester) async {
     // Initialisation
     AppConfig.instance.init(flavor: AppFlavor.dev);
