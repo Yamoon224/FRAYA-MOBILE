@@ -84,6 +84,7 @@ class DestinationSearchSheet extends ConsumerWidget {
       ref.invalidate(savedPlacesNotifierProvider);
       ref.invalidate(placeSuggestionsProvider);
       await ref.read(passengerUserAddressProvider.future);
+      if (!context.mounted) return;
       if (query.isEmpty) {
         await Future.wait([
           ref.read(nearbyLandmarksProvider.future),

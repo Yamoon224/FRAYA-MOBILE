@@ -336,7 +336,10 @@ class _PassengerHomeScreenState extends ConsumerState<PassengerHomeScreen>
       largePhone: 280,
       tablet: 300,
     );
-    final maxPadding = (size.height - topInset - 140).clamp(220, size.height);
+    final maxPadding = (size.height - topInset - 140)
+        .clamp(220, size.height)
+        .toDouble();
+    if (minPadding >= maxPadding) return minPadding;
     return ratioPadding.clamp(minPadding, maxPadding).toDouble();
   }
 

@@ -69,13 +69,14 @@ class _BookingFlowListenersState extends ConsumerState<BookingFlowListeners> {
 
     ref.listen(bookingFlowProvider, (previous, next) {
       if (next == BookingFlowState.activeRideConflict &&
-          previous != BookingFlowState.activeRideConflict) {
+          previous != BookingFlowState.activeRideConflict &&
+          context.mounted) {
         _showActiveRideConflictDialog(context, ref);
       }
     });
 
     ref.listen(pendingSearchTimeoutEventProvider, (previous, next) {
-      if (next == previous || next == 0) return;
+      if (next == previous || next == 0 || !context.mounted) return;
       _showPendingSearchTimeoutDialog(context, ref);
     });
 
@@ -90,7 +91,7 @@ class _BookingFlowListenersState extends ConsumerState<BookingFlowListeners> {
     });
 
     ref.listen(bookingErrorProvider, (_, error) {
-      if (error == null) return;
+      if (error == null || !context.mounted) return;
       ref.read(bookingErrorProvider.notifier).state = null;
       final isSearchFailed =
           ref.read(bookingFlowProvider) == BookingFlowState.searchFailed;
@@ -105,7 +106,7 @@ class _BookingFlowListenersState extends ConsumerState<BookingFlowListeners> {
     });
 
     ref.listen(rideCategoriesProvider, (previous, next) {
-      if (next is AsyncError && previous is! AsyncError) {
+      if (next is AsyncError && previous is! AsyncError && context.mounted) {
         BookingErrorModal.show(
           context,
           message: 'Impossible de charger les gammes de véhicules.',
@@ -115,7 +116,7 @@ class _BookingFlowListenersState extends ConsumerState<BookingFlowListeners> {
     });
 
     ref.listen(routeDirectionsProvider, (previous, next) {
-      if (next is AsyncError && previous is! AsyncError) {
+      if (next is AsyncError && previous is! AsyncError && context.mounted) {
         BookingErrorModal.show(
           context,
           message:

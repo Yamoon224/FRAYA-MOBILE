@@ -117,6 +117,7 @@ class FavoritePlacesNotifier extends _$FavoritePlacesNotifier {
     }
 
     // Le ref.listen de PassengerHomeScreen gère la navigation vers vehicleSelection.
+    if (!ref.mounted) return;
     ref.read(selectedDestinationProvider.notifier).setPlace(details);
   }
 
