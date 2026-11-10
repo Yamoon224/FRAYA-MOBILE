@@ -41,20 +41,22 @@ class _MapAddressPickerScreenState
     _cameraCenter = widget.initialPosition;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref
-          .read(mapAddressEditControllerProvider(widget.target).notifier)
-          .enterEditMode(widget.initialPosition);
+      final controller = ref
+          .read(mapAddressEditControllerProvider(widget.target).notifier);
+      _editController = controller;
+      controller.enterEditMode(widget.initialPosition);
     });
   }
 
+  MapAddressEditController? _editController;
+
   @override
   void dispose() {
-    if (ref
-        .read(mapAddressEditControllerProvider(widget.target))
-        .isEditing) {
-      ref
-          .read(mapAddressEditControllerProvider(widget.target).notifier)
-          .cancelEditing();
+    // `ref` interdit dans dispose() : on utilise le controller capturé.
+    try {
+      _editController?.cancelEditing();
+    } catch (_) {
+      // Provider déjà détruit : rien à annuler.
     }
     super.dispose();
   }

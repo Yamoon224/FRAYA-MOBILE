@@ -22,7 +22,9 @@ Future<List<PlaceDetails>> recentPlacesList(Ref ref) async {
 }
 
 /// Notifier pour ajouter/supprimer des lieux récents et invalider le cache.
-@riverpod
+// keepAlive: les méthodes sont asynchrones et utilisent `ref` après un await ;
+// un notifier autoDispose serait détruit entre-temps (Ref disposed).
+@Riverpod(keepAlive: true)
 class RecentPlacesNotifier extends _$RecentPlacesNotifier {
   @override
   void build() {}

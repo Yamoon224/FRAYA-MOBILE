@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateController;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'package:fraya_mobile/domain/models/ride_status.dart';
@@ -46,20 +47,25 @@ class _RoutePreviewScreenState extends ConsumerState<RoutePreviewScreen> {
       if (!mounted) return;
       if (ref.read(selectedDestinationProvider) != null) _expandSheet();
       ref.read(locationTrackingRequestCountProvider.notifier).state++;
+      _trackingNotifier =
+          ref.read(locationTrackingRequestCountProvider.notifier);
+      _trackingNotifier!.state++;
       _hasRequestedLocation = true;
     });
   }
 
+  StateController<int>? _trackingNotifier;
+
   @override
   void dispose() {
+    // `ref` ne doit pas être utilisé dans dispose() : on utilise le notifier
+    // capturé au montage.
     if (_hasRequestedLocation) {
       try {
-        final notifier =
-            ref.read(locationTrackingRequestCountProvider.notifier);
+        final notifier = _trackingNotifier!;
         notifier.state = notifier.state > 0 ? notifier.state - 1 : 0;
       } catch (_) {
-        // Le ProviderContainer peut déjà être détruit (ex: reset de session
-        // en cours pendant le démontage de cet écran) ; rien à décrémenter.
+        // Le ProviderContainer peut déjà être détruit ; rien à décrémenter.
       }
     }
     _sheetController.dispose();
