@@ -37,6 +37,8 @@
 		<string>Fraya a besoin de votre position pour vous trouver un chauffeur.</string>
 		<key>NSLocationAlwaysUsageDescription</key>
 		<string>Fraya a besoin de votre position pour suivre votre course.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>Fraya a besoin de votre position pour vous trouver un chauffeur et suivre votre course.</string>
 		<key>NSCameraUsageDescription</key>
 		<string>Fraya a besoin de la camera pour photographier vos documents KYC.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
