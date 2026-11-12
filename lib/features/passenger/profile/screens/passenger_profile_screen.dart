@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PlatformException;
+import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -189,10 +191,24 @@ class _ProfileBody extends ConsumerWidget {
     required bool fromCamera,
   }) async {
     final picker = ref.read(profilePhotoPickerProvider);
-    final file = fromCamera
-        ? await picker.pickFromCamera()
-        : await picker.pickFromGallery();
-    if (file == null) return;
+    final XFile? file;
+    try {
+      file = fromCamera
+          ? await picker.pickFromCamera()
+          : await picker.pickFromGallery();
+    } on PlatformException {
+      // Permission caméra/galerie refusée : on le dit au lieu de planter.
+      if (context.mounted) {
+        AppSnackBar.showError(
+          context,
+          fromCamera
+              ? "Accès à l'appareil photo refusé. Autorisez-le dans les réglages."
+              : "Accès aux photos refusé. Autorisez-le dans les réglages.",
+        );
+      }
+      return;
+    }
+    if (file == null || !context.mounted) return;
 
     await ref
         .read(profileControllerProvider.notifier)

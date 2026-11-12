@@ -77,7 +77,11 @@ class _LocationPoint extends StatelessWidget {
               child: Icon(icon, size: 12, color: iconColor),
             ),
             if (showLine)
-              Container(width: 1.5, height: 60, color: context.colors.greyLight),
+              Container(
+                width: 1.5,
+                height: 60,
+                color: context.colors.greyLight,
+              ),
           ],
         ),
         const SizedBox(width: 16),
@@ -87,7 +91,9 @@ class _LocationPoint extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: AppTextStyles.xs.copyWith(color: context.colors.textTertiary),
+                style: AppTextStyles.xs.copyWith(
+                  color: context.colors.textTertiary,
+                ),
               ),
               const SizedBox(height: 4),
               Text(

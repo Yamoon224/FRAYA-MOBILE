@@ -68,7 +68,10 @@ class PaymentInfoCard extends StatelessWidget {
             right: Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: context.colors.surfaceElevated,
                   borderRadius: BorderRadius.circular(4),

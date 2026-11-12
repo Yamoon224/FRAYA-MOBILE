@@ -34,19 +34,24 @@ int? toInt(dynamic value) {
   return null;
 }
 
-LatLng parseLatLng(Map<String, dynamic> map, List<String> latKeys, List<String> lngKeys, {LatLng? fallback}) {
+LatLng parseLatLng(
+  Map<String, dynamic> map,
+  List<String> latKeys,
+  List<String> lngKeys, {
+  LatLng? fallback,
+}) {
   double? lat;
   for (final key in latKeys) {
     lat = toDouble(map[key]);
     if (lat != null) break;
   }
-  
+
   double? lng;
   for (final key in lngKeys) {
     lng = toDouble(map[key]);
     if (lng != null) break;
   }
-  
+
   if (lat != null && lng != null) return LatLng(lat, lng);
   return fallback ?? const LatLng(5.3484, -3.9554);
 }

@@ -75,7 +75,11 @@ class AppUpdateService {
       if (Platform.isAndroid) return await _checkAndroid();
       if (Platform.isIOS) return await _checkIos();
     } catch (error, stackTrace) {
-      logger.info('Vérification de mise à jour ignorée: $error', null, stackTrace);
+      logger.info(
+        'Vérification de mise à jour ignorée: $error',
+        null,
+        stackTrace,
+      );
     }
     return null;
   }
@@ -129,7 +133,11 @@ class AppUpdateService {
         await InAppUpdate.performImmediateUpdate();
         return;
       } catch (error, stackTrace) {
-        logger.info('Mise à jour intégrée impossible: $error', null, stackTrace);
+        logger.info(
+          'Mise à jour intégrée impossible: $error',
+          null,
+          stackTrace,
+        );
       }
     }
     final url = update.storeUrl;

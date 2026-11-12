@@ -18,7 +18,8 @@ class PasswordPolicy {
 
   static const String hint = '4 chiffres';
 
-  static const String invalidMessage = 'Le mot de passe doit contenir 4 chiffres';
+  static const String invalidMessage =
+      'Le mot de passe doit contenir 4 chiffres';
 
   static bool isValidNew(String? value) => _pin.hasMatch(value ?? '');
 

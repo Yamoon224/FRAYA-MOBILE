@@ -25,8 +25,9 @@ class RideReceiptSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: context.colors.surface,
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(AppTheme.radius2xl)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppTheme.radius2xl),
+        ),
         boxShadow: AppColors.shadowLg,
       ),
       padding: EdgeInsets.only(
@@ -58,7 +59,9 @@ class RideReceiptSheet extends StatelessWidget {
             ),
             Text(
               'Réf. #${ride.id.length > 8 ? ride.id.substring(0, 8).toUpperCase() : ride.id.toUpperCase()}',
-              style: AppTextStyles.xs.copyWith(color: context.colors.textSecondary),
+              style: AppTextStyles.xs.copyWith(
+                color: context.colors.textSecondary,
+              ),
             ),
             const SizedBox(height: AppTheme.spacingLg),
             _Divider(),
@@ -83,17 +86,11 @@ class RideReceiptSheet extends StatelessWidget {
               children: [
                 if (ride.duration != null)
                   Expanded(
-                    child: _StatItem(
-                      label: 'Durée',
-                      value: ride.duration!,
-                    ),
+                    child: _StatItem(label: 'Durée', value: ride.duration!),
                   ),
                 if (ride.distance != null)
                   Expanded(
-                    child: _StatItem(
-                      label: 'Distance',
-                      value: ride.distance!,
-                    ),
+                    child: _StatItem(label: 'Distance', value: ride.distance!),
                   ),
                 Expanded(
                   child: _StatItem(
@@ -119,7 +116,8 @@ class RideReceiptSheet extends StatelessWidget {
                 icon: Icons.directions_car_outlined,
                 iconColor: context.colors.textSecondary,
                 label: 'Véhicule',
-                value: '${ride.vehicleModel}'
+                value:
+                    '${ride.vehicleModel}'
                     '${ride.licensePlate != null ? ' · ${ride.licensePlate}' : ''}',
               ),
             ],
@@ -154,7 +152,9 @@ class RideReceiptSheet extends StatelessWidget {
                 children: [
                   Text(
                     'Total payé',
-                    style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                    style: AppTextStyles.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   Text(
                     ride.price.toCFA,
@@ -173,7 +173,9 @@ class RideReceiptSheet extends StatelessWidget {
                 onPressed: () => Navigator.pop(context),
                 child: Text(
                   'Fermer',
-                  style: AppTextStyles.body.copyWith(color: context.colors.textSecondary),
+                  style: AppTextStyles.body.copyWith(
+                    color: context.colors.textSecondary,
+                  ),
                 ),
               ),
             ),
@@ -217,7 +219,9 @@ class _ReceiptRow extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: AppTextStyles.xs.copyWith(color: context.colors.textSecondary),
+                style: AppTextStyles.xs.copyWith(
+                  color: context.colors.textSecondary,
+                ),
               ),
               Text(
                 value,

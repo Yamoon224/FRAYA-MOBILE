@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/services/address_formatter_service.dart';
 import '../../core/services/places_service.dart';
+import '../../core/data/ci_popular_places.dart';
 import '../../core/models/places_models.dart';
 import 'location_provider.dart';
 import 'places_local_suggestions.dart';
@@ -27,6 +29,10 @@ class ActiveSearchType extends _$ActiveSearchType {
 
 @riverpod
 class SearchQuery extends _$SearchQuery {
+  /// Délai avant d'envoyer une frappe : 300 à 400 ms évitent un appel Google
+  /// par lettre tapée.
+  static const debounce = Duration(milliseconds: 350);
+
   Timer? _debounceTimer;
 
   @override
@@ -39,7 +45,7 @@ class SearchQuery extends _$SearchQuery {
 
   void updateQuery(String query) {
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+    _debounceTimer = Timer(debounce, () {
       state = query;
     });
   }
@@ -53,6 +59,12 @@ class SearchQuery extends _$SearchQuery {
 @riverpod
 Stream<List<PlaceSuggestion>> placeSuggestions(Ref ref) async* {
   final query = ref.watch(searchQueryProvider);
+  // Annule la requête Google en cours dès que la frappe change (le provider est
+  // reconstruit à chaque nouvelle requête). Enregistré avant tout `await`.
+  final cancelToken = CancelToken();
+  ref.onDispose(() {
+    if (!cancelToken.isCancelled) cancelToken.cancel('query changed');
+  });
   if (query.isEmpty) {
     yield [];
     return;
@@ -63,7 +75,12 @@ Stream<List<PlaceSuggestion>> placeSuggestions(Ref ref) async* {
     return;
   }
 
-  final localResults = await localPlaceSuggestions(ref, normalizedQuery);
+  // Base locale : lieux récents / favoris / enregistrés (Domicile, Travail…)
+  // puis lieux populaires d'Abidjan. Aucun appel Google pour ceux-ci.
+  final localResults = _withPopularPlaces(
+    await localPlaceSuggestions(ref, normalizedQuery),
+    normalizedQuery,
+  );
   if (localResults.isNotEmpty) {
     yield localResults;
   }
@@ -90,8 +107,13 @@ Stream<List<PlaceSuggestion>> placeSuggestions(Ref ref) async* {
   final position = await ref.read(passengerLocationSnapshotProvider.future);
   final localWithDistance = localResults.isEmpty
       ? localResults
-      : await localPlaceSuggestions(
-          ref,
+      : _withPopularPlaces(
+          await localPlaceSuggestions(
+            ref,
+            normalizedQuery,
+            originLat: position?.latitude,
+            originLng: position?.longitude,
+          ),
           normalizedQuery,
           originLat: position?.latitude,
           originLng: position?.longitude,
@@ -101,15 +123,17 @@ Stream<List<PlaceSuggestion>> placeSuggestions(Ref ref) async* {
     yield localWithDistance;
   }
 
+  // Assez de résultats locaux : Google ne sert qu'en secours.
+  if (localWithDistance.length >= localSufficientCount) return;
+
+  if (!ref.mounted) return;
+
   final service = ref.read(placesServiceProvider);
   final remoteResults = await service.getAutocompleteSuggestions(
     normalizedQuery,
     originLat: position?.latitude,
     originLng: position?.longitude,
-    bypassCache:
-        normalizedQuery.length >=
-            PlacesService.forceAutocompleteRefreshQueryLength &&
-        localWithDistance.isNotEmpty,
+    cancelToken: cancelToken,
   );
   final merged = mergePlaceSuggestions(localWithDistance, remoteResults);
   if (localWithDistance.isEmpty ||
@@ -118,17 +142,34 @@ Stream<List<PlaceSuggestion>> placeSuggestions(Ref ref) async* {
   }
 }
 
-/// Résout les détails d'une suggestion (par placeId) pour récupérer la commune
-/// exacte absente du texte d'autocomplete. Provider *family* manuel (non codegen)
-/// et non auto-dispose : un placeId déjà résolu reste en cache et n'est pas
-/// re-fetché quand la liste se reconstruit à chaque frappe.
+/// Nombre de résultats locaux à partir duquel on n'interroge pas Google.
+const localSufficientCount = 3;
+
+List<PlaceSuggestion> _withPopularPlaces(
+  List<PlaceSuggestion> local,
+  String query, {
+  double? originLat,
+  double? originLng,
+}) {
+  final popular = popularPlaceSuggestions(
+    query,
+    originLat: originLat,
+    originLng: originLng,
+  );
+  if (popular.isEmpty) return local;
+  return mergePlaceSuggestions(local, popular).take(5).toList();
+}
+
+/// Détails d'une suggestion déjà présents en cache local, pour afficher la
+/// commune exacte. N'appelle JAMAIS Google : un Place Details par suggestion
+/// affichée casserait la session d'autocomplete et serait facturé à chaque
+/// frappe. Le détail est récupéré une seule fois, à la sélection du lieu.
 final suggestionDetailsProvider = FutureProvider.family<PlaceDetails?, String>((
   ref,
   placeId,
 ) async {
   if (placeId.isEmpty) return null;
-  final service = ref.read(placesServiceProvider);
-  return service.getPlaceDetails(placeId);
+  return ref.read(placesServiceProvider).getCachedPlaceDetails(placeId);
 });
 
 @Riverpod(keepAlive: true)

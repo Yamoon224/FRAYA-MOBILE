@@ -42,19 +42,32 @@ class _LegalPdfDialog extends StatefulWidget {
 }
 
 class _LegalPdfDialogState extends State<_LegalPdfDialog> {
-  late final PdfControllerPinch _controller;
+  // Le contrôleur n'est créé qu'une fois les octets téléchargés : un échec réseau
+  // ne doit pas laisser pdfx dans un état partiellement initialisé (null check).
+  PdfControllerPinch? _controller;
+  bool _failed = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = PdfControllerPinch(
-      document: PdfDocument.openData(_loadPdfBytes()),
-    );
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final bytes = await _loadPdfBytes();
+      if (!mounted) return;
+      setState(() {
+        _controller = PdfControllerPinch(document: PdfDocument.openData(bytes));
+      });
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
@@ -72,6 +85,7 @@ class _LegalPdfDialogState extends State<_LegalPdfDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final controller = _controller;
     return Dialog(
       backgroundColor: context.colors.surface,
       insetPadding: const EdgeInsets.all(16),
@@ -83,20 +97,28 @@ class _LegalPdfDialogState extends State<_LegalPdfDialog> {
           children: [
             _LegalDialogHeader(title: widget.title),
             Expanded(
-              child: PdfViewPinch(
-                controller: _controller,
-                builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
-                  options: const DefaultBuilderOptions(),
-                  documentLoaderBuilder: (_) => const _LegalLoader(),
-                  pageLoaderBuilder: (_) => const _LegalLoader(),
-                  errorBuilder: (_, error) => _LegalError(
-                    message:
-                        'Impossible de charger ce document. Vérifiez votre connexion puis réessayez.',
-                  ),
-                ),
-              ),
+              child: _failed
+                  ? const _LegalError(
+                      message:
+                          'Impossible de charger ce document. Vérifiez votre connexion puis réessayez.',
+                    )
+                  : controller == null
+                  ? const _LegalLoader()
+                  : PdfViewPinch(
+                      controller: controller,
+                      builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
+                        options: const DefaultBuilderOptions(),
+                        documentLoaderBuilder: (_) => const _LegalLoader(),
+                        pageLoaderBuilder: (_) => const _LegalLoader(),
+                        errorBuilder: (_, error) => _LegalError(
+                          message:
+                              'Impossible de charger ce document. Vérifiez votre connexion puis réessayez.',
+                        ),
+                      ),
+                    ),
             ),
-            _LegalPdfFooter(controller: _controller),
+            if (controller != null && !_failed)
+              _LegalPdfFooter(controller: controller),
           ],
         ),
       ),
@@ -269,7 +291,9 @@ class _LegalError extends StatelessWidget {
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: AppTextStyles.small.copyWith(color: context.colors.textSecondary),
+          style: AppTextStyles.small.copyWith(
+            color: context.colors.textSecondary,
+          ),
         ),
       ),
     );

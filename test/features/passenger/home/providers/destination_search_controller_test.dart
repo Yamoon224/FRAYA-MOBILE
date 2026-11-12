@@ -209,6 +209,8 @@ class _FakePlacesService extends PlacesService {
     double? originLat,
     double? originLng,
     bool bypassCache = false,
+    Object? cancelToken,
+    bool useSession = true,
   }) async {
     if (suggestionsDelay > Duration.zero) {
       await Future<void>.delayed(suggestionsDelay);

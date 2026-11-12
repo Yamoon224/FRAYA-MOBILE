@@ -28,9 +28,7 @@ class HistoryStatsHeader extends ConsumerWidget {
             ),
             Flexible(
               child: _StatItem(
-                value: MeasurementFormatter.formatCurrency(
-                  stats['totalSpent'],
-                ),
+                value: MeasurementFormatter.formatCurrency(stats['totalSpent']),
                 label: 'Dépenses',
               ),
             ),

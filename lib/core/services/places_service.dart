@@ -7,6 +7,7 @@ import 'place_address_enrichment_service.dart';
 import 'places_autocomplete_memory_cache.dart';
 import 'places_cache_service.dart';
 import 'places_service_support.dart';
+import 'places_session.dart';
 
 final _log = AppLogger.instance;
 
@@ -15,6 +16,17 @@ class PlacesService {
   final PlacesCacheService _cacheService;
   final PlacesAutocompleteMemoryCache _autocompleteMemoryCache;
   final PlaceAddressEnrichmentService _addressEnrichmentService;
+  final PlacesSession _session;
+
+  /// Lieux proches déjà demandés : la recherche Nearby est l'appel le plus cher
+  /// et sa réponse ne change pas d'une ouverture de l'écran à l'autre.
+  static final Map<String, _NearbyEntry> _nearbyCache = {};
+  static const _nearbyTtl = Duration(hours: 12);
+
+  /// Centre d'Abidjan : biais de recherche quand la position est inconnue.
+  static const abidjanLat = 5.3245;
+  static const abidjanLng = -4.0201;
+  static const biasRadiusMeters = 50000;
 
   static const minAutocompleteQueryLength = 3;
   static const forceAutocompleteRefreshQueryLength = 3;
@@ -24,7 +36,9 @@ class PlacesService {
     PlacesCacheService? cacheService,
     PlacesAutocompleteMemoryCache? autocompleteMemoryCache,
     GeocodingService? geocodingService,
-  }) : _googleDio = googleDio ?? Dio(),
+    PlacesSession? session,
+  }) : _session = session ?? PlacesSession.shared,
+       _googleDio = googleDio ?? Dio(),
        _cacheService = cacheService ?? PlacesCacheService(),
        _autocompleteMemoryCache =
            autocompleteMemoryCache ?? PlacesAutocompleteMemoryCache(),
@@ -48,6 +62,8 @@ class PlacesService {
     double? originLat,
     double? originLng,
     bool bypassCache = false,
+    CancelToken? cancelToken,
+    bool useSession = true,
   }) async {
     final normalizedQuery = PlacesServiceSupport.normalizeQuery(query);
     if (normalizedQuery.length < minAutocompleteQueryLength) return [];
@@ -75,16 +91,31 @@ class PlacesService {
       }
     }
 
+    // Toutes les frappes d'une recherche partagent un même token ; il est clos
+    // par l'appel Place Details de la sélection.
+    // `useSession: false` pour un appel isolé (sans Place Details derrière) :
+    // facturé à la requête, sans ouvrir de session qui ne serait jamais close.
+    final token = !useSession
+        ? null
+        : (sessionToken != null && sessionToken.isNotEmpty)
+        ? sessionToken
+        : _session.current();
+
     try {
       final response = await _googleDio.get(
         'https://maps.googleapis.com/maps/api/place/autocomplete/json',
+        cancelToken: cancelToken,
         queryParameters: {
           'input': normalizedQuery,
           'key': _apiKey,
           'language': language,
+          // Restreint à la Côte d'Ivoire.
           'components': components,
-          if (sessionToken != null && sessionToken.isNotEmpty)
-            'sessiontoken': sessionToken,
+          // Biais vers la position de l'utilisateur, sinon vers Abidjan.
+          'locationbias':
+              'circle:$biasRadiusMeters@'
+              '${originLat ?? abidjanLat},${originLng ?? abidjanLng}',
+          if (token != null) 'sessiontoken': token,
           // Fournir `origin` fait renvoyer `distance_meters` par prédiction.
           if (originLat != null && originLng != null)
             'origin': '$originLat,$originLng',
@@ -109,6 +140,11 @@ class PlacesService {
         }
       }
       return [];
+    } on DioException catch (e) {
+      // Requête annulée car l'utilisateur a continué à taper : pas une erreur.
+      if (CancelToken.isCancel(e)) return [];
+      _log.error('Exception in getAutocompleteSuggestions: $e');
+      return [];
     } catch (e) {
       _log.error('Exception in getAutocompleteSuggestions: $e');
       return [];
@@ -120,6 +156,12 @@ class PlacesService {
     String? sessionToken,
     String language = 'fr',
   }) async {
+    // Cet appel clôture la session d'autocomplete : on consomme le token (il ne
+    // doit plus être réutilisé), même si le lieu vient du cache.
+    final closingToken = (sessionToken != null && sessionToken.isNotEmpty)
+        ? sessionToken
+        : _session.close();
+
     final cached = _cacheService.readDetails(placeId);
     if (cached != null) return cached;
 
@@ -133,8 +175,7 @@ class PlacesService {
           'fields':
               'place_id,name,formatted_address,adr_address,'
               'address_components,geometry,vicinity,types',
-          if (sessionToken != null && sessionToken.isNotEmpty)
-            'sessiontoken': sessionToken,
+          if (closingToken != null) 'sessiontoken': closingToken,
         },
       );
 
@@ -158,6 +199,15 @@ class PlacesService {
     }
   }
 
+  /// Termine la session d'autocomplete en cours sans appeler Place Details
+  /// (recherche sans résultat ou abandonnée) : la prochaine recherche repart
+  /// avec un nouveau token au lieu de traîner une session périmée.
+  void endSearchSession() => _session.close();
+
+  /// Détails déjà en cache local, sans aucun appel réseau (ni facturation).
+  PlaceDetails? getCachedPlaceDetails(String placeId) =>
+      _cacheService.readDetails(placeId);
+
   Future<List<PlaceDetails>> getNearbyPlaces({
     required double lat,
     required double lng,
@@ -165,6 +215,15 @@ class PlacesService {
     String type = 'point_of_interest',
     String language = 'fr',
   }) async {
+    // Clé arrondie (~1 km) : deux ouvertures de l'écran au même endroit ne
+    // refacturent pas la recherche.
+    final cacheKey =
+        '${lat.toStringAsFixed(2)},${lng.toStringAsFixed(2)}|$radius|$type|$language';
+    final cached = _nearbyCache[cacheKey];
+    if (cached != null && DateTime.now().difference(cached.at) < _nearbyTtl) {
+      return cached.places;
+    }
+
     try {
       final response = await _googleDio.get(
         'https://maps.googleapis.com/maps/api/place/nearbysearch/json',
@@ -182,7 +241,13 @@ class PlacesService {
         if (data['status'] == 'OK') {
           final results = data['results'] as List;
           // On transforme les résultats en PlaceDetails
-          return results.map((json) => PlaceDetails.fromJson(json)).toList();
+          final places = results
+              .map((json) => PlaceDetails.fromJson(json))
+              .toList();
+          if (places.isNotEmpty) {
+            _nearbyCache[cacheKey] = _NearbyEntry(places, DateTime.now());
+          }
+          return places;
         }
       }
       return [];
@@ -191,4 +256,11 @@ class PlacesService {
       return [];
     }
   }
+}
+
+class _NearbyEntry {
+  const _NearbyEntry(this.places, this.at);
+
+  final List<PlaceDetails> places;
+  final DateTime at;
 }

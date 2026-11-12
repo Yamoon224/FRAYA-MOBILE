@@ -233,7 +233,9 @@ String? resolveDriverRedirect({
 
   if (isGoingToAuth) {
     if (gate.needsKycSubmission) {
-      return gate.isKycRejected ? RoutePaths.driverKyc : RoutePaths.driverVehicle;
+      return gate.isKycRejected
+          ? RoutePaths.driverKyc
+          : RoutePaths.driverVehicle;
     }
     if (needsVehicleStep) {
       return RoutePaths.driverVehicle;

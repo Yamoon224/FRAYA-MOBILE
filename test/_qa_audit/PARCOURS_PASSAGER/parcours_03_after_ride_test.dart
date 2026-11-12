@@ -38,7 +38,7 @@ class _NoDetailsPlaces extends PlacesService {
   Future<List<PlaceDetails>> getNearbyPlaces({required double lat, required double lng, int radius = 10000, String type = 'point_of_interest', String language = 'fr'}) async => const [];
   @override
   Future<List<PlaceSuggestion>> getAutocompleteSuggestions(String query,
-          {String? sessionToken, String language = 'fr', String components = 'country:ci', double? originLat, double? originLng, bool bypassCache = false}) async =>
+          {String? sessionToken, String language = 'fr', String components = 'country:ci', double? originLat, double? originLng, bool bypassCache = false, Object? cancelToken, bool useSession = true}) async =>
       const [];
 }
 

@@ -113,17 +113,11 @@ extension ResponsiveContextExtensions on BuildContext {
     ),
   );
 
-  EdgeInsets get listViewPadding => EdgeInsets.symmetric(
-    horizontal: horizontalPagePadding,
-    vertical: 12,
-  );
+  EdgeInsets get listViewPadding =>
+      EdgeInsets.symmetric(horizontal: horizontalPagePadding, vertical: 12);
 
-  EdgeInsets get overlayPadding => EdgeInsets.fromLTRB(
-    horizontalPagePadding,
-    12,
-    horizontalPagePadding,
-    0,
-  );
+  EdgeInsets get overlayPadding =>
+      EdgeInsets.fromLTRB(horizontalPagePadding, 12, horizontalPagePadding, 0);
 
   T responsiveValue<T>({
     required T compact,

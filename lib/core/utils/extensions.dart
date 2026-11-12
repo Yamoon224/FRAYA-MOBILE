@@ -34,7 +34,8 @@ extension ContextExtensions on BuildContext {
   EdgeInsets get padding => MediaQuery.paddingOf(this);
 
   /// Couleurs adaptées au thème courant.
-  ThemeColors get colors => ThemeColors(Theme.of(this).brightness == Brightness.dark);
+  ThemeColors get colors =>
+      ThemeColors(Theme.of(this).brightness == Brightness.dark);
 
   /// Affiche un SnackBar.
   void showSnackBar(String message, {bool isError = false}) {
@@ -55,8 +56,7 @@ class ThemeColors {
 
   final bool isDark;
 
-  Color get surface =>
-      isDark ? AppColors.darkSurface : AppColors.surface;
+  Color get surface => isDark ? AppColors.darkSurface : AppColors.surface;
   Color get surfaceElevated =>
       isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceElevated;
   Color get surfacePressed =>
@@ -69,10 +69,8 @@ class ThemeColors {
       isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
   Color get textTertiary =>
       isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
-  Color get border =>
-      isDark ? AppColors.darkBorder : AppColors.border;
-  Color get greyLight =>
-      isDark ? AppColors.darkGreyLight : AppColors.greyLight;
+  Color get border => isDark ? AppColors.darkBorder : AppColors.border;
+  Color get greyLight => isDark ? AppColors.darkGreyLight : AppColors.greyLight;
   Color get greyExtraLight =>
       isDark ? AppColors.darkGreyExtraLight : AppColors.greyExtraLight;
   Color get infoBackground =>

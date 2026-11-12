@@ -126,9 +126,29 @@ Paiement : ${ride.paymentMethod ?? 'Espèces'}
 
     try {
       final placesService = ref.read(placesServiceProvider);
+      final hasCoordinates = ride.arrivalLat != 0 || ride.arrivalLng != 0;
+      // La course garde les coordonnées d'arrivée : l'autocomplete ne sert qu'à
+      // retrouver le placeId (exigé par le calcul de prix). Un seul appel facturé
+      // à la requête, biaisé sur l'arrivée, sans Place Details derrière.
       final suggestions = await placesService.getAutocompleteSuggestions(
         ride.arrivalAddress,
+        originLat: hasCoordinates ? ride.arrivalLat : null,
+        originLng: hasCoordinates ? ride.arrivalLng : null,
+        useSession: !hasCoordinates,
       );
+      if (suggestions.isNotEmpty && hasCoordinates) {
+        final suggestion = suggestions.first;
+        return _DestinationResolution(
+          destination: PlaceDetails(
+            placeId: suggestion.placeId,
+            name: _extractPrimaryLabel(ride.arrivalAddress),
+            address: _addressFormatter.normalize(ride.arrivalAddress),
+            latitude: ride.arrivalLat,
+            longitude: ride.arrivalLng,
+          ),
+          usedFallbackNoPlaceId: false,
+        );
+      }
       if (suggestions.isNotEmpty) {
         final placeDetails = await placesService.getPlaceDetails(
           suggestions.first.placeId,

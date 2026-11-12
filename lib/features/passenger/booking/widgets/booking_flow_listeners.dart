@@ -275,11 +275,12 @@ class _BookingFlowListenersState extends ConsumerState<BookingFlowListeners> {
                   HomeNavigationNotifier.instance.requestResetSearchState();
                   HomeNavigationNotifier.instance
                       .requestOpenDestinationSearchOnHome();
-                  context.go(RoutePaths.passengerHome);
+                  if (context.mounted) context.go(RoutePaths.passengerHome);
                 },
                 secondaryLabel: 'Continuer la recherche',
                 onSecondaryPressed: () {
                   Navigator.of(ctx).pop();
+                  if (!context.mounted) return;
                   ref.read(bookingFlowProvider.notifier).startSearching();
                 },
               ),

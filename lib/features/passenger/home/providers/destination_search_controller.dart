@@ -151,6 +151,7 @@ class DestinationSearchController extends _$DestinationSearchController {
         .getAutocompleteSuggestions(place.name);
     if (!ref.mounted || !context.mounted) return;
     if (suggestions.isEmpty) {
+      ref.read(placesServiceProvider).endSearchSession();
       ref.read(selectedPickupProvider.notifier).setPlace(place);
       ref.read(searchQueryProvider.notifier).clear();
       ref
@@ -190,6 +191,7 @@ class DestinationSearchController extends _$DestinationSearchController {
     final suggestions = await service.getAutocompleteSuggestions(place.name);
     if (!ref.mounted || !context.mounted) return null;
     if (suggestions.isEmpty) {
+      service.endSearchSession();
       return place;
     }
 

@@ -44,9 +44,7 @@ class HistoryFilterBar extends ConsumerWidget {
             isCompact: isCompact,
           ),
           const SizedBox(height: AppTheme.spacingSm),
-          _PeriodButton(
-            onTap: () => _pickRange(context, controller),
-          ),
+          _PeriodButton(onTap: () => _pickRange(context, controller)),
           if (state.customRange != null) ...[
             const SizedBox(height: AppTheme.spacingSm),
             _RangeChip(
@@ -210,10 +208,7 @@ class _PeriodButton extends StatelessWidget {
 }
 
 class _RangeChip extends StatelessWidget {
-  const _RangeChip({
-    required this.range,
-    required this.onDeleted,
-  });
+  const _RangeChip({required this.range, required this.onDeleted});
 
   final DateTimeRange range;
   final VoidCallback onDeleted;

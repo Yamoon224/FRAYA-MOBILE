@@ -69,12 +69,16 @@ class FavoritePlacesNotifier extends _$FavoritePlacesNotifier {
   void build() {}
 
   Future<void> save(FavoritePlace place) async {
-    await ref.read(favoritePlacesServiceProvider).save(place);
+    final service = ref.read(favoritePlacesServiceProvider);
+    await service.save(place);
+    if (!ref.mounted) return;
     ref.invalidate(favoritePlacesListProvider);
   }
 
   Future<void> remove(String id) async {
-    await ref.read(favoritePlacesServiceProvider).remove(id);
+    final service = ref.read(favoritePlacesServiceProvider);
+    await service.remove(id);
+    if (!ref.mounted) return;
     ref.invalidate(favoritePlacesListProvider);
   }
 

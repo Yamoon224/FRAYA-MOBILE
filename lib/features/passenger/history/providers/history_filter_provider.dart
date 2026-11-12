@@ -47,8 +47,8 @@ class HistoryFilterController extends StateNotifier<HistoryFilterState> {
 
 final historyFilterControllerProvider =
     StateNotifierProvider<HistoryFilterController, HistoryFilterState>((ref) {
-  return HistoryFilterController();
-});
+      return HistoryFilterController();
+    });
 
 final filteredRidesProvider = Provider<List<Ride>>((ref) {
   final rides = ref.watch(allRidesProvider);
@@ -56,10 +56,7 @@ final filteredRidesProvider = Provider<List<Ride>>((ref) {
   return applyHistoryFilter(rides, filter);
 });
 
-List<Ride> applyHistoryFilter(
-  List<Ride> rides,
-  HistoryFilterState filter,
-) {
+List<Ride> applyHistoryFilter(List<Ride> rides, HistoryFilterState filter) {
   final sorted = List<Ride>.from(rides)
     ..sort((left, right) => right.date.compareTo(left.date));
   if (filter.customRange != null) {
@@ -71,9 +68,7 @@ List<Ride> applyHistoryFilter(
   final today = _startOfDay(DateTime.now());
   switch (filter.quickFilter) {
     case HistoryQuickFilter.today:
-      return sorted
-          .where((ride) => _startOfDay(ride.date) == today)
-          .toList();
+      return sorted.where((ride) => _startOfDay(ride.date) == today).toList();
     case HistoryQuickFilter.sevenDays:
       final start = today.subtract(const Duration(days: 6));
       return sorted
@@ -96,6 +91,7 @@ bool _isWithinCustomRange(DateTime date, DateTimeRange range) {
   return !day.isBefore(start) && !day.isAfter(end);
 }
 
-DateTime _startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
+DateTime _startOfDay(DateTime date) =>
+    DateTime(date.year, date.month, date.day);
 
 const Object _sentinel = Object();

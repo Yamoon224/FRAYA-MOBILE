@@ -104,6 +104,8 @@ class _FallbackPlacesService extends PlacesService {
     double? originLat,
     double? originLng,
     bool bypassCache = false,
+    Object? cancelToken,
+    bool useSession = true,
   }) async {
     return const [];
   }

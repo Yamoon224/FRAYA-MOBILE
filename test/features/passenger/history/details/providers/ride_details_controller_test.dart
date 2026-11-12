@@ -104,6 +104,12 @@ void main() {
     expect(destination, isNotNull);
     expect(destination!.placeId, 'google_place_abc');
     expect(container.read(bookingErrorProvider), isNull);
+    // La course a des coordonnées : un seul appel facturé à la requête, sans
+    // session ouverte ni Place Details.
+    expect(placesService.detailsCalls, 0);
+    expect(placesService.lastUseSession, isFalse);
+    expect(destination.latitude, ride.arrivalLat);
+    expect(destination.longitude, ride.arrivalLng);
   });
 
   testWidgets(
@@ -209,6 +215,8 @@ class _FakePlacesService extends PlacesService {
   final List<PlaceSuggestion> suggestions;
   final PlaceDetails? placeDetails;
   final Duration delay;
+  int detailsCalls = 0;
+  bool? lastUseSession;
 
   @override
   Future<List<PlaceSuggestion>> getAutocompleteSuggestions(
@@ -219,7 +227,10 @@ class _FakePlacesService extends PlacesService {
     double? originLat,
     double? originLng,
     bool bypassCache = false,
+    Object? cancelToken,
+    bool useSession = true,
   }) async {
+    lastUseSession = useSession;
     if (delay > Duration.zero) {
       await Future<void>.delayed(delay);
     }
@@ -232,6 +243,7 @@ class _FakePlacesService extends PlacesService {
     String? sessionToken,
     String language = 'fr',
   }) async {
+    detailsCalls++;
     return placeDetails;
   }
 }

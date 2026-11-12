@@ -205,7 +205,9 @@ class _StatBox extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.xs.copyWith(color: context.colors.textTertiary),
+            style: AppTextStyles.xs.copyWith(
+              color: context.colors.textTertiary,
+            ),
           ),
           const SizedBox(height: 4),
           Text(

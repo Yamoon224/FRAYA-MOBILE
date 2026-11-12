@@ -73,9 +73,7 @@ class _HistoryRideRatingSheetState
       },
       (outcome) {
         // Succès ou déjà soumis : on considère la course notée côté UI.
-        ref
-            .read(locallyRatedRideIdsProvider.notifier)
-            .markRated(widget.rideId);
+        ref.read(locallyRatedRideIdsProvider.notifier).markRated(widget.rideId);
         ref.invalidate(rideHistoryProvider);
         ref.invalidate(rideDetailsProvider(widget.rideId));
 

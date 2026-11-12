@@ -355,7 +355,9 @@ class _CancelledBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: context.colors.isDark ? const Color(0xFF4A1A1A) : const Color(0xFFFDECEC),
+        color: context.colors.isDark
+            ? const Color(0xFF4A1A1A)
+            : const Color(0xFFFDECEC),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -375,11 +377,7 @@ class _RideKeyRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(
-          Icons.tag_outlined,
-          size: 14,
-          color: context.colors.textSecondary,
-        ),
+        Icon(Icons.tag_outlined, size: 14, color: context.colors.textSecondary),
         const SizedBox(width: 6),
         Text(
           'Réf : $keyRide',

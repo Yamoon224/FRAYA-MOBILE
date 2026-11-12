@@ -55,7 +55,7 @@ void main() {
     final service = _CountingPlacesService();
     final container = ProviderContainer(
       overrides: [
-        searchQueryProvider.overrideWithValue('ang'),
+        searchQueryProvider.overrideWithValue('zzz'),
         placesServiceProvider.overrideWith((ref) => service),
         passengerLocationSnapshotProvider.overrideWith((ref) async => null),
       ],
@@ -109,7 +109,7 @@ void main() {
       expect(suggestions.single.localDetails, isNotNull);
       expect(suggestions.single.distanceMeters, isNull);
       expect(service.autocompleteCalls, 1);
-      expect(service.lastBypassCache, isTrue);
+      expect(service.lastBypassCache, isFalse);
       expect(locationReads, 1);
     },
   );
@@ -152,7 +152,7 @@ void main() {
 
       expect(events.last.single.distanceMeters, inInclusiveRange(100, 120));
       expect(service.autocompleteCalls, 1);
-      expect(service.lastBypassCache, isTrue);
+      expect(service.lastBypassCache, isFalse);
     },
   );
 
@@ -201,7 +201,7 @@ void main() {
 
       expect(first.single.placeId, 'local_restaurant');
       expect(service.autocompleteCalls, 1);
-      expect(service.lastBypassCache, isTrue);
+      expect(service.lastBypassCache, isFalse);
       expect(events.last.map((s) => s.placeId), [
         'local_restaurant',
         'google_restaurant',
@@ -251,42 +251,48 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(service.autocompleteCalls, 1);
-    expect(service.lastBypassCache, isTrue);
+    expect(service.lastBypassCache, isFalse);
     expect(events.last, hasLength(1));
     expect(events.last.single.mainText, 'Restaurant local');
     expect(events.last.single.localDetails, isNotNull);
   });
 
-  test('three characters with local hit bypass autocomplete cache', () async {
-    await RecentPlacesService('anonymous').add(
-      const PlaceDetails(
-        placeId: 'local_restaurant',
-        name: 'Restaurant local',
-        address: 'Rue des Jardins, Cocody',
-        latitude: 5.39,
-        longitude: -3.99,
-        localityLabel: 'Rue des Jardins, Cocody',
-      ),
-    );
-    final service = _CountingPlacesService();
-    final container = ProviderContainer(
-      overrides: [
-        searchQueryProvider.overrideWithValue('res'),
-        placesServiceProvider.overrideWith((ref) => service),
-        passengerLocationSnapshotProvider.overrideWith((ref) async => null),
-      ],
-    );
-    addTearDown(container.dispose);
+  test(
+    'three characters with a local hit keep the autocomplete cache (no forced refresh)',
+    () async {
+      await RecentPlacesService('anonymous').add(
+        const PlaceDetails(
+          placeId: 'local_restaurant',
+          name: 'Restaurant local',
+          address: 'Rue des Jardins, Cocody',
+          latitude: 5.39,
+          longitude: -3.99,
+          localityLabel: 'Rue des Jardins, Cocody',
+        ),
+      );
+      final service = _CountingPlacesService();
+      final container = ProviderContainer(
+        overrides: [
+          searchQueryProvider.overrideWithValue('res'),
+          placesServiceProvider.overrideWith((ref) => service),
+          passengerLocationSnapshotProvider.overrideWith((ref) async => null),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    final subscription = container.listen(placeSuggestionsProvider, (_, _) {});
-    addTearDown(subscription.close);
+      final subscription = container.listen(
+        placeSuggestionsProvider,
+        (_, _) {},
+      );
+      addTearDown(subscription.close);
 
-    await container.read(placeSuggestionsProvider.future);
-    await Future<void>.delayed(Duration.zero);
+      await container.read(placeSuggestionsProvider.future);
+      await Future<void>.delayed(Duration.zero);
 
-    expect(service.autocompleteCalls, 1);
-    expect(service.lastBypassCache, isTrue);
-  });
+      expect(service.autocompleteCalls, 1);
+      expect(service.lastBypassCache, isFalse);
+    },
+  );
 
   test(
     'three characters without local hit keep normal autocomplete cache flow',
@@ -313,6 +319,73 @@ void main() {
       expect(service.lastBypassCache, isFalse);
     },
   );
+
+  test('enough local results (3+) skip Google entirely', () async {
+    for (final n in ['Resto A', 'Resto B', 'Resto C']) {
+      await RecentPlacesService('anonymous').add(
+        PlaceDetails(
+          placeId: 'recent_$n',
+          name: n,
+          address: 'Rue $n, Cocody',
+          latitude: 5.39,
+          longitude: -3.99,
+          localityLabel: 'Rue $n, Cocody',
+        ),
+      );
+    }
+    final service = _CountingPlacesService();
+    final container = ProviderContainer(
+      overrides: [
+        searchQueryProvider.overrideWithValue('resto'),
+        placesServiceProvider.overrideWith((ref) => service),
+        passengerLocationSnapshotProvider.overrideWith((ref) async => null),
+      ],
+    );
+    addTearDown(container.dispose);
+    final subscription = container.listen(placeSuggestionsProvider, (_, _) {});
+    addTearDown(subscription.close);
+
+    final suggestions = await container.read(placeSuggestionsProvider.future);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(suggestions, hasLength(3));
+    expect(service.autocompleteCalls, 0);
+  });
+
+  test('popular Abidjan places are served locally before Google', () async {
+    final service = _CountingPlacesService();
+    final container = ProviderContainer(
+      overrides: [
+        searchQueryProvider.overrideWithValue('aeroport'),
+        placesServiceProvider.overrideWith((ref) => service),
+        passengerLocationSnapshotProvider.overrideWith((ref) async => null),
+      ],
+    );
+    addTearDown(container.dispose);
+    final subscription = container.listen(placeSuggestionsProvider, (_, _) {});
+    addTearDown(subscription.close);
+
+    final first = await container.read(placeSuggestionsProvider.future);
+
+    expect(first.first.placeId, startsWith('local_ci_'));
+    expect(first.first.localDetails, isNotNull);
+  });
+
+  test('keystrokes are debounced between 300 and 400 ms', () {
+    expect(SearchQuery.debounce.inMilliseconds, inInclusiveRange(300, 400));
+  });
+
+  test('details of a suggestion tile never hit the network', () async {
+    final service = _CountingPlacesService();
+    final container = ProviderContainer(
+      overrides: [placesServiceProvider.overrideWith((ref) => service)],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(suggestionDetailsProvider('google_9').future);
+
+    expect(service.detailsCalls, 0);
+  });
 
   testWidgets('SimpleSearchSheet uses localDetails without details call', (
     tester,
@@ -366,6 +439,8 @@ class _CountingPlacesService extends PlacesService {
     double? originLat,
     double? originLng,
     bool bypassCache = false,
+    Object? cancelToken,
+    bool useSession = true,
   }) async {
     autocompleteCalls++;
     lastBypassCache = bypassCache;

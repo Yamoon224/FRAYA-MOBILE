@@ -47,6 +47,8 @@ class _FakePlacesService extends PlacesService {
     double? originLat,
     double? originLng,
     bool bypassCache = false,
+    Object? cancelToken,
+    bool useSession = true,
   }) async => suggestions;
 
   @override

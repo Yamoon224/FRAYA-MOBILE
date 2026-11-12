@@ -53,14 +53,10 @@ void main() {
     },
   );
 
-  testWidgets('suggestion tile enriches subtitle after details resolve', (
+  testWidgets('suggestion tile uses cached details and never calls Google', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          placesServiceProvider.overrideWith(
-            (ref) => _DelayedPlacesService(
+    final service = _DelayedPlacesService(
               delay: const Duration(milliseconds: 80),
               details: const PlaceDetails(
                 placeId: 'google_4',
@@ -70,8 +66,11 @@ void main() {
                 longitude: -3.99,
                 localityLabel: 'Angre 8eme tranche, Cocody',
               ),
-            ),
-          ),
+            );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          placesServiceProvider.overrideWith((ref) => service),
           favoritePlacesListProvider.overrideWith((ref) async => const []),
         ],
         child: MaterialApp(
@@ -90,13 +89,11 @@ void main() {
       ),
     );
 
-    expect(find.text('Cocody'), findsOneWidget);
-
-    await tester.pump(const Duration(milliseconds: 90));
     await tester.pump();
 
+    // Sous-titre enrichi depuis le cache local, sans aucun appel Place Details.
     expect(find.text('Angre 8eme tranche, Cocody'), findsOneWidget);
-    expect(find.text('Cocody'), findsNothing);
+    expect(service.detailsCalls, 0);
   });
 
   testWidgets('suggestion tile uses compact typography and spacing', (
@@ -184,6 +181,10 @@ class _DelayedPlacesService extends PlacesService {
 
   final Duration delay;
   final PlaceDetails details;
+  int detailsCalls = 0;
+
+  @override
+  PlaceDetails? getCachedPlaceDetails(String placeId) => details;
 
   @override
   Future<PlaceDetails?> getPlaceDetails(
@@ -191,6 +192,7 @@ class _DelayedPlacesService extends PlacesService {
     String? sessionToken,
     String language = 'fr',
   }) async {
+    detailsCalls++;
     await Future<void>.delayed(delay);
     return details;
   }
