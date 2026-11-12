@@ -10,7 +10,10 @@ workflows:
     instance_type: mac_mini_m2
 
     environment:
-      flutter: stable
+      # Version figée : celle avec laquelle pubspec.lock et le code généré (*.g.dart) ont été
+      # produits. `stable` a fini par installer un SDK plus récent (Dart 3.14) qui force
+      # riverpod 3.5.0, incompatible avec le code généré par riverpod_generator 4.0.3.
+      flutter: 3.41.7
       groups:
         - fraya_env
       ios_signing:
@@ -92,7 +95,10 @@ workflows:
     instance_type: mac_mini_m2
 
     environment:
-      flutter: stable
+      # Version figée : celle avec laquelle pubspec.lock et le code généré (*.g.dart) ont été
+      # produits. `stable` a fini par installer un SDK plus récent (Dart 3.14) qui force
+      # riverpod 3.5.0, incompatible avec le code généré par riverpod_generator 4.0.3.
+      flutter: 3.41.7
       groups:
         - fraya_env
       ios_signing:
