@@ -16,7 +16,7 @@
 
 .PARAMETER Minify
     Active R8 (-Pminify=true). A ne faire qu'apres validation du parcours complet
-    (push OneSignal, carte Maps, Crashlytics) : R8 peut casser au runtime sans casser
+    (push FCM, carte Maps, Crashlytics) : R8 peut casser au runtime sans casser
     la compilation.
 
 .PARAMETER Universal
@@ -82,7 +82,7 @@ function Build-Flavor {
     # `flutter build` ne relaie pas les -P vers Gradle ; en revanche Gradle lit toute
     # variable d'environnement ORG_GRADLE_PROJECT_<nom> comme propriete de projet.
     if ($Minify) {
-        Write-Host "R8 ACTIVE : valider push OneSignal + carte Maps + Crashlytics avant diffusion." -ForegroundColor Yellow
+        Write-Host "R8 ACTIVE : valider push FCM + carte Maps + Crashlytics avant diffusion." -ForegroundColor Yellow
         $env:ORG_GRADLE_PROJECT_minify = 'true'
     }
     else {

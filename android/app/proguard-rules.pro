@@ -4,11 +4,6 @@
 # io.flutter.*. Ce fichier ne couvre que les SDK natifs sensibles a la reflexion, que R8
 # supprimerait sans le savoir : la compilation reste verte, mais le crash arrive au runtime.
 
-# --- OneSignal (notifications push) -----------------------------------------
-# Le SDK instancie ses receivers/services par nom de classe.
--keep class com.onesignal.** { *; }
--dontwarn com.onesignal.**
-
 # --- Firebase / Crashlytics --------------------------------------------------
 # Les modeles Firestore/RTDB sont deserialises par reflexion, et Crashlytics a besoin
 # des numeros de ligne + du nom des fichiers source pour desobfusquer les stack traces.

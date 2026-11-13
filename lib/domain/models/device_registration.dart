@@ -6,20 +6,31 @@ class DeviceRegistration extends Equatable {
   const DeviceRegistration({
     required this.userId,
     required this.role,
-    required this.oneSignalSubscriptionId,
+    required this.pushToken,
     required this.platform,
   });
 
   final String userId;
   final String role;
-  final String oneSignalSubscriptionId;
+  final String pushToken;
   final String platform;
 
+  /// Corps de POST /devices/register (le serveur déduit l'utilisateur du jeton d'authentification).
+  Map<String, dynamic> toRegisterRequest() {
+    return {'token': pushToken, 'platform': platform, 'role': role};
+  }
+
+  /// Corps de POST /devices/deactivate.
+  Map<String, dynamic> toDeactivateRequest() {
+    return {'token': pushToken};
+  }
+
+  /// Sérialisation locale (dernier enregistrement), qui garde aussi l'utilisateur.
   Map<String, dynamic> toJson() {
     return {
       'userId': userId,
       'role': role,
-      'oneSignalSubscriptionId': oneSignalSubscriptionId,
+      'token': pushToken,
       'platform': platform,
     };
   }
@@ -27,17 +38,15 @@ class DeviceRegistration extends Equatable {
   static DeviceRegistration? fromJson(Map<String, dynamic> json) {
     final userId = json['userId']?.toString().trim();
     final role = json['role']?.toString().trim();
-    final oneSignalSubscriptionId = json['oneSignalSubscriptionId']
-        ?.toString()
-        .trim();
+    final pushToken = json['token']?.toString().trim();
     final platform = json['platform']?.toString().trim();
 
     if (userId == null ||
         userId.isEmpty ||
         role == null ||
         role.isEmpty ||
-        oneSignalSubscriptionId == null ||
-        oneSignalSubscriptionId.isEmpty ||
+        pushToken == null ||
+        pushToken.isEmpty ||
         platform == null ||
         platform.isEmpty) {
       return null;
@@ -46,11 +55,11 @@ class DeviceRegistration extends Equatable {
     return DeviceRegistration(
       userId: userId,
       role: role,
-      oneSignalSubscriptionId: oneSignalSubscriptionId,
+      pushToken: pushToken,
       platform: platform,
     );
   }
 
   @override
-  List<Object?> get props => [userId, role, oneSignalSubscriptionId, platform];
+  List<Object?> get props => [userId, role, pushToken, platform];
 }

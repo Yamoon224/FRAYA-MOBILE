@@ -31,7 +31,7 @@ val mapsApiKey: String = System.getenv("MAPS_API_KEY")
 // Minification desactivee par defaut : elle n'apporte que quelques Mo sur une app Flutter
 // (le code Dart est deja compile AOT et tree-shake) mais peut casser au runtime les plugins
 // natifs qui utilisent la reflexion. A activer avec -Pminify=true une fois le parcours
-// complet valide (push OneSignal, carte Maps, Crashlytics).
+// complet valide (push FCM, carte Maps, Crashlytics).
 val minifyEnabled = (project.findProperty("minify") as String?)?.toBoolean() ?: false
 
 android {
@@ -55,7 +55,7 @@ android {
         applicationId = "com.example.fraya_mobile"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // OneSignal Android SDK 5.x requires Android API 23+.
+        // firebase_messaging exige l'API 23 minimum.
         // Le Navigation SDK de Google exige l'API 24 minimum.
         minSdk = maxOf(flutter.minSdkVersion, 24)
         targetSdk = flutter.targetSdkVersion

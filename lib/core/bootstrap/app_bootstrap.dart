@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,6 +40,20 @@ Future<void> _initializeRequiredServices(AppFlavor flavor) async {
   logger.info('${AppConfig.instance.appName} initialise');
   await LocalStorage.instance.init();
   ApiClient.instance.init();
+  _registerPushBackgroundHandler();
+}
+
+/// Messages push reçus app fermée ou en arrière-plan : à enregistrer avant runApp.
+void _registerPushBackgroundHandler() {
+  try {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  } catch (error, stackTrace) {
+    logger.warning(
+      'Handler push en arriere-plan indisponible',
+      error,
+      stackTrace,
+    );
+  }
 }
 
 void _scheduleDeferredServicesInitialization() {
@@ -52,7 +67,7 @@ Future<void> _initializePushNotifications() async {
   try {
     await PushNotificationService.instance.init();
   } catch (error, stackTrace) {
-    logger.warning('OneSignal indisponible', error, stackTrace);
+    logger.warning('Push FCM indisponible', error, stackTrace);
   }
 }
 

@@ -1,8 +1,10 @@
 library;
 
+import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:in_app_update/in_app_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -102,28 +104,61 @@ class AppUpdateService {
 
   Future<AvailableUpdate?> _checkIos() async {
     final package = await PackageInfo.fromPlatform();
-    final bundleId = package.packageName;
-    final current = package.version;
+    return checkIos(
+      bundleId: package.packageName,
+      currentVersion: package.version,
+    );
+  }
+
+  /// Interroge la fiche publique App Store. Visible pour les tests.
+  @visibleForTesting
+  Future<AvailableUpdate?> checkIos({
+    required String bundleId,
+    required String currentVersion,
+  }) async {
+    // D'abord la boutique de Côte d'Ivoire ; si l'application n'y est pas listée (disponibilité par pays),
+    // on retombe sur la recherche mondiale plutôt que de ne jamais proposer la mise à jour.
+    for (final country in const <String?>['ci', null]) {
+      final app = await _lookupIos(bundleId, country);
+      if (app == null) continue;
+      final version = app['version']?.toString();
+      if (version == null || compareVersions(version, currentVersion) <= 0) {
+        return null;
+      }
+      return AvailableUpdate(
+        storeVersion: version,
+        storeUrl: app['trackViewUrl']?.toString(),
+      );
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> _lookupIos(
+    String bundleId,
+    String? country,
+  ) async {
     final response = await _dio.get<dynamic>(
       'https://itunes.apple.com/lookup',
-      queryParameters: {'bundleId': bundleId, 'country': 'ci'},
+      queryParameters: {
+        'bundleId': bundleId,
+        if (country != null) 'country': country,
+        // Le CDN d'Apple garde les réponses en cache : un paramètre unique évite de voir une version périmée.
+        't': DateTime.now().millisecondsSinceEpoch,
+      },
+      // iTunes répond en « text/javascript » : Dio ne décode pas ce type en JSON, on le fait nous-mêmes.
       options: Options(
+        responseType: ResponseType.plain,
         receiveTimeout: const Duration(seconds: 6),
         sendTimeout: const Duration(seconds: 6),
       ),
     );
-    final data = response.data is String
-        ? null
-        : response.data as Map<String, dynamic>?;
-    final results = data?['results'];
+    final raw = response.data;
+    final data = raw is String ? jsonDecode(raw) : raw;
+    if (data is! Map<String, dynamic>) return null;
+    final results = data['results'];
     if (results is! List || results.isEmpty) return null;
-    final app = results.first as Map<String, dynamic>;
-    final version = app['version']?.toString();
-    if (version == null || compareVersions(version, current) <= 0) return null;
-    return AvailableUpdate(
-      storeVersion: version,
-      storeUrl: app['trackViewUrl']?.toString(),
-    );
+    final first = results.first;
+    return first is Map<String, dynamic> ? first : null;
   }
 
   /// Lance la mise à jour : intégrée sous Android quand c'est possible, sinon ouverture de la fiche du store.

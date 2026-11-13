@@ -111,6 +111,22 @@ void main() {
         isNull,
       );
       expect(
+        StoreLinks.shareLink(
+          isAndroid: false,
+          isIos: true,
+          flavor: AppFlavor.passenger,
+        ),
+        StoreLinks.passengerIos,
+      );
+      expect(
+        StoreLinks.shareLink(
+          isAndroid: false,
+          isIos: true,
+          flavor: AppFlavor.driver,
+        ),
+        StoreLinks.driverIos,
+      );
+      expect(
         StoreLinks.shareLink(isAndroid: false, flavor: AppFlavor.passenger),
         isNull,
       );

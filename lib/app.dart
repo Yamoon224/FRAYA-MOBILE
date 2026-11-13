@@ -79,21 +79,30 @@ class _FrayaAppState extends ConsumerState<FrayaApp> {
     });
   }
 
-  /// Après le lancement, propose la dernière version publiée sur le store (Play Store ou App Store).
-  void _scheduleUpdatePrompt() {
-    _updatePromptTimer = Timer(const Duration(seconds: 3), () {
+  /// Propose la dernière version publiée sur le store (Play Store ou App Store) : au lancement, puis à chaque
+  /// retour au premier plan. Si l'écran n'est pas encore prêt (démarrage, connexion), on réessaie quelques fois.
+  void _scheduleUpdatePrompt({
+    Duration delay = const Duration(seconds: 3),
+    int attemptsLeft = 5,
+  }) {
+    _updatePromptTimer?.cancel();
+    _updatePromptTimer = Timer(delay, () async {
       if (!mounted) return;
-      unawaited(
-        maybeShowAppUpdatePrompt(
-          () => ref
-              .read(appRouterProvider)
-              .routerDelegate
-              .navigatorKey
-              .currentState
-              ?.overlay
-              ?.context,
-        ),
+      final handled = await maybeShowAppUpdatePrompt(
+        () => ref
+            .read(appRouterProvider)
+            .routerDelegate
+            .navigatorKey
+            .currentState
+            ?.overlay
+            ?.context,
       );
+      if (!handled && attemptsLeft > 1 && mounted) {
+        _scheduleUpdatePrompt(
+          delay: const Duration(seconds: 5),
+          attemptsLeft: attemptsLeft - 1,
+        );
+      }
     });
   }
 
@@ -206,6 +215,8 @@ class _FrayaAppState extends ConsumerState<FrayaApp> {
   }
 
   Future<void> _handleAppResumed() async {
+    // Une application laissée en arrière-plan pendant des jours doit aussi voir la nouvelle version.
+    _scheduleUpdatePrompt(delay: const Duration(seconds: 2));
     if (!AppConfig.instance.isDriver) return;
     await ref.read(driverPresenceControllerProvider).handleAppResumed();
   }

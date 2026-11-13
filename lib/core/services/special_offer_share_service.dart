@@ -15,10 +15,11 @@ typedef SpecialOfferShareInvoker = Future<Object?> Function(ShareParams params);
 typedef StoreLinkResolver = String? Function();
 
 String? _defaultStoreLink() {
-  if (kIsWeb || !Platform.isAndroid) return null;
+  if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) return null;
   try {
     return StoreLinks.shareLink(
-      isAndroid: true,
+      isAndroid: Platform.isAndroid,
+      isIos: Platform.isIOS,
       flavor: AppConfig.instance.flavor,
     );
   } catch (_) {

@@ -50,7 +50,7 @@ La continuité du projet dépend des accès suivants :
 | API Fraya | Authentification, profils, courses, chauffeurs, portefeuille et autres données métier. | Hébergement, accès d’administration, documentation des endpoints et comptes techniques. |
 | Socket.IO | Événements temps réel liés aux courses et aux statuts. | URL du service, disponibilité du serveur et droits d’accès. |
 | Google Maps et Places | Carte, géolocalisation, recherche de lieux, géocodage et itinéraires. | Projet Google Cloud, facturation activée et restrictions des clés Android/iOS. |
-| OneSignal | Notifications push, avec un identifiant distinct pour chaque application. | Compte OneSignal, applications passager/chauffeur et droits de gestion des notifications. |
+| Firebase Cloud Messaging | Notifications push (jeton FCM de l'appareil enregistré sur le serveur). | Projet Firebase des deux applications ; sur iOS, clé APNs importée dans la console Firebase. |
 | Firebase / Crashlytics | Initialisation Firebase et remontée des erreurs applicatives. | Projet Firebase, accès console et configuration Android/iOS. |
 
 Les fichiers Firebase Android sont présents dans les répertoires de flavors. Ils doivent rester cohérents avec le projet Firebase détenu par l’entreprise.
@@ -64,8 +64,6 @@ GOOGLE_MAPS_API_KEY_ANDROID=
 GOOGLE_MAPS_API_KEY_IOS=
 GOOGLE_PLACES_API_KEY=
 SERVER_URL=
-ONESIGNAL_APP_ID_PASSENGER=
-ONESIGNAL_APP_ID_DRIVER=
 WHATSAPP_SUPPORT_NUMBER=
 ```
 
@@ -99,6 +97,6 @@ Le script de build associe automatiquement chaque flavor Android au bon point d�
 
 Il produit des APK séparés par architecture et affiche une empreinte SHA-256. Pour la diffusion courante, utiliser l’APK `arm64-v8a` correspondant au flavor, conserver son empreinte SHA-256 avec le fichier transmis et confirmer que la signature release est utilisée.
 
-La minification est désactivée par défaut. Si elle est activée, valider impérativement les notifications OneSignal, la carte Google Maps et Crashlytics avant diffusion.
+La minification est désactivée par défaut. Si elle est activée, valider impérativement les notifications push FCM, la carte Google Maps et Crashlytics avant diffusion.
 
 

@@ -12,24 +12,28 @@ class DeviceRegistrationRemoteDataSource {
   final Dio? _dio;
   Dio get _client => _dio ?? ApiClient.instance.dio;
 
-  Future<void> register(DeviceRegistration registration) async {
-    // Temporairement désactivé : cet endpoint n'existe pas côté backend.
-    // await _postDeviceMutation('/device/register', registration);
+  /// Associe le jeton FCM de l'appareil à l'utilisateur connecté.
+  Future<void> register(DeviceRegistration registration) {
+    return _postDeviceMutation(
+      '/devices/register',
+      registration.toRegisterRequest(),
+    );
   }
 
-  Future<void> deactivate(DeviceRegistration registration) async {
-    // Temporairement désactivé avec la synchronisation device backend.
-    // await _postDeviceMutation('/device/deactivate', registration);
+  /// Retire le jeton FCM : l'appareil ne reçoit plus de notifications pour cet utilisateur.
+  Future<void> deactivate(DeviceRegistration registration) {
+    return _postDeviceMutation(
+      '/devices/deactivate',
+      registration.toDeactivateRequest(),
+    );
   }
 
-  // Conservé pour réactiver la synchronisation quand le backend sera prêt.
-  // ignore: unused_element
   Future<void> _postDeviceMutation(
     String path,
-    DeviceRegistration registration,
+    Map<String, dynamic> body,
   ) async {
     try {
-      final response = await _client.post(path, data: registration.toJson());
+      final response = await _client.post(path, data: body);
       if (_isSuccess(response.statusCode)) {
         return;
       }

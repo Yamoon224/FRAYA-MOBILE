@@ -72,7 +72,7 @@ class _PushNotificationCoordinator {
       if (_disposed) return;
       _latestSubscriptionId = id;
       logger.warning(
-        'Diagnostic OneSignal [coordinator.subscription]: '
+        'Diagnostic FCM [coordinator.subscription]: '
         'subscriptionId=${_maskValue(id)}',
       );
       _enqueueSyncCurrentAuth();
@@ -177,7 +177,7 @@ class _PushNotificationCoordinator {
         !_service.isPushSubscriptionOptedIn) {
       await _service.optInUser();
       logger.warning(
-        'Diagnostic OneSignal [coordinator.optIn.after]: '
+        'Diagnostic FCM [coordinator.optIn.after]: '
         'permission=${_service.hasNotificationPermission}, '
         'optedIn=${_service.isPushSubscriptionOptedIn}, '
         'subscriptionId=${_maskValue(_service.currentSubscriptionId)}',
@@ -191,7 +191,7 @@ class _PushNotificationCoordinator {
 
     if (_latestSubscriptionId != null) {
       logger.warning(
-        'Diagnostic OneSignal [coordinator.cachedSubscription]: '
+        'Diagnostic FCM [coordinator.cachedSubscription]: '
         'subscriptionId=${_maskValue(_latestSubscriptionId)}',
       );
     }
@@ -223,7 +223,7 @@ class _PushNotificationCoordinator {
       DeviceRegistration(
         userId: userId,
         role: role,
-        oneSignalSubscriptionId: trimmedSubscriptionId,
+        pushToken: trimmedSubscriptionId,
         platform: platform,
       ),
     );

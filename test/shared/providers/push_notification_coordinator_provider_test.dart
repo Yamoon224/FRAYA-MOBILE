@@ -54,7 +54,7 @@ void main() {
         DeviceRegistration(
           userId: '24',
           role: 'DRIVER',
-          oneSignalSubscriptionId: 'sub-1',
+          pushToken: 'sub-1',
           platform: 'android',
         ),
       ]);
@@ -129,12 +129,12 @@ void main() {
     service.emitSubscription('sub-late');
     await _settle();
 
-    expect(repository.registered.map((item) => item.oneSignalSubscriptionId), [
+    expect(repository.registered.map((item) => item.pushToken), [
       'sub-late',
     ]);
   });
 
-  test('deactivates stored device before OneSignal logout', () async {
+  test('deactivates stored device before push logout', () async {
     final log = <String>[];
     final repository = RecordingDeviceRegistrationRepository(log);
     final service = FakePushNotificationService(

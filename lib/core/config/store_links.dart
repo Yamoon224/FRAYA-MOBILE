@@ -9,17 +9,24 @@ class StoreLinks {
   static const String driverAndroid =
       'https://play.google.com/store/apps/details?id=fraya.taxi.driver.ci';
 
-  /// Lien Play Store de l'application en cours ; null hors Android ou pour la version de développement.
+  static const String passengerIos =
+      'https://apps.apple.com/ci/app/fraya-taxi/id6825035633';
+  static const String driverIos =
+      'https://apps.apple.com/ci/app/fraya-taxi-driver/id6825035443';
+
+  /// Lien de la boutique (Play Store ou App Store) de l'application en cours ;
+  /// null hors Android/iOS ou pour la version de développement.
   static String? shareLink({
     required bool isAndroid,
+    bool isIos = false,
     required AppFlavor flavor,
   }) {
-    if (!isAndroid) return null;
+    if (!isAndroid && !isIos) return null;
     switch (flavor) {
       case AppFlavor.passenger:
-        return passengerAndroid;
+        return isAndroid ? passengerAndroid : passengerIos;
       case AppFlavor.driver:
-        return driverAndroid;
+        return isAndroid ? driverAndroid : driverIos;
       case AppFlavor.dev:
         return null;
     }

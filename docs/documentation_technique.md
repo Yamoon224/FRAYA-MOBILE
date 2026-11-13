@@ -23,7 +23,7 @@ Le widget racine est `FrayaApp` dans `lib/app.dart`. Il configure le theme, la l
 | HTTP | Dio |
 | Temps reel | socket_io_client |
 | Cartographie | google_maps_flutter, Google Directions/Places |
-| Notifications | OneSignal, Firebase |
+| Notifications | Firebase Cloud Messaging |
 | Crash reporting | Firebase Crashlytics |
 | Stockage local | shared_preferences, flutter_secure_storage |
 | Documents et medias | image_picker, file_picker, pdf, pdfx, flutter_image_compress |
@@ -108,8 +108,6 @@ GOOGLE_MAPS_API_KEY_ANDROID=
 GOOGLE_MAPS_API_KEY_IOS=
 GOOGLE_PLACES_API_KEY=
 SERVER_URL=
-ONESIGNAL_APP_ID_PASSENGER=
-ONESIGNAL_APP_ID_DRIVER=
 WHATSAPP_SUPPORT_NUMBER=
 ```
 
@@ -250,7 +248,7 @@ Cles importantes dans `AppConstants` :
 L'application utilise :
 
 - `socket_io_client` pour les evenements temps reel.
-- OneSignal pour les notifications push.
+- Firebase Cloud Messaging pour les notifications push.
 - Firebase Crashlytics pour les erreurs fatales et Flutter.
 - Un coordinateur de reprise d'application pour rafraichir les donnees apres un long passage en arriere-plan.
 

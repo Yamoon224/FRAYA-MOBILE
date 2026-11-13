@@ -32,6 +32,7 @@ class RecentPlacesNotifier extends _$RecentPlacesNotifier {
   Future<void> add(PlaceDetails place) async {
     final service = ref.read(recentPlacesServiceProvider);
     await service.add(place);
+    if (!ref.mounted) return;
     // Invalider le provider pour forcer le rechargement
     ref.invalidate(recentPlacesListProvider);
   }
@@ -39,12 +40,14 @@ class RecentPlacesNotifier extends _$RecentPlacesNotifier {
   Future<void> remove(String placeId) async {
     final service = ref.read(recentPlacesServiceProvider);
     await service.remove(placeId);
+    if (!ref.mounted) return;
     ref.invalidate(recentPlacesListProvider);
   }
 
   Future<void> clearAll() async {
     final service = ref.read(recentPlacesServiceProvider);
     await service.clearAll();
+    if (!ref.mounted) return;
     ref.invalidate(recentPlacesListProvider);
   }
 }
