@@ -4,13 +4,14 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/error/exceptions.dart';
 import '../../../core/models/directions_models.dart';
+import '../../../core/services/maps_usage_tracker.dart';
 import '../../../core/utils/logger.dart';
 
 final _log = AppLogger.instance;
 
 class DirectionsRemoteDataSource {
   DirectionsRemoteDataSource({Dio? googleDio})
-    : _googleDio = googleDio ?? Dio();
+    : _googleDio = googleDio ?? createGoogleDio();
 
   final Dio _googleDio;
 

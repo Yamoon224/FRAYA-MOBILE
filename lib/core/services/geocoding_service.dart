@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'address_formatter_service.dart';
+import 'maps_usage_tracker.dart';
 import '../utils/logger.dart';
 
 final _log = AppLogger.instance;
@@ -10,7 +11,7 @@ class GeocodingService {
   final AddressFormatterService _addressFormatter;
 
   GeocodingService({Dio? dio, AddressFormatterService? addressFormatter})
-    : _dio = dio ?? Dio(),
+    : _dio = dio ?? createGoogleDio(),
       _addressFormatter = addressFormatter ?? const AddressFormatterService();
 
   String get _apiKey {

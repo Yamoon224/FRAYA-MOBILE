@@ -11,6 +11,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../../core/models/directions_models.dart';
+import '../../../../core/services/maps_usage_tracker.dart';
 import '../../../../core/services/navigation_launcher_service.dart';
 import '../../../../core/services/navigation_progress.dart';
 import '../../../../core/services/navigation_voice.dart';
@@ -69,6 +70,7 @@ class _DriverDirectionsNavigationScreenState
   @override
   void initState() {
     super.initState();
+    MapsUsageTracker.instance.recordMapLoad();
     unawaited(_setWakelock(true));
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadRoute());
   }

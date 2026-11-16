@@ -5,6 +5,7 @@ import 'package:fraya_mobile/shared/widgets/fraya_skeleton.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../../core/services/maps_usage_tracker.dart';
 import '../../providers/location_provider.dart';
 import 'fraya_map_style.dart';
 
@@ -58,6 +59,12 @@ class _FrayaMapState extends ConsumerState<FrayaMap> {
   bool _isMapReady = false;
 
   static const LatLng _defaultPosition = LatLng(5.3167, -4.0167);
+
+  @override
+  void initState() {
+    super.initState();
+    MapsUsageTracker.instance.recordMapLoad();
+  }
 
   @override
   void didUpdateWidget(covariant FrayaMap oldWidget) {

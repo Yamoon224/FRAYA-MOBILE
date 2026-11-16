@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/places_models.dart';
 import '../utils/logger.dart';
 import 'geocoding_service.dart';
+import 'maps_usage_tracker.dart';
 import 'place_address_enrichment_service.dart';
 import 'places_autocomplete_memory_cache.dart';
 import 'places_cache_service.dart';
@@ -38,7 +39,7 @@ class PlacesService {
     GeocodingService? geocodingService,
     PlacesSession? session,
   }) : _session = session ?? PlacesSession.shared,
-       _googleDio = googleDio ?? Dio(),
+       _googleDio = googleDio ?? createGoogleDio(),
        _cacheService = cacheService ?? PlacesCacheService(),
        _autocompleteMemoryCache =
            autocompleteMemoryCache ?? PlacesAutocompleteMemoryCache(),

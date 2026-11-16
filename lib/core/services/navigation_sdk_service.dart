@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 
 import '../utils/logger.dart';
+import 'maps_usage_tracker.dart';
 import 'navigation_launcher_service.dart';
 
 final _log = AppLogger.instance;
@@ -89,6 +90,12 @@ class GoogleNavigationSdkGateway implements NavigationSdkGateway {
           travelMode: NavigationTravelMode.driving,
         ),
       ),
+    );
+    // Le Navigation SDK est facturé par destination définie.
+    MapsUsageTracker.instance.record(
+      MapsService.navigation,
+      success: status == NavigationRouteStatus.statusOk,
+      googleStatus: status.toString().split('.').last,
     );
     switch (status) {
       case NavigationRouteStatus.statusOk:

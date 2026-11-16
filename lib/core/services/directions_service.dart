@@ -7,11 +7,12 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../models/directions_models.dart';
 import '../utils/logger.dart';
+import 'maps_usage_tracker.dart';
 
 final _log = AppLogger.instance;
 
 class DirectionsService {
-  DirectionsService({Dio? googleDio}) : _googleDio = googleDio ?? Dio();
+  DirectionsService({Dio? googleDio}) : _googleDio = googleDio ?? createGoogleDio();
 
   final Dio _googleDio;
 
