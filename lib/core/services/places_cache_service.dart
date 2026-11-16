@@ -16,6 +16,7 @@ class PlacesCacheService {
 
   static const _detailsPrefix = 'places_cache_details_';
   static const _queryPrefix = 'places_cache_query_';
+  static const _nearbyPrefix = 'places_cache_nearby_';
 
   final LocalStorage _storage;
   final DateTime Function() _now;
@@ -84,6 +85,41 @@ class PlacesCacheService {
       jsonEncode({
         'cachedAt': _now().millisecondsSinceEpoch,
         'placeIds': placeIds,
+      }),
+    );
+  }
+
+  /// Lieux proches conservés sur disque : sans cela, chaque ouverture de l'app
+  /// refacture la recherche (Nearby Search, l'un des appels les plus chers).
+  List<PlaceDetails>? readNearby(String cacheKey, Duration maxAge) {
+    if (!_storage.isInitialized || cacheKey.isEmpty) return null;
+    final raw = _storage.getString('$_nearbyPrefix$cacheKey');
+    if (raw == null || raw.isEmpty) return null;
+    final data = _decode(raw);
+    if (data == null || _isExpired(data, maxAge)) {
+      _storage.remove('$_nearbyPrefix$cacheKey');
+      return null;
+    }
+    final items = data['places'];
+    if (items is! List) return null;
+    try {
+      final places = [
+        for (final item in items)
+          if (item is Map<String, dynamic>) PlaceDetails.fromLocalJson(item),
+      ];
+      return places.isEmpty ? null : places;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveNearby(String cacheKey, List<PlaceDetails> places) async {
+    if (!_storage.isInitialized || cacheKey.isEmpty || places.isEmpty) return;
+    await _storage.setString(
+      '$_nearbyPrefix$cacheKey',
+      jsonEncode({
+        'cachedAt': _now().millisecondsSinceEpoch,
+        'places': places.map((p) => p.toLocalJson()).toList(),
       }),
     );
   }

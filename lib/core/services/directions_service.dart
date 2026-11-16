@@ -12,7 +12,13 @@ import 'maps_usage_tracker.dart';
 final _log = AppLogger.instance;
 
 class DirectionsService {
-  DirectionsService({Dio? googleDio}) : _googleDio = googleDio ?? createGoogleDio();
+  /// [includeTrafficSegments] : le second appel (Routes API, palier le plus cher) ne sert qu'à
+  /// colorer le trafic sur la carte passager. Les écrans chauffeur ne l'affichent pas : ils le
+  /// désactivent pour ne pas payer un appel dont le résultat n'est jamais lu.
+  DirectionsService({Dio? googleDio, this.includeTrafficSegments = true})
+    : _googleDio = googleDio ?? createGoogleDio();
+
+  final bool includeTrafficSegments;
 
   final Dio _googleDio;
 
@@ -48,10 +54,12 @@ class DirectionsService {
       }
 
       final result = DirectionsResult.fromGoogleApi(data);
-      final trafficByRoute = await _fetchTrafficSegmentsFromRoutesApi(
-        origin: origin,
-        destination: destination,
-      );
+      final trafficByRoute = includeTrafficSegments
+          ? await _fetchTrafficSegmentsFromRoutesApi(
+              origin: origin,
+              destination: destination,
+            )
+          : null;
 
       final routes = _attachTrafficSegments(result.routes, trafficByRoute);
       return result.copyWith(routes: routes);

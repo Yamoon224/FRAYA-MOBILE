@@ -224,6 +224,11 @@ class PlacesService {
     if (cached != null && DateTime.now().difference(cached.at) < _nearbyTtl) {
       return cached.places;
     }
+    final persisted = _cacheService.readNearby(cacheKey, _nearbyTtl);
+    if (persisted != null) {
+      _nearbyCache[cacheKey] = _NearbyEntry(persisted, DateTime.now());
+      return persisted;
+    }
 
     try {
       final response = await _googleDio.get(
@@ -247,6 +252,7 @@ class PlacesService {
               .toList();
           if (places.isNotEmpty) {
             _nearbyCache[cacheKey] = _NearbyEntry(places, DateTime.now());
+            await _cacheService.saveNearby(cacheKey, places);
           }
           return places;
         }

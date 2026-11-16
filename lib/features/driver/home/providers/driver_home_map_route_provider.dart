@@ -48,5 +48,6 @@ final driverHomeMapRouteProvider = FutureProvider.autoDispose
     });
 
 final driverHomeDirectionsServiceProvider = Provider<DirectionsService>((ref) {
-  return DirectionsService();
+  // L'écran chauffeur n'affiche pas les segments de trafic : pas d'appel Routes API.
+  return DirectionsService(includeTrafficSegments: false);
 });
