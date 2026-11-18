@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/services/address_formatter_service.dart';
 import '../../core/services/places_service.dart';
 import '../../core/data/ci_popular_places.dart';
+import '../../core/services/popular_destinations_store.dart';
 import '../../core/models/places_models.dart';
 import 'location_provider.dart';
 import 'places_local_suggestions.dart';
@@ -29,9 +30,9 @@ class ActiveSearchType extends _$ActiveSearchType {
 
 @riverpod
 class SearchQuery extends _$SearchQuery {
-  /// Délai avant d'envoyer une frappe : 300 à 400 ms évitent un appel Google
-  /// par lettre tapée.
-  static const debounce = Duration(milliseconds: 350);
+  /// Délai avant de lancer la recherche LOCALE (récents, favoris, lieux populaires) : courte, car
+  /// gratuite. L'appel Google, lui, attend [placesGoogleExtraDelay] de plus.
+  static const debounce = Duration(milliseconds: 250);
 
   Timer? _debounceTimer;
 
@@ -56,8 +57,15 @@ class SearchQuery extends _$SearchQuery {
   }
 }
 
+/// Pause supplémentaire avant d'interroger Google, une fois les résultats locaux affichés. Elle évite
+/// les requêtes payantes pendant que le passager tape encore : si la saisie change, la recherche en
+/// cours est abandonnée avant tout appel. Modifiable pour les tests.
+Duration placesGoogleExtraDelay = const Duration(milliseconds: 450);
+
 @riverpod
 Stream<List<PlaceSuggestion>> placeSuggestions(Ref ref) async* {
+  // Met à jour en arrière-plan la liste des destinations fréquentes (au plus une fois par semaine).
+  unawaited(PopularDestinationsStore.instance.refreshIfStale());
   final query = ref.watch(searchQueryProvider);
   // Annule la requête Google en cours dès que la frappe change (le provider est
   // reconstruit à chaque nouvelle requête). Enregistré avant tout `await`.
@@ -123,10 +131,17 @@ Stream<List<PlaceSuggestion>> placeSuggestions(Ref ref) async* {
     yield localWithDistance;
   }
 
-  // Assez de résultats locaux : Google ne sert qu'en secours.
-  if (localWithDistance.length >= localSufficientCount) return;
+  // Assez de lieux locaux dont le NOM correspond : Google ne sert qu'en secours.
+  if (strongLocalMatchCount(localWithDistance, normalizedQuery) >=
+      localSufficientCount) {
+    return;
+  }
 
-  if (!ref.mounted) return;
+  // Le passager tape peut-être encore : on attend avant de payer un appel.
+  if (placesGoogleExtraDelay > Duration.zero) {
+    await Future<void>.delayed(placesGoogleExtraDelay);
+  }
+  if (!ref.mounted || cancelToken.isCancelled) return;
 
   final service = ref.read(placesServiceProvider);
   final remoteResults = await service.getAutocompleteSuggestions(
@@ -286,6 +301,7 @@ int _landmarkPriority(PlaceDetails p) {
 
 @riverpod
 Future<List<PlaceDetails>> nearbyLandmarks(Ref ref) async {
+  unawaited(PopularDestinationsStore.instance.refreshIfStale());
   final service = ref.read(placesServiceProvider);
   final location = await ref.watch(passengerLocationSnapshotProvider.future);
   final results = await service.getNearbyPlaces(

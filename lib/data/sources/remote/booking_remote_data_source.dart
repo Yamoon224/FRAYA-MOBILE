@@ -54,6 +54,12 @@ class BookingRemoteDataSource {
           'currentLat': params.latDeparture,
           'currentLng': params.longDeparture,
           'destinationPlaceId': params.arrivalPlaceId,
+          // Coordonnées déjà connues : le serveur n'a pas à redemander le lieu à Google
+          // (un appel Place Details facturé de moins par estimation).
+          if (params.arrivalLat != 0 || params.arrivalLong != 0) ...{
+            'destinationLat': params.arrivalLat,
+            'destinationLng': params.arrivalLong,
+          },
           'stops': [
             for (final stop in params.stops)
               {'position': stop.position, 'placeId': stop.placeId},
@@ -181,7 +187,8 @@ class BookingRemoteDataSource {
       final share = payload is Map ? payload['share'] : null;
       if (data['success'] != true || share is! Map) {
         throw ServerException(
-          message: data['message']?.toString() ??
+          message:
+              data['message']?.toString() ??
               'Impossible de generer le lien de suivi.',
           statusCode: response.statusCode,
         );

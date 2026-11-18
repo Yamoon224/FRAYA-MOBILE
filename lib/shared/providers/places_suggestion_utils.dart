@@ -1,3 +1,4 @@
+import '../../core/data/ci_popular_places.dart' show foldSearchText;
 import '../../core/models/places_models.dart';
 
 String normalizePlaceSearchQuery(String value) {
@@ -39,4 +40,13 @@ String placeSuggestionKey(PlaceSuggestion suggestion) {
     suggestion.description,
   ].join(' ');
   return 'text:${normalizePlaceSearchQuery(text)}';
+}
+
+/// Nombre de suggestions locales dont le NOM correspond à la recherche. Une correspondance sur la seule
+/// commune (« Cocody » dans l'adresse) ne prouve pas que le lieu cherché est dans la liste locale : elle ne
+/// doit pas empêcher d'interroger Google.
+int strongLocalMatchCount(List<PlaceSuggestion> local, String query) {
+  final q = foldSearchText(query);
+  if (q.isEmpty) return 0;
+  return local.where((s) => foldSearchText(s.mainText).contains(q)).length;
 }

@@ -12,7 +12,12 @@ class RecentPlacesService {
 
   final String _userId;
   String get _key => 'fraya_recent_places_$_userId';
-  static const int maxItems = 10;
+
+  /// Lieux conservés (la recherche locale les utilise pour éviter des appels Google).
+  static const int maxItems = 30;
+
+  /// Lieux affichés dans la liste « Récents » de l'accueil.
+  static const int displayItems = 10;
   static const _addressFormatter = AddressFormatterService();
 
   /// Récupère la liste des lieux récents (du plus récent au plus ancien).

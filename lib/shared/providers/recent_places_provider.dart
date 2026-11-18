@@ -18,7 +18,10 @@ RecentPlacesService recentPlacesService(Ref ref) {
 @riverpod
 Future<List<PlaceDetails>> recentPlacesList(Ref ref) async {
   final service = ref.read(recentPlacesServiceProvider);
-  return service.getAll();
+  // Tout l'historique sert à la recherche locale ; seul le début est affiché ici.
+  return (await service.getAll())
+      .take(RecentPlacesService.displayItems)
+      .toList();
 }
 
 /// Notifier pour ajouter/supprimer des lieux récents et invalider le cache.

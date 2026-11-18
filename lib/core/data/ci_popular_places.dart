@@ -1,4 +1,5 @@
 import '../models/places_models.dart';
+import '../services/popular_destinations_store.dart';
 import '../utils/geo_distance_utils.dart';
 
 /// Base locale des lieux les plus demandés à Abidjan. Elle est interrogée avant
@@ -104,6 +105,9 @@ const ciPopularPlaces = <CiPopularPlace>[
   ),
 ];
 
+/// Texte comparable : minuscules, sans accents ni ponctuation.
+String foldSearchText(String value) => _fold(value);
+
 String _fold(String value) {
   const from = 'àâäáãåçéèêëíìîïñóòôöõúùûüýÿœ';
   const to = 'aaaaaaceeeeiiiinooooouuuuyyo';
@@ -132,8 +136,18 @@ List<PlaceSuggestion> popularPlaceSuggestions(
   final q = _fold(query);
   if (q.length < 3) return const [];
 
+  // Base intégrée + destinations fréquentes issues des courses réelles (serveur). Le nom d'un lieu intégré
+  // l'emporte sur un doublon venu du serveur : ses alias sont soignés.
+  final builtInNames = {for (final p in ciPopularPlaces) _fold(p.name)};
+  final all = <CiPopularPlace>[
+    ...ciPopularPlaces,
+    for (final d in PopularDestinationsStore.instance.items)
+      if (!builtInNames.contains(_fold(d.name)))
+        CiPopularPlace(d.id, d.name, d.locality, d.latitude, d.longitude),
+  ];
+
   final scored = <MapEntry<int, CiPopularPlace>>[];
-  for (final place in ciPopularPlaces) {
+  for (final place in all) {
     final candidates = [place.name, ...place.aliases].map(_fold);
     var best = -1;
     for (final c in candidates) {
@@ -152,9 +166,14 @@ List<PlaceSuggestion> popularPlaceSuggestions(
   return scored.take(limit).map((entry) {
     final place = entry.value;
     final details = PlaceDetails(
-      placeId: 'local_ci_${place.id}',
+      // Les lieux du serveur gardent leur identifiant propre (jamais un identifiant Google).
+      placeId: place.id.startsWith('popular_')
+          ? place.id
+          : 'local_ci_${place.id}',
       name: place.name,
-      address: '${place.name}, ${place.locality}',
+      address: place.locality.isEmpty
+          ? place.name
+          : '${place.name}, ${place.locality}',
       latitude: place.latitude,
       longitude: place.longitude,
       localityLabel: place.locality,

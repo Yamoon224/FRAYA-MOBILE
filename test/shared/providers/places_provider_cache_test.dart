@@ -15,11 +15,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  // Pause avant l'appel Google : annulée dans les tests (les cas qui la vérifient la rétablissent).
+  final defaultGoogleDelay = placesGoogleExtraDelay;
+
   setUp(() async {
+    placesGoogleExtraDelay = Duration.zero;
     FlutterSecureStorage.setMockInitialValues({});
     SharedPreferences.setMockInitialValues({});
     await LocalStorage.instance.init();
   });
+
+  tearDown(() => placesGoogleExtraDelay = defaultGoogleDelay);
 
   test(
     'short queries do not call autocomplete when local results miss',
@@ -51,11 +57,11 @@ void main() {
     },
   );
 
-  test('three characters without local hit call normal autocomplete', () async {
+  test('five characters without local hit call normal autocomplete', () async {
     final service = _CountingPlacesService();
     final container = ProviderContainer(
       overrides: [
-        searchQueryProvider.overrideWithValue('zzz'),
+        searchQueryProvider.overrideWithValue('zzzzz'),
         placesServiceProvider.overrideWith((ref) => service),
         passengerLocationSnapshotProvider.overrideWith((ref) async => null),
       ],
@@ -87,7 +93,7 @@ void main() {
       var locationReads = 0;
       final container = ProviderContainer(
         overrides: [
-          searchQueryProvider.overrideWithValue('neo'),
+          searchQueryProvider.overrideWithValue('neobu'),
           placesServiceProvider.overrideWith((ref) => service),
           passengerLocationSnapshotProvider.overrideWith((ref) async {
             locationReads++;
@@ -130,7 +136,7 @@ void main() {
       final service = _CountingPlacesService(suggestions: []);
       final container = ProviderContainer(
         overrides: [
-          searchQueryProvider.overrideWithValue('res'),
+          searchQueryProvider.overrideWithValue('resta'),
           placesServiceProvider.overrideWith((ref) => service),
           passengerLocationSnapshotProvider.overrideWith(
             (ref) async => _position(latitude: 5, longitude: -4),
@@ -181,7 +187,7 @@ void main() {
       );
       final container = ProviderContainer(
         overrides: [
-          searchQueryProvider.overrideWithValue('res'),
+          searchQueryProvider.overrideWithValue('resta'),
           placesServiceProvider.overrideWith((ref) => service),
           passengerLocationSnapshotProvider.overrideWith((ref) async => null),
         ],
@@ -232,7 +238,7 @@ void main() {
     );
     final container = ProviderContainer(
       overrides: [
-        searchQueryProvider.overrideWithValue('res'),
+        searchQueryProvider.overrideWithValue('resta'),
         placesServiceProvider.overrideWith((ref) => service),
         passengerLocationSnapshotProvider.overrideWith((ref) async => null),
       ],
@@ -258,7 +264,7 @@ void main() {
   });
 
   test(
-    'three characters with a local hit keep the autocomplete cache (no forced refresh)',
+    'five characters with a local hit keep the autocomplete cache (no forced refresh)',
     () async {
       await RecentPlacesService('anonymous').add(
         const PlaceDetails(
@@ -273,7 +279,7 @@ void main() {
       final service = _CountingPlacesService();
       final container = ProviderContainer(
         overrides: [
-          searchQueryProvider.overrideWithValue('res'),
+          searchQueryProvider.overrideWithValue('resta'),
           placesServiceProvider.overrideWith((ref) => service),
           passengerLocationSnapshotProvider.overrideWith((ref) async => null),
         ],
@@ -295,12 +301,12 @@ void main() {
   );
 
   test(
-    'three characters without local hit keep normal autocomplete cache flow',
+    'five characters without local hit keep normal autocomplete cache flow',
     () async {
       final service = _CountingPlacesService();
       final container = ProviderContainer(
         overrides: [
-          searchQueryProvider.overrideWithValue('res'),
+          searchQueryProvider.overrideWithValue('resta'),
           placesServiceProvider.overrideWith((ref) => service),
           passengerLocationSnapshotProvider.overrideWith((ref) async => null),
         ],
@@ -371,9 +377,128 @@ void main() {
     expect(first.first.localDetails, isNotNull);
   });
 
-  test('keystrokes are debounced between 300 and 400 ms', () {
-    expect(SearchQuery.debounce.inMilliseconds, inInclusiveRange(300, 400));
+  test('local search is quick, Google waits for a longer pause', () {
+    // Local (gratuit) : réponse rapide. Google (payant) : débounce + pause supplémentaire ≈ 0,7 s.
+    expect(SearchQuery.debounce.inMilliseconds, inInclusiveRange(200, 300));
+    expect(
+      (SearchQuery.debounce + defaultGoogleDelay).inMilliseconds,
+      inInclusiveRange(600, 900),
+    );
   });
+
+  test(
+    '3 and 4 characters are answered locally only, never by Google',
+    () async {
+      await RecentPlacesService('anonymous').add(
+        const PlaceDetails(
+          placeId: 'local_restaurant',
+          name: 'Restaurant local',
+          address: 'Rue des Jardins, Cocody',
+          latitude: 5.39,
+          longitude: -3.99,
+          localityLabel: 'Rue des Jardins, Cocody',
+        ),
+      );
+      for (final query in ['res', 'rest']) {
+        final service = _CountingPlacesService();
+        final container = ProviderContainer(
+          overrides: [
+            searchQueryProvider.overrideWithValue(query),
+            placesServiceProvider.overrideWith((ref) => service),
+            passengerLocationSnapshotProvider.overrideWith((ref) async => null),
+          ],
+        );
+        addTearDown(container.dispose);
+        final subscription = container.listen(
+          placeSuggestionsProvider,
+          (_, _) {},
+        );
+        addTearDown(subscription.close);
+
+        final suggestions = await container.read(
+          placeSuggestionsProvider.future,
+        );
+
+        expect(suggestions.single.placeId, 'local_restaurant', reason: query);
+        expect(service.autocompleteCalls, 0, reason: query);
+      }
+    },
+  );
+
+  test('local matches on the commune only do not replace Google', () async {
+    // Trois récents situés à Cocody, mais dont aucun NOM ne correspond à « cocod ».
+    for (final n in ['Alpha', 'Beta', 'Gamma']) {
+      await RecentPlacesService('anonymous').add(
+        PlaceDetails(
+          placeId: 'recent_$n',
+          name: n,
+          address: 'Rue $n, Cocody',
+          latitude: 5.39,
+          longitude: -3.99,
+          localityLabel: 'Rue $n, Cocody',
+        ),
+      );
+    }
+    final service = _CountingPlacesService();
+    final container = ProviderContainer(
+      overrides: [
+        searchQueryProvider.overrideWithValue('cocod'),
+        placesServiceProvider.overrideWith((ref) => service),
+        passengerLocationSnapshotProvider.overrideWith((ref) async => null),
+      ],
+    );
+    addTearDown(container.dispose);
+    final subscription = container.listen(placeSuggestionsProvider, (_, _) {});
+    addTearDown(subscription.close);
+
+    await container.read(placeSuggestionsProvider.future);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(service.autocompleteCalls, 1);
+  });
+
+  test('typing again during the pause cancels the paid call', () async {
+    placesGoogleExtraDelay = const Duration(milliseconds: 120);
+    final service = _CountingPlacesService();
+    final container = ProviderContainer(
+      overrides: [
+        searchQueryProvider.overrideWithValue('zzzzz'),
+        placesServiceProvider.overrideWith((ref) => service),
+        passengerLocationSnapshotProvider.overrideWith((ref) async => null),
+      ],
+    );
+    final subscription = container.listen(placeSuggestionsProvider, (_, _) {});
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+
+    // Le passager a continué à taper : la recherche est abandonnée.
+    subscription.close();
+    container.dispose();
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+
+    expect(service.autocompleteCalls, 0);
+  });
+
+  test(
+    'recents keep 30 places for search but the home list shows 10',
+    () async {
+      final recents = RecentPlacesService('anonymous');
+      for (var i = 0; i < 35; i++) {
+        await recents.add(
+          PlaceDetails(
+            placeId: 'p$i',
+            name: 'Lieu $i',
+            address: 'Rue $i, Cocody',
+            latitude: 5.3 + i / 1000,
+            longitude: -4,
+          ),
+        );
+      }
+
+      expect((await recents.getAll()).length, RecentPlacesService.maxItems);
+      expect(RecentPlacesService.maxItems, 30);
+      expect(RecentPlacesService.displayItems, 10);
+    },
+  );
 
   test('details of a suggestion tile never hit the network', () async {
     final service = _CountingPlacesService();

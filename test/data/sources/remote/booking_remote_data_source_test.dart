@@ -70,6 +70,9 @@ void main() {
           'currentLat': 5.31,
           'currentLng': -4.01,
           'destinationPlaceId': 'google_destination_123',
+          // Coordonnées envoyées : le serveur évite un appel Google Place Details.
+          'destinationLat': 5.25,
+          'destinationLng': -3.93,
           'stops': <dynamic>[],
           'promoCode': '',
           'waitingSeconds': 0,
@@ -79,6 +82,40 @@ void main() {
         expect(body.containsKey('arrivalLong'), isFalse);
       },
     );
+
+    test('omits destination coordinates when they are unknown (0,0)', () async {
+      late Map<String, dynamic> body;
+      final dataSource = BookingRemoteDataSource(
+        dio: Dio()
+          ..httpClientAdapter = _RecordingHttpClientAdapter((
+            options,
+            requestStream,
+            cancelFuture,
+          ) async {
+            body = await _decodeRequestBody(requestStream);
+            return _jsonResponse({
+              'success': true,
+              'data': {
+                'data': {'prices': []},
+              },
+            }, 200);
+          }),
+      );
+
+      await dataSource.calculatePrices(
+        const CalculateRidePricesParams(
+          latDeparture: 5.31,
+          longDeparture: -4.01,
+          arrivalPlaceId: 'google_destination_123',
+          arrivalLat: 0,
+          arrivalLong: 0,
+        ),
+      );
+
+      expect(body.containsKey('destinationLat'), isFalse);
+      expect(body.containsKey('destinationLng'), isFalse);
+      expect(body['destinationPlaceId'], 'google_destination_123');
+    });
 
     test('serializes stops, promo code, and waiting seconds', () async {
       late Map<String, dynamic> body;

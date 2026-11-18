@@ -1,10 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/places_models.dart';
 import '../utils/logger.dart';
 import 'geocoding_service.dart';
 import 'maps_usage_tracker.dart';
 import 'place_address_enrichment_service.dart';
+import 'places_api_new_client.dart';
 import 'places_autocomplete_memory_cache.dart';
 import 'places_cache_service.dart';
 import 'places_service_support.dart';
@@ -19,6 +21,20 @@ class PlacesService {
   final PlaceAddressEnrichmentService _addressEnrichmentService;
   final PlacesSession _session;
 
+  /// Places API (New), ou null si désactivée (`PLACES_API_NEW=false`). Toute indisponibilité ramène à
+  /// l'ancienne API, utilisée plus bas.
+  final bool _useNewApi;
+  late final PlacesApiNewClient? _newApi = _useNewApi
+      ? PlacesApiNewClient(_googleDio)
+      : null;
+
+  /// Noms des lieux vus dans l'autocomplétion : les détails (palier moins cher) n'ont pas à les redemander.
+  static final Map<String, String> _predictionNames = {};
+  static const _predictionNamesLimit = 300;
+
+  @visibleForTesting
+  static void debugResetPredictionNames() => _predictionNames.clear();
+
   /// Lieux proches déjà demandés : la recherche Nearby est l'appel le plus cher
   /// et sa réponse ne change pas d'une ouverture de l'écran à l'autre.
   static final Map<String, _NearbyEntry> _nearbyCache = {};
@@ -29,7 +45,9 @@ class PlacesService {
   static const abidjanLng = -4.0201;
   static const biasRadiusMeters = 50000;
 
-  static const minAutocompleteQueryLength = 3;
+  /// Longueur minimale pour interroger Google. En dessous, seuls les lieux locaux (récents, favoris,
+  /// destinations fréquentes) répondent, gratuitement.
+  static const minAutocompleteQueryLength = 5;
   static const forceAutocompleteRefreshQueryLength = 3;
 
   PlacesService({
@@ -38,6 +56,7 @@ class PlacesService {
     PlacesAutocompleteMemoryCache? autocompleteMemoryCache,
     GeocodingService? geocodingService,
     PlacesSession? session,
+    bool? useNewApi,
   }) : _session = session ?? PlacesSession.shared,
        _googleDio = googleDio ?? createGoogleDio(),
        _cacheService = cacheService ?? PlacesCacheService(),
@@ -45,7 +64,16 @@ class PlacesService {
            autocompleteMemoryCache ?? PlacesAutocompleteMemoryCache(),
        _addressEnrichmentService = PlaceAddressEnrichmentService(
          geocodingService: geocodingService,
-       );
+       ),
+       _useNewApi = useNewApi ?? _newApiEnabledByConfig();
+
+  static bool _newApiEnabledByConfig() {
+    try {
+      return (dotenv.env['PLACES_API_NEW'] ?? 'true').toLowerCase() != 'false';
+    } catch (_) {
+      return true;
+    }
+  }
 
   String get _apiKey {
     try {
@@ -78,7 +106,10 @@ class PlacesService {
     );
     if (!bypassCache) {
       final memoryHit = _autocompleteMemoryCache.read(cacheKey);
-      if (memoryHit != null) return memoryHit;
+      if (memoryHit != null) {
+        _rememberNames(memoryHit);
+        return memoryHit;
+      }
 
       final persistentHit = PlacesServiceSupport.readPersistentAutocomplete(
         _cacheService,
@@ -87,6 +118,7 @@ class PlacesService {
         originLng: originLng,
       );
       if (persistentHit != null) {
+        _rememberNames(persistentHit);
         _autocompleteMemoryCache.save(cacheKey, persistentHit);
         return persistentHit;
       }
@@ -103,6 +135,18 @@ class PlacesService {
         : _session.current();
 
     try {
+      // Places API (New) d'abord ; en cas d'indisponibilité, l'ancienne API répond comme avant.
+      final viaNew = await _autocompleteFromNewApi(
+        query: normalizedQuery,
+        language: language,
+        components: components,
+        originLat: originLat,
+        originLng: originLng,
+        token: token,
+        cancelToken: cancelToken,
+      );
+      if (viaNew != null) return _storeAutocomplete(cacheKey, viaNew);
+
       final response = await _googleDio.get(
         'https://maps.googleapis.com/maps/api/place/autocomplete/json',
         cancelToken: cancelToken,
@@ -130,12 +174,7 @@ class PlacesService {
           final suggestions = predictions
               .map((json) => PlaceSuggestion.fromJson(json))
               .toList();
-          _autocompleteMemoryCache.save(cacheKey, suggestions);
-          await _cacheService.saveQueryPlaceIds(
-            cacheKey,
-            suggestions.map((s) => s.placeId).toList(),
-          );
-          return suggestions;
+          return _storeAutocomplete(cacheKey, suggestions);
         } else {
           _log.error('Google Places Autocomplete error: ${data['status']}');
         }
@@ -150,6 +189,64 @@ class PlacesService {
       _log.error('Exception in getAutocompleteSuggestions: $e');
       return [];
     }
+  }
+
+  Future<List<PlaceSuggestion>?> _autocompleteFromNewApi({
+    required String query,
+    required String language,
+    required String components,
+    required String? token,
+    double? originLat,
+    double? originLng,
+    CancelToken? cancelToken,
+  }) async {
+    final client = _newApi;
+    final key = _apiKey;
+    if (client == null || !client.isAvailable || key.isEmpty) return null;
+    final predictions = await client.autocomplete(
+      apiKey: key,
+      input: query,
+      language: language,
+      components: components,
+      biasLat: originLat ?? abidjanLat,
+      biasLng: originLng ?? abidjanLng,
+      biasRadiusMeters: biasRadiusMeters,
+      sessionToken: token,
+      originLat: originLat,
+      originLng: originLng,
+      cancelToken: cancelToken,
+    );
+    return predictions?.map(PlaceSuggestion.fromJson).toList();
+  }
+
+  Future<List<PlaceSuggestion>> _storeAutocomplete(
+    String cacheKey,
+    List<PlaceSuggestion> suggestions,
+  ) async {
+    _rememberNames(suggestions);
+    _autocompleteMemoryCache.save(cacheKey, suggestions);
+    await _cacheService.saveQueryPlaceIds(
+      cacheKey,
+      suggestions.map((s) => s.placeId).toList(),
+    );
+    return suggestions;
+  }
+
+  void _rememberNames(List<PlaceSuggestion> suggestions) {
+    for (final s in suggestions) {
+      if (s.placeId.isEmpty || s.mainText.trim().isEmpty) continue;
+      _predictionNames.remove(s.placeId);
+      _predictionNames[s.placeId] = s.mainText;
+      if (_predictionNames.length > _predictionNamesLimit) {
+        _predictionNames.remove(_predictionNames.keys.first);
+      }
+    }
+  }
+
+  Future<PlaceDetails> _finishDetails(PlaceDetails parsed) async {
+    final details = await _addressEnrichmentService.enrichIfNeeded(parsed);
+    await _cacheService.saveDetails(details);
+    return details;
   }
 
   Future<PlaceDetails?> getPlaceDetails(
@@ -167,6 +264,20 @@ class PlacesService {
     if (cached != null) return cached;
 
     try {
+      final client = _newApi;
+      final key = _apiKey;
+      if (client != null && client.isAvailable && key.isNotEmpty) {
+        final viaNew = await client.placeDetails(
+          apiKey: key,
+          placeId: placeId,
+          language: language,
+          sessionToken: closingToken,
+          knownName: _predictionNames[placeId],
+        );
+        if (viaNew != null)
+          return _finishDetails(PlaceDetails.fromJson(viaNew));
+      }
+
       final response = await _googleDio.get(
         'https://maps.googleapis.com/maps/api/place/details/json',
         queryParameters: {
@@ -183,12 +294,7 @@ class PlacesService {
       if (response.statusCode == 200) {
         final data = response.data;
         if (data['status'] == 'OK') {
-          final parsed = PlaceDetails.fromJson(data['result']);
-          final details = await _addressEnrichmentService.enrichIfNeeded(
-            parsed,
-          );
-          await _cacheService.saveDetails(details);
-          return details;
+          return _finishDetails(PlaceDetails.fromJson(data['result']));
         } else {
           _log.error('Google Places Details error: ${data['status']}');
         }

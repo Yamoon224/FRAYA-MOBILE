@@ -25,7 +25,7 @@ void main() {
     final adapter = _FakeGoogleAdapter();
     final service = _service(adapter);
 
-    for (final query in ['a', 'an']) {
+    for (final query in ['a', 'an', 'ang', 'angr']) {
       expect(await service.getAutocompleteSuggestions(query), isEmpty);
     }
 
@@ -38,7 +38,7 @@ void main() {
     );
     final service = _service(adapter);
 
-    final suggestions = await service.getAutocompleteSuggestions('ang');
+    final suggestions = await service.getAutocompleteSuggestions('angre');
 
     expect(adapter.autocompleteCalls, 1);
     expect(suggestions.single.placeId, 'place_1');
@@ -207,6 +207,7 @@ PlacesService _service(
     cacheService: cacheService ?? PlacesCacheService(),
     autocompleteMemoryCache: PlacesAutocompleteMemoryCache(),
     geocodingService: geocodingService,
+    useNewApi: false, // ces tests couvrent l'ancienne API
   );
 }
 

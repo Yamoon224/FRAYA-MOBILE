@@ -283,6 +283,7 @@ PlacesService _service(_CapturingAdapter adapter) {
     cacheService: PlacesCacheService(),
     autocompleteMemoryCache: PlacesAutocompleteMemoryCache(),
     session: PlacesSession(),
+    useNewApi: false, // ces tests couvrent l'ancienne API
   );
 }
 

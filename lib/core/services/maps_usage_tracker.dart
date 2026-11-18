@@ -24,6 +24,7 @@ final _log = AppLogger.instance;
 enum MapsService {
   placesAutocomplete('PLACES_AUTOCOMPLETE'),
   placeDetails('PLACE_DETAILS'),
+  placeDetailsEssentials('PLACE_DETAILS_ESSENTIALS'),
   nearbySearch('NEARBY_SEARCH'),
   directions('DIRECTIONS'),
   geocoding('GEOCODING'),
@@ -176,6 +177,25 @@ class MapsUsageTracker {
 class MapsUsageInterceptor extends Interceptor {
   static const _startKey = 'maps_usage_started_at';
 
+  /// Classe une requête, en tenant compte de la méthode et des champs demandés (Places API (New)).
+  static MapsService? classifyRequest(RequestOptions options) {
+    final uri = options.uri;
+    if (uri.host == 'places.googleapis.com') {
+      if (uri.path.contains(':autocomplete')) {
+        return MapsService.placesAutocomplete;
+      }
+      if (uri.path.contains('/v1/places/')) {
+        // Sans le nom (displayName), les détails relèvent du palier Essentials, moins cher.
+        final mask = options.headers['X-Goog-FieldMask']?.toString() ?? '';
+        return mask.contains('displayName')
+            ? MapsService.placeDetails
+            : MapsService.placeDetailsEssentials;
+      }
+      return null;
+    }
+    return classify(uri);
+  }
+
   static MapsService? classify(Uri uri) {
     final host = uri.host;
     final path = uri.path;
@@ -234,7 +254,7 @@ class MapsUsageInterceptor extends Interceptor {
     (bool, String?, String?) Function() outcome,
   ) {
     try {
-      final service = classify(options.uri);
+      final service = classifyRequest(options);
       if (service == null) return;
       final started = options.extra[_startKey] as int?;
       final (ok, status, message) = outcome();
